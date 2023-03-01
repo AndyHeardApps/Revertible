@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Restorable",
+    name: "Revertable",
     platforms: [
         .macOS(.v13),
         .iOS(.v16),
@@ -12,18 +12,18 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "Restorable",
-            targets: ["Restorable"]
+            name: "Revertable",
+            targets: ["Revertable"]
         )
     ],
     targets: [
         .target(
-            name: "Restorable",
+            name: "Revertable",
             dependencies: []
         ),
         .testTarget(
-            name: "RestorableTests",
-            dependencies: ["Restorable"]
+            name: "RevertableTests",
+            dependencies: ["Revertable"]
         )
     ]
 )
