@@ -31,9 +31,7 @@ struct SetReversion<Root, Element: Hashable> {
 
 // MARK: - Value reversion
 extension SetReversion: ValueReversion {
-    
-    typealias Mapped = SetReversion
-    
+        
     func revert(_ object: inout Root) {
         
         switch action {
@@ -46,12 +44,13 @@ extension SetReversion: ValueReversion {
         }
     }
     
-    func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> SetReversion<NewRoot, Element> {
+    func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         SetReversion<NewRoot, Element>(
             keyPath: keyPath.appending(path: self.keyPath),
             action: .init(action)
         )
+        .erasedToAnyValueReversion()
     }
 }
 
@@ -63,7 +62,7 @@ extension SetReversion {
         case insert(Set<Element>)
         case remove(Set<Element>)
         
-        init<OtherRoot>(_ other: SetReversion<OtherRoot, Element>.Action) {
+        fileprivate init<OtherRoot>(_ other: SetReversion<OtherRoot, Element>.Action) {
         
             switch other {
             case let .insert(elements):

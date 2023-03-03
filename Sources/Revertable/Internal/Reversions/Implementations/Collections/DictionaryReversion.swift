@@ -39,9 +39,7 @@ struct DictionaryReversion<Root, Key: Hashable, Value: Identifiable> {
 
 // MARK: - Value reversion
 extension DictionaryReversion: ValueReversion {
-    
-    typealias Mapped = DictionaryReversion
-    
+        
     func revert(_ object: inout Root) {
         
         switch action {
@@ -66,12 +64,13 @@ extension DictionaryReversion: ValueReversion {
         }
     }
     
-    func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> DictionaryReversion<NewRoot, Key, Value> {
+    func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         DictionaryReversion<NewRoot, Key, Value>(
             keyPath: keyPath.appending(path: self.keyPath),
             action: .init(action)
         )
+        .erasedToAnyValueReversion()
     }
 }
 

@@ -1,5 +1,5 @@
 
-struct ArrayReversion<Root, Element: Identifiable> {
+struct ArrayReversion<Root, Element> {
     
     // MARK: - Properties
     private let keyPath: WritableKeyPath<Root, [Element]>
@@ -17,14 +17,8 @@ struct ArrayReversion<Root, Element: Identifiable> {
         self.keyPath = \.self
         self.action = .remove(indices)
     }
-    
-    init(move elementID: Element.ID, to destination: Array<Element>.Index) where Root == [Element] {
-        
-        self.keyPath = \.self
-        self.action = .move(elementID: elementID, destination: destination)
-    }
-    
-    private init(
+
+    fileprivate init(
         keyPath: WritableKeyPath<Root, [Element]>,
         action: Action
     ) {
@@ -36,9 +30,7 @@ struct ArrayReversion<Root, Element: Identifiable> {
 
 // MARK: - Value reversion
 extension ArrayReversion: ValueReversion {
-    
-    typealias Mapped = ArrayReversion
-        
+            
     func revert(_ object: inout Root) {
         
         switch action {
@@ -54,21 +46,16 @@ extension ArrayReversion: ValueReversion {
                 from: &object[keyPath: keyPath]
             )
             
-        case let .move(elementID, destination):
-            move(
-                elementID: elementID,
-                to: destination,
-                in: &object[keyPath: keyPath]
-            )
         }
     }
     
-    func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> ArrayReversion<NewRoot, Element> {
+    func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         ArrayReversion<NewRoot, Element>(
             keyPath: keyPath.appending(path: self.keyPath),
             action: .init(action)
         )
+        .erasedToAnyValueReversion()
     }
 }
 
@@ -100,32 +87,17 @@ extension ArrayReversion {
             array.remove(at: index)
         }
     }
-    
-    private func move(
-        elementID: Element.ID,
-        to destination: Array<Element>.Index,
-        in array: inout [Element]
-    ) {
-        
-        guard let elementIndex = array.firstIndex(where: { $0.id == elementID}) else {
-            return
-        }
-        
-        let element = array.remove(at: elementIndex)
-        array.insert(element, at: destination)
-    }
 }
 
 // MARK: - Action
 extension ArrayReversion {
     
-    private enum Action {
+    fileprivate enum Action {
         
         case insert(Set<Insertion>)
         case remove(Set<Array<Element>.Index>)
-        case move(elementID: Element.ID, destination: Array<Element>.Index)
         
-        init<OtherRoot>(_ other: ArrayReversion<OtherRoot, Element>.Action) {
+        fileprivate init<OtherRoot>(_ other: ArrayReversion<OtherRoot, Element>.Action) {
         
             switch other {
             case let .insert(insertions):
@@ -134,9 +106,6 @@ extension ArrayReversion {
 
             case let .remove(indices):
                 self = .remove(indices)
-                
-            case let .move(elementID, destination):
-                self = .move(elementID: elementID, destination: destination)
                 
             }
         }
@@ -148,10 +117,19 @@ extension ArrayReversion {
     
     struct Insertion {
         
-        let index: Array<Element>.Index
-        let element: Element
+        fileprivate let index: Array<Element>.Index
+        fileprivate let element: Element
         
-        init<OtherRoot>(_ other: ArrayReversion<OtherRoot, Element>.Insertion) {
+        init(
+            index: Array<Element>.Index,
+            element: Element
+        ) {
+            
+            self.index = index
+            self.element = element
+        }
+        
+        fileprivate init<OtherRoot>(_ other: ArrayReversion<OtherRoot, Element>.Insertion) {
             
             self.index = other.index
             self.element = other.element
