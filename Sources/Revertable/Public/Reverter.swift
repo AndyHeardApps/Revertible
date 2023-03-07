@@ -32,7 +32,8 @@ public protocol Reverter<Root> {
     mutating func appendReversion<Element>(at keyPath: WritableKeyPath<Root, Set<Element>>)
 
     mutating func appendReversion<Element: Equatable>(at keyPath: WritableKeyPath<Root, [Element]>)
-    mutating func appendReversion<Element: Equatable & Identifiable & Revertable>(at keyPath: WritableKeyPath<Root, [Element]>)
+    mutating func appendReversion<Element: Identifiable & Revertable>(at keyPath: WritableKeyPath<Root, [Element]>)
     
+    mutating func appendReversion<Key, Value: Equatable>(at keyPath: WritableKeyPath<Root, [Key : Value]>)
     mutating func appendReversion<Key, Value: Identifiable & Revertable>(at keyPath: WritableKeyPath<Root, [Key : Value]>)
 }

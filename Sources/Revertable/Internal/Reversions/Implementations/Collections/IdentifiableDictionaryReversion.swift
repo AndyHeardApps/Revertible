@@ -1,5 +1,5 @@
 
-struct DictionaryReversion<Root, Key: Hashable, Value: Equatable> {
+struct IdentifiableDictionaryReversion<Root, Key: Hashable, Value: Identifiable> {
     
     // MARK: - Properties
     private let keyPath: WritableKeyPath<Root, [Key : Value]>
@@ -18,6 +18,15 @@ struct DictionaryReversion<Root, Key: Hashable, Value: Equatable> {
         self.action = .remove(keys)
     }
     
+    init(
+        move origin: Key,
+        to destination: Key
+    ) where Root == [Key : Value] {
+        
+        self.keyPath = \.self
+        self.action = .move(origin: origin, destination: destination)
+    }
+    
     private init(
         keyPath: WritableKeyPath<Root, [Key : Value]>,
         action: Action
@@ -29,7 +38,7 @@ struct DictionaryReversion<Root, Key: Hashable, Value: Equatable> {
 }
 
 // MARK: - Value reversion
-extension DictionaryReversion: ValueReversion {
+extension IdentifiableDictionaryReversion: ValueReversion {
         
     func revert(_ object: inout Root) {
         
@@ -46,12 +55,18 @@ extension DictionaryReversion: ValueReversion {
                 from: &object[keyPath: keyPath]
             )
             
+        case let .move(origin, destination):
+            move(
+                from: origin,
+                to: destination,
+                in: &object[keyPath: keyPath]
+            )
         }
     }
     
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
-        DictionaryReversion<NewRoot, Key, Value>(
+        IdentifiableDictionaryReversion<NewRoot, Key, Value>(
             keyPath: keyPath.appending(path: self.keyPath),
             action: .init(action)
         )
@@ -60,7 +75,7 @@ extension DictionaryReversion: ValueReversion {
 }
 
 // MARK: - Utilities
-extension DictionaryReversion {
+extension IdentifiableDictionaryReversion {
 
     private func insert(
         insertions: [Key : Value],
@@ -79,17 +94,29 @@ extension DictionaryReversion {
             dictionary.removeValue(forKey: key)
         }
     }
+    
+    private func move(
+        from origin: Key,
+        to destination: Key,
+        in dictionary: inout [Key : Value]
+    ) {
+        
+        if let value = dictionary.removeValue(forKey: origin) {
+            dictionary.updateValue(value, forKey: destination)
+        }
+    }
 }
 
 // MARK: - Action
-extension DictionaryReversion {
+extension IdentifiableDictionaryReversion {
     
     private enum Action {
         
         case insert([Key : Value])
         case remove(Set<Key>)
+        case move(origin: Key, destination: Key)
         
-        init<OtherRoot>(_ other: DictionaryReversion<OtherRoot, Key, Value>.Action) {
+        init<OtherRoot>(_ other: IdentifiableDictionaryReversion<OtherRoot, Key, Value>.Action) {
         
             switch other {
             case let .insert(insertions):
@@ -97,6 +124,9 @@ extension DictionaryReversion {
 
             case let .remove(keys):
                 self = .remove(keys)
+                
+            case let .move(origin, destination):
+                self = .move(origin: origin, destination: destination)
                 
             }
         }
