@@ -2,31 +2,36 @@
 struct SetReversion<Root, Element: Hashable> {
     
     // MARK: - Properties
-    private let keyPath: WritableKeyPath<Root, Set<Element>>
     private let action: Action
-    
+    private let keyPath: WritableKeyPath<Root, Set<Element>>
+
     // MARK: - Initialisers
-    init(insert elements: Set<Element>) where Root == Set<Element> {
+    init(
+        insert elements: Set<Element>,
+        inSetAt keyPath: WritableKeyPath<Root, Set<Element>>
+    ) {
         
-        self.keyPath = \.self
         self.action = .insert(elements)
+        self.keyPath = keyPath
     }
     
-    init(remove elements: Set<Element>) where Root == Set<Element> {
+    init(
+        remove elements: Set<Element>,
+        fromSetAt keyPath: WritableKeyPath<Root, Set<Element>>
+    ) {
         
-        self.keyPath = \.self
         self.action = .remove(elements)
+        self.keyPath = keyPath
     }
     
     private init(
-        keyPath: WritableKeyPath<Root, Set<Element>>,
-        action: Action
+        action: Action,
+        keyPath: WritableKeyPath<Root, Set<Element>>
     ) {
         
-        self.keyPath = keyPath
         self.action = action
+        self.keyPath = keyPath
     }
-
 }
 
 // MARK: - Value reversion
@@ -47,8 +52,8 @@ extension SetReversion: ValueReversion {
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         SetReversion<NewRoot, Element>(
-            keyPath: keyPath.appending(path: self.keyPath),
-            action: .init(action)
+            action: .init(action),
+            keyPath: keyPath.appending(path: self.keyPath)
         )
         .erasedToAnyValueReversion()
     }

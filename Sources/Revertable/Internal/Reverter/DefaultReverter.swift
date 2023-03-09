@@ -174,8 +174,13 @@ extension DefaultReverter {
                     let upperBound = currentValue.index(currentValue.startIndex, offsetBy: range.upperBound)
                     return lowerBound...upperBound
                 }
-            let reversion = StringReversion(remove: Set(stringIndices))
-                .mapped(to: keyPath)
+            
+            let reversion = StringReversion(
+                remove: Set(stringIndices),
+                fromStringAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+
             reversions.append(reversion)
         }
         
@@ -186,13 +191,18 @@ extension DefaultReverter {
                 let elements = range.compactMap { insertionDictionary[$0] }
                 let startIndex = currentValue.index(currentValue.startIndex, offsetBy: range.lowerBound)
                 
-                return StringReversion<String>.Insertion(
+                return StringReversion<Root>.Insertion(
                     index: startIndex,
                     elements: Substring(elements)
                 )
             }
-            let reversion = StringReversion(insert: Set(insertions))
-                .mapped(to: keyPath)
+            
+            let reversion = StringReversion(
+                insert: Set(insertions),
+                inStringAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+
             reversions.append(reversion)
         }
     }
@@ -228,8 +238,13 @@ extension DefaultReverter {
         
         if !indicesToRemove.isEmpty {
             let rangesToRemove = indicesToRemove.convertToRanges()
-            let reversion = DataReversion(remove: Set(rangesToRemove))
-                .mapped(to: keyPath)
+            
+            let reversion = DataReversion(
+                remove: Set(rangesToRemove),
+                fromDataAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
         
@@ -239,13 +254,18 @@ extension DefaultReverter {
             let insertions = rangesToInsert.map { range in
                 let elements = range.compactMap { insertionDictionary[$0] }
                 
-                return DataReversion<Data>.Insertion(
+                return DataReversion<Root>.Insertion(
                     index: range.lowerBound,
                     elements: Data.SubSequence(elements)
                 )
             }
-            let reversion = DataReversion(insert: Set(insertions))
-                .mapped(to: keyPath)
+            
+            let reversion = DataReversion(
+                insert: Set(insertions),
+                inDataAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
     }
@@ -267,14 +287,24 @@ extension DefaultReverter {
         let elementsToInsert = previousValue.subtracting(currentValue)
         
         if !elementsToRemove.isEmpty {
-            let reversion = SetReversion(remove: elementsToRemove)
-                .mapped(to: keyPath)
+            
+            let reversion = SetReversion(
+                remove: elementsToRemove,
+                fromSetAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
         
         if !elementsToInsert.isEmpty {
-            let reversion = SetReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
+            
+            let reversion = SetReversion(
+                insert: elementsToInsert,
+                inSetAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
     }
@@ -295,7 +325,7 @@ extension DefaultReverter {
         let difference = currentValue.difference(from: previousValue)
         
         var indicesToRemove: Set<Array<Element>.Index> = []
-        var elementsToInsert: Set<ArrayReversion<[Element], Element>.Insertion> = []
+        var elementsToInsert: Set<ArrayReversion<Root, Element>.Insertion> = []
         
         for change in difference {
             switch change {
@@ -309,15 +339,24 @@ extension DefaultReverter {
         }
         
         if !indicesToRemove.isEmpty {
-            let reversion = ArrayReversion<[Element], Element>(remove: indicesToRemove)
-                .mapped(to: keyPath)
+            
+            let reversion = ArrayReversion(
+                remove: indicesToRemove,
+                fromArrayAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
         
         if !elementsToInsert.isEmpty {
             
-            let reversion = ArrayReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
+            let reversion = ArrayReversion(
+                insert: elementsToInsert,
+                inArrayAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
     }
@@ -339,7 +378,7 @@ extension DefaultReverter {
         let idsToUpdate = currentIDs.intersection(previousIDs)
         
         var indicesToRemove: Set<Array<Element>.Index> = []
-        var elementsToInsert: Set<IdentifiableArrayReversion<[Element], Element>.Insertion> = []
+        var elementsToInsert: Set<IdentifiableArrayReversion<Root, Element>.Insertion> = []
         var indicesOfMovedInPrevious: [Element.ID : Array<Element>.Index] = [:]
         var indicesOfUpdatedInCurrent: [Element.ID : Array<Element>.Index] = [:]
         
@@ -365,15 +404,24 @@ extension DefaultReverter {
         }
         
         if !indicesToRemove.isEmpty {
-            let reversion = IdentifiableArrayReversion<[Element], Element>(remove: indicesToRemove)
-                .mapped(to: keyPath)
+            
+            let reversion = IdentifiableArrayReversion(
+                remove: indicesToRemove,
+                fromArrayAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
         
         if !elementsToInsert.isEmpty {
             
-            let reversion = IdentifiableArrayReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
+            let reversion = IdentifiableArrayReversion(
+                insert: elementsToInsert,
+                inArrayAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
         
@@ -388,16 +436,26 @@ extension DefaultReverter {
             let elementKeyPath: WritableKeyPath<Root, Element>
             
             if let previousValueIndex = indicesOfMovedInPrevious[updatedID] {
-                let moveReversion = IdentifiableArrayReversion(move: updatedID, to: previousValueIndex)
-                    .mapped(to: keyPath)
+                
+                let moveReversion = IdentifiableArrayReversion(
+                    move: updatedID,
+                    to: previousValueIndex,
+                    inArrayAt: keyPath
+                )
+                .erasedToAnyValueReversion()
+                
                 reversions.append(moveReversion)
+
                 currentElementValue = currentValue[currentValueIndex]
                 previousElementValue = previousValue[previousValueIndex]
                 elementKeyPath = keyPath.appending(path: \.[previousValueIndex])
+                
             } else {
+                
                 currentElementValue = currentValue[currentValueIndex]
                 previousElementValue = previousValue[currentValueIndex]
                 elementKeyPath = keyPath.appending(path: \.[currentValueIndex])
+                
             }
             
             appendReversion(
@@ -439,14 +497,24 @@ extension DefaultReverter {
             }
         
         if !keysToRemove.isEmpty {
-            let reversion = DictionaryReversion<[Key : Value], Key, Value>(remove: keysToRemove)
-                .mapped(to: keyPath)
+            
+            let reversion = DictionaryReversion(
+                remove: keysToRemove,
+                fromDictionaryAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+
             reversions.append(reversion)
         }
         
         if !elementsToInsert.isEmpty {
-            let reversion = DictionaryReversion(insert: Dictionary(uniqueKeysWithValues: elementsToInsert))
-                .mapped(to: keyPath)
+            
+            let reversion = DictionaryReversion(
+                insert: Dictionary(uniqueKeysWithValues: elementsToInsert),
+                inDictionaryAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
     }
@@ -494,15 +562,24 @@ extension DefaultReverter {
         }
         
         if !keysToRemove.isEmpty {
-            let reversion = IdentifiableDictionaryReversion(remove: keysToRemove)
-                .mapped(to: keyPath)
+            
+            let reversion = IdentifiableDictionaryReversion(
+                remove: keysToRemove,
+                fromDictionaryAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
         
         if !elementsToInsert.isEmpty {
             
-            let reversion = IdentifiableDictionaryReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
+            let reversion = IdentifiableDictionaryReversion(
+                insert: elementsToInsert,
+                inDictionaryAt: keyPath
+            )
+            .erasedToAnyValueReversion()
+            
             reversions.append(reversion)
         }
         
@@ -517,16 +594,26 @@ extension DefaultReverter {
             let elementKeyPath: WritableKeyPath<Root, Value>
             
             if let previousValueKey = keysOfMovedInPrevious[updatedID] {
-                let moveReversion = IdentifiableDictionaryReversion(move: currentValueKey, to: previousValueKey)
-                    .mapped(to: keyPath)
+                
+                let moveReversion = IdentifiableDictionaryReversion(
+                    move: currentValueKey,
+                    to: previousValueKey,
+                    inDictionaryAt: keyPath
+                )
+                .erasedToAnyValueReversion()
+                
                 reversions.append(moveReversion)
+
                 currentElementValue = currentValue[currentValueKey]!
                 previousElementValue = previousValue[previousValueKey]!
                 elementKeyPath = keyPath.appending(path: \.[previousValueKey].setUnsafelyUnwrapped)
+                
             } else {
+                
                 currentElementValue = currentValue[currentValueKey]!
                 previousElementValue = previousValue[currentValueKey]!
                 elementKeyPath = keyPath.appending(path: \.[currentValueKey].setUnsafelyUnwrapped)
+                
             }
             
             appendReversion(
@@ -538,7 +625,7 @@ extension DefaultReverter {
     }
 }
 
-// MARK: - Equatable default reversion
+// MARK: - Equatable default reversions
 extension DefaultReverter {
     
     private mutating func appendEquatableReversion<Value: Equatable>(at keyPath: WritableKeyPath<Root, Value>) {
@@ -550,8 +637,11 @@ extension DefaultReverter {
             return
         }
         
-        let reversion = SingleValueReversion(value: previousValue)
-            .mapped(to: keyPath)
+        let reversion = SingleValueReversion(
+            value: previousValue,
+            at: keyPath
+        )
+        .erasedToAnyValueReversion()
         
         reversions.append(reversion)
     }

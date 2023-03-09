@@ -2,23 +2,17 @@
 struct SingleValueReversion<Root, Value> {
 
     // MARK: - Properties
-    private let keyPath: WritableKeyPath<Root, Value>
     private let value: Value
-    
+    private let keyPath: WritableKeyPath<Root, Value>
+
     // MARK: - Initialisers
-    init(value: Value) where Root == Value {
-        
-        self.keyPath = \.self
-        self.value = value
-    }
-    
-    private init(
-        keyPath: WritableKeyPath<Root, Value>,
-        value: Value
+    init(
+        value: Value,
+        at keyPath: WritableKeyPath<Root, Value>
     ) {
         
-        self.keyPath = keyPath
         self.value = value
+        self.keyPath = keyPath
     }
 }
 
@@ -33,8 +27,8 @@ extension SingleValueReversion: ValueReversion {
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         SingleValueReversion<NewRoot, Value>(
-            keyPath: keyPath.appending(path: self.keyPath),
-            value: value
+            value: value,
+            at: keyPath.appending(path: self.keyPath)
         )
         .erasedToAnyValueReversion()
     }

@@ -6,6 +6,8 @@ public protocol Reverter<Root> {
     associatedtype Root
     
     // MARK: - Functions
+    
+    // MARK: Value types
     mutating func appendReversion<Value: Revertable>(at keyPath: WritableKeyPath<Root, Value>)
     
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Int>)

@@ -2,29 +2,35 @@
 struct StringReversion<Root> {
     
     // MARK: - Properties
-    private let keyPath: WritableKeyPath<Root, String>
     private let action: Action
-    
-    // MARK: - Initialisers
-    init(insert elements: Set<Insertion>) where Root == String {
+    private let keyPath: WritableKeyPath<Root, String>
 
-        self.keyPath = \.self
+    // MARK: - Initialisers
+    init(
+        insert elements: Set<Insertion>,
+        inStringAt keyPath: WritableKeyPath<Root, String>
+    ) {
+
         self.action = .insert(elements)
+        self.keyPath = keyPath
     }
 
-    init(remove indedRanges: Set<ClosedRange<String.Index>>) where Root == String {
+    init(
+        remove indedRanges: Set<ClosedRange<String.Index>>,
+        fromStringAt keyPath: WritableKeyPath<Root, String>
+    ) {
 
-        self.keyPath = \.self
         self.action = .remove(indedRanges)
+        self.keyPath = keyPath
     }
         
     private init(
-        keyPath: WritableKeyPath<Root, String>,
-        action: Action
+        action: Action,
+        keyPath: WritableKeyPath<Root, String>
     ) {
         
-        self.keyPath = keyPath
         self.action = action
+        self.keyPath = keyPath
     }
 }
 
@@ -52,8 +58,8 @@ extension StringReversion: ValueReversion {
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         StringReversion<NewRoot>(
-            keyPath: keyPath.appending(path: self.keyPath),
-            action: .init(action)
+            action: .init(action),
+            keyPath: keyPath.appending(path: self.keyPath)
         )
         .erasedToAnyValueReversion()
     }

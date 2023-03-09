@@ -2,38 +2,45 @@
 struct IdentifiableDictionaryReversion<Root, Key: Hashable, Value: Identifiable> {
     
     // MARK: - Properties
-    private let keyPath: WritableKeyPath<Root, [Key : Value]>
     private let action: Action
-    
-    // MARK: - Initialisers
-    init(insert dictionary: [Key : Value]) where Root == [Key : Value] {
+    private let keyPath: WritableKeyPath<Root, [Key : Value]>
 
-        self.keyPath = \.self
+    // MARK: - Initialisers
+    init(
+        insert dictionary: [Key : Value],
+        inDictionaryAt keyPath: WritableKeyPath<Root, [Key : Value]>
+    ) {
+
         self.action = .insert(dictionary)
+        self.keyPath = keyPath
     }
 
-    init(remove keys: Set<Key>) where Root == [Key : Value] {
-
-        self.keyPath = \.self
+    init(
+        remove keys: Set<Key>,
+        fromDictionaryAt keyPath: WritableKeyPath<Root, [Key : Value]>
+    ) {
+        
         self.action = .remove(keys)
+        self.keyPath = keyPath
     }
     
     init(
         move origin: Key,
-        to destination: Key
-    ) where Root == [Key : Value] {
+        to destination: Key,
+        inDictionaryAt keyPath: WritableKeyPath<Root, [Key : Value]>
+    ) {
         
-        self.keyPath = \.self
         self.action = .move(origin: origin, destination: destination)
+        self.keyPath = keyPath
     }
     
     private init(
-        keyPath: WritableKeyPath<Root, [Key : Value]>,
-        action: Action
+        action: Action,
+        keyPath: WritableKeyPath<Root, [Key : Value]>
     ) {
         
-        self.keyPath = keyPath
         self.action = action
+        self.keyPath = keyPath
     }
 }
 
@@ -67,8 +74,8 @@ extension IdentifiableDictionaryReversion: ValueReversion {
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         IdentifiableDictionaryReversion<NewRoot, Key, Value>(
-            keyPath: keyPath.appending(path: self.keyPath),
-            action: .init(action)
+            action: .init(action),
+            keyPath: keyPath.appending(path: self.keyPath)
         )
         .erasedToAnyValueReversion()
     }

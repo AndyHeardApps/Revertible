@@ -3,29 +3,35 @@ import Foundation
 struct DataReversion<Root> {
     
     // MARK: - Properties
-    private let keyPath: WritableKeyPath<Root, Data>
     private let action: Action
-    
-    // MARK: - Initialisers
-    init(insert elements: Set<Insertion>) where Root == Data {
+    private let keyPath: WritableKeyPath<Root, Data>
 
-        self.keyPath = \.self
+    // MARK: - Initialisers
+    init(
+        insert elements: Set<Insertion>,
+        inDataAt keyPath: WritableKeyPath<Root, Data>
+    ) {
+
         self.action = .insert(elements)
+        self.keyPath = keyPath
     }
 
-    init(remove indices: Set<ClosedRange<Data.Index>>) where Root == Data {
+    init(
+        remove indices: Set<ClosedRange<Data.Index>>,
+        fromDataAt keyPath: WritableKeyPath<Root, Data>
+    ) {
 
-        self.keyPath = \.self
         self.action = .remove(indices)
+        self.keyPath = keyPath
     }
         
     private init(
-        keyPath: WritableKeyPath<Root, Data>,
-        action: Action
+        action: Action,
+        keyPath: WritableKeyPath<Root, Data>
     ) {
         
-        self.keyPath = keyPath
         self.action = action
+        self.keyPath = keyPath
     }
 }
 
@@ -53,8 +59,8 @@ extension DataReversion: ValueReversion {
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
         DataReversion<NewRoot>(
-            keyPath: keyPath.appending(path: self.keyPath),
-            action: .init(action)
+            action: .init(action),
+            keyPath: keyPath.appending(path: self.keyPath)
         )
         .erasedToAnyValueReversion()
     }

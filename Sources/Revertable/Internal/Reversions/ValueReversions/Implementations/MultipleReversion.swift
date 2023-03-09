@@ -5,9 +5,9 @@ struct MultipleValueReversion<Root> {
     private let reversions: [AnyValueReversion<Root>]
     
     // MARK: - Initialiser
-    init<C: Collection<AnyValueReversion<Root>>>(_ reversions: C) {
+    init(_ reversions: [AnyValueReversion<Root>]) {
         
-        self.reversions = Array(reversions)
+        self.reversions = reversions
     }
 }
 

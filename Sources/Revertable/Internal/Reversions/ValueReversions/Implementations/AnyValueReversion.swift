@@ -37,11 +37,6 @@ extension ValueReversion {
 // MARK: - Collection extensions
 extension Collection where Element: ValueReversion {
     
-    func erasedToAnyValueReversions() -> [AnyValueReversion<Element.Root>] {
-        
-        map { $0.erasedToAnyValueReversion() }
-    }
-    
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Element.Root>) -> [AnyValueReversion<NewRoot>] {
         
         map { $0.mapped(to: keyPath) }
