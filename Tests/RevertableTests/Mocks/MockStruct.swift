@@ -48,7 +48,7 @@ struct MockStruct: Identifiable {
 // MARK: - Revertable
 extension MockStruct: Revertable {
     
-    func addReversions(into reverter: inout some Reverter<MockStruct>) {
+    func addReversions(into reverter: inout some Reverter<Self>) {
         
         reverter.appendReversion(at: \.int)
         reverter.appendReversion(at: \.string)

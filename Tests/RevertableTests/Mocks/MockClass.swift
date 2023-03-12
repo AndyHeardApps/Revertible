@@ -49,7 +49,7 @@ final class MockClass: Identifiable {
 extension MockClass: Revertable {
     
     func addReversions(into reverter: inout some Reverter<MockClass>) {
-        
+
         reverter.appendReversion(at: \.int)
         reverter.appendReversion(at: \.string)
         reverter.appendReversion(at: \.data)
@@ -91,4 +91,26 @@ extension MockClass: Revertable {
         hasher.combine(identifiableReferenceDictionary)
         hasher.combine(equatableSet)
     }
+}
+
+struct User: Revertable {
+
+    var name: String
+    var imageData: Data?
+
+    func addReversions(into reverter: inout some Reverter<User>) {
+        
+        reverter.appendReversion(at: \.name)
+        reverter.appendReversion(at: \.imageData)
+    }
+}
+
+func t() {
+    
+    var user = User(name: "", imageData: .init())
+    let previous = user
+    let reversion = user.reversion(to: user)
+    user.name = "Johnny"
+//    let reversion = user.reversion(to: user)
+
 }

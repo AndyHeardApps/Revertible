@@ -20,8 +20,7 @@ extension DictionaryReversionTests {
             insert: [
                 0 : MockStruct(id: 5),
                 4 : MockStruct(id: 4)
-            ],
-            inDictionaryAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -51,8 +50,7 @@ extension DictionaryReversionTests {
             insert: [
                 0 : MockClass(id: 5),
                 4 : MockClass(id: 4)
-            ],
-            inDictionaryAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -69,40 +67,6 @@ extension DictionaryReversionTests {
         )
     }
     
-    func testRevert_onInsertReversion_withValueChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockStruct()
-        
-        let reversion = DictionaryReversion(
-            insert: [
-                0 : "00",
-                4 : "4"
-            ],
-            inDictionaryAt: \MockStruct.equatableDictionary
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableDictionary, [0 : "00", 1 : "1", 2 : "2", 3 : "3", 4 : "4"])
-    }
-
-    func testRevert_onInsertReversion_withReferenceChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockClass()
-        
-        let reversion = DictionaryReversion(
-            insert: [
-                0 : "00",
-                4 : "4"
-            ],
-            inDictionaryAt: \MockClass.equatableDictionary
-        )
-
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableDictionary, [0 : "00", 1 : "1", 2 : "2", 3 : "3", 4 : "4"])
-    }
-    
     // MARK: Remove
     func testRevert_onRemoveReversion_withValueSelfKeyPath_willRemoveElementsCorrectly() {
         
@@ -117,8 +81,7 @@ extension DictionaryReversionTests {
             remove: [
                 0,
                 3
-            ],
-            fromDictionaryAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -145,8 +108,7 @@ extension DictionaryReversionTests {
             remove: [
                 0,
                 3
-            ],
-            fromDictionaryAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -159,41 +121,6 @@ extension DictionaryReversionTests {
             ]
         )
     }
-
-    
-    func testRevert_onRemoveReversion_withValueChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockStruct()
-        
-        let reversion = DictionaryReversion(
-            remove: [
-                0,
-                3
-            ],
-            fromDictionaryAt: \MockStruct.equatableDictionary
-        )
-
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableDictionary, [1 : "1", 2 : "2"])
-    }
-
-    func testRevert_onRemoveReversion_withReferenceChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockClass()
-        
-        let reversion = DictionaryReversion(
-            remove: [
-                0,
-                3
-            ],
-            fromDictionaryAt: \MockClass.equatableDictionary
-        )
-
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableDictionary, [1 : "1", 2 : "2"])
-    }
     
     // MARK: Mapped insertion
     func testRevert_onInsertReversion_withMappedValueChildKeyPath_willInsertElementsCorrectly() {
@@ -204,8 +131,7 @@ extension DictionaryReversionTests {
             insert: [
                 0 : "00",
                 4 : "4"
-            ],
-            inDictionaryAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.equatableDictionary)
 
@@ -222,8 +148,7 @@ extension DictionaryReversionTests {
             insert: [
                 0 : "00",
                 4 : "4"
-            ],
-            inDictionaryAt: \.self
+            ]
         )
         .mapped(to: \MockClass.equatableDictionary)
 
@@ -241,8 +166,7 @@ extension DictionaryReversionTests {
             remove: [
                 0,
                 3
-            ],
-            fromDictionaryAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.equatableDictionary)
 
@@ -259,8 +183,7 @@ extension DictionaryReversionTests {
             remove: [
                 0,
                 3
-            ],
-            fromDictionaryAt: \.self
+            ]
         )
         .mapped(to: \MockClass.equatableDictionary)
         

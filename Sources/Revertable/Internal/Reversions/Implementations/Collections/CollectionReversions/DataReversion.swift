@@ -1,32 +1,27 @@
+import Foundation
 
-struct StringReversion<Root> {
+struct DataReversion<Root> {
     
     // MARK: - Properties
     private let action: Action
-    private let keyPath: WritableKeyPath<Root, String>
+    private let keyPath: WritableKeyPath<Root, Data>
 
     // MARK: - Initialisers
-    init(
-        insert elements: Set<Insertion>,
-        inStringAt keyPath: WritableKeyPath<Root, String>
-    ) {
+    init(insert elements: Set<Insertion>) where Root == Data {
 
         self.action = .insert(elements)
-        self.keyPath = keyPath
+        self.keyPath = \.self
     }
 
-    init(
-        remove indedRanges: Set<ClosedRange<String.Index>>,
-        fromStringAt keyPath: WritableKeyPath<Root, String>
-    ) {
+    init(remove indices: Set<Data.Index>) where Root == Data {
 
-        self.action = .remove(indedRanges)
-        self.keyPath = keyPath
+        self.action = .remove(indices)
+        self.keyPath = \.self
     }
         
     private init(
         action: Action,
-        keyPath: WritableKeyPath<Root, String>
+        keyPath: WritableKeyPath<Root, Data>
     ) {
         
         self.action = action
@@ -35,7 +30,7 @@ struct StringReversion<Root> {
 }
 
 // MARK: - Value reversion
-extension StringReversion: ValueReversion {
+extension DataReversion: ValueReversion {
             
     func revert(_ object: inout Root) {
         
@@ -46,9 +41,9 @@ extension StringReversion: ValueReversion {
                 into: &object[keyPath: keyPath]
             )
             
-        case let .remove(indexRanges):
+        case let .remove(indices):
             remove(
-                indexRanges: indexRanges,
+                indices: indices,
                 from: &object[keyPath: keyPath]
             )
             
@@ -57,7 +52,7 @@ extension StringReversion: ValueReversion {
     
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
-        StringReversion<NewRoot>(
+        DataReversion<NewRoot>(
             action: .init(action),
             keyPath: keyPath.appending(path: self.keyPath)
         )
@@ -66,84 +61,84 @@ extension StringReversion: ValueReversion {
 }
 
 // MARK: - Utilities
-extension StringReversion {
+extension DataReversion {
     
     private func insert(
         insertions: Set<Insertion>,
-        into string: inout String
+        into data: inout Data
     ) {
         
         let sortedInsertions = insertions
             .sorted { $0.index < $1.index }
         
         for insertion in sortedInsertions {
-            string.insert(contentsOf: insertion.elements, at: insertion.index)
+            data.insert(insertion.element, at: insertion.index)
         }
     }
     
     private func remove(
-        indexRanges: Set<ClosedRange<String.Index>>,
-        from string: inout String
+        indices: Set<Data.Index>,
+        from data: inout Data
     ) {
         
-        let sortedIndexRanges = indexRanges
-            .sorted { $0.upperBound > $1.upperBound }
+        let sortedIndices = indices
+            .sorted { $0 > $1 }
         
-        for indexRange in sortedIndexRanges {
-            string.removeSubrange(indexRange)
+        for index in sortedIndices {
+            data.remove(at: index)
         }
     }
 }
 
 // MARK: - Action
-extension StringReversion {
+extension DataReversion {
     
     private enum Action {
         
         case insert(Set<Insertion>)
-        case remove(Set<ClosedRange<String.Index>>)
-
-        init<OtherRoot>(_ other: StringReversion<OtherRoot>.Action) {
+        case remove(Set<Data.Index>)
+        
+        init<OtherRoot>(_ other: DataReversion<OtherRoot>.Action) {
         
             switch other {
             case let .insert(insertions):
                 let mappedInsertions = insertions.map { Insertion($0) }
                 self = .insert(Set(mappedInsertions))
-                      
-            case let .remove(indexRanges):
-                self = .remove(indexRanges)
-                
+
+            case let .remove(indices):
+                self = .remove(indices)
+                                
             }
         }
     }
 }
 
 // MARK: - Insertion
-extension StringReversion {
+extension DataReversion {
     
     struct Insertion {
         
-        fileprivate let index: String.Index
-        fileprivate let elements: String.SubSequence
+        fileprivate let index: Data.Index
+        fileprivate let element: Data.Element
         
         init(
-            index: String.Index,
-            elements: String.SubSequence
+            index: Data.Index,
+            element: Data.Element
         ) {
 
             self.index = index
-            self.elements = elements
+            self.element = element
         }
         
-        fileprivate init<OtherRoot>(_ other: StringReversion<OtherRoot>.Insertion) {
+        fileprivate init<OtherRoot>(_ other: DataReversion<OtherRoot>.Insertion) {
             
             self.index = other.index
-            self.elements = other.elements
+            self.element = other.element
         }
     }
 }
 
-extension StringReversion.Insertion: Hashable {
+extension DataReversion.Insertion: Hashable {
     
     static func == (lhs: Self, rhs: Self) -> Bool {
         

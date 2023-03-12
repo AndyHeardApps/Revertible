@@ -6,9 +6,15 @@ struct SingleValueReversion<Root, Value> {
     private let keyPath: WritableKeyPath<Root, Value>
 
     // MARK: - Initialisers
-    init(
+    init(value: Value) where Root == Value {
+        
+        self.value = value
+        self.keyPath = \.self
+    }
+    
+    private init(
         value: Value,
-        at keyPath: WritableKeyPath<Root, Value>
+        keyPath: WritableKeyPath<Root, Value>
     ) {
         
         self.value = value
@@ -28,7 +34,7 @@ extension SingleValueReversion: ValueReversion {
         
         SingleValueReversion<NewRoot, Value>(
             value: value,
-            at: keyPath.appending(path: self.keyPath)
+            keyPath: keyPath.appending(path: self.keyPath)
         )
         .erasedToAnyValueReversion()
     }

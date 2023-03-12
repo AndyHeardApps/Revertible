@@ -22,8 +22,7 @@ extension SetReversionTests {
                 MockStruct(id: 12),
                 MockStruct(id: 11),
                 MockStruct(id: 13)
-            ],
-            inSetAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -58,8 +57,7 @@ extension SetReversionTests {
                 MockClass(id: 12),
                 MockClass(id: 11),
                 MockClass(id: 13)
-            ],
-            inSetAt: \.self
+            ]
         )
 
         reversion.revert(&value)
@@ -79,44 +77,6 @@ extension SetReversionTests {
         )
     }
 
-    func testRevert_onInsertReversion_withValueChildKeyPath_willInsertElementsCorrectly() {
-
-        var value = MockStruct()
-
-        let reversion = SetReversion(
-            insert: [
-                10,
-                12,
-                11,
-                13
-            ],
-            inSetAt: \MockStruct.equatableSet
-        )
-
-        reversion.revert(&value)
-
-        XCTAssertEqual(value.equatableSet, [10, 0, 13, 1, 2, 3, 11, 12])
-    }
-
-    func testRevert_onInsertReversion_withReferenceChildKeyPath_willInsertElementsCorrectly() {
-
-        var value = MockClass()
-
-        let reversion = SetReversion(
-            insert: [
-                10,
-                12,
-                11,
-                13
-            ],
-            inSetAt: \MockClass.equatableSet
-        )
-
-        reversion.revert(&value)
-
-        XCTAssertEqual(value.equatableSet, [10, 0, 13, 1, 2, 3, 11, 12])
-    }
-
     // MARK: Remove
     func testRevert_onRemoveReversion_withValueSelfKeyPath_willRemoveElementsCorrectly() {
 
@@ -131,8 +91,7 @@ extension SetReversionTests {
             remove: [
                 MockStruct(id: 1),
                 MockStruct(id: 2),
-            ],
-            fromSetAt: \.self
+            ]
         )
 
         reversion.revert(&value)
@@ -159,8 +118,7 @@ extension SetReversionTests {
             remove: [
                 MockClass(id: 1),
                 MockClass(id: 2),
-            ],
-            fromSetAt: \.self
+            ]
         )
 
         reversion.revert(&value)
@@ -174,40 +132,6 @@ extension SetReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withValueChildKeyPath_willRemoveElementsCorrectly() {
-
-        var value = MockStruct()
-
-        let reversion = SetReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromSetAt: \MockStruct.equatableSet
-        )
-
-        reversion.revert(&value)
-
-        XCTAssertEqual(value.equatableSet, [0, 3])
-    }
-
-    func testRevert_onRemoveReversion_withReferenceChildKeyPath_willRemoveElementsCorrectly() {
-
-        var value = MockClass()
-
-        let reversion = SetReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromSetAt: \MockClass.equatableSet
-        )
-
-        reversion.revert(&value)
-
-        XCTAssertEqual(value.equatableSet, [0, 3])
-    }
-
     // MARK: Mapped insertion
     func testRevert_onInsertReversion_withMappedValueChildKeyPath_willInsertElementsCorrectly() {
 
@@ -219,8 +143,7 @@ extension SetReversionTests {
                 12,
                 11,
                 13
-            ],
-            inSetAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.equatableSet)
 
@@ -239,8 +162,7 @@ extension SetReversionTests {
                 12,
                 11,
                 13
-            ],
-            inSetAt: \.self
+            ]
         )
         .mapped(to: \MockClass.equatableSet)
 
@@ -258,8 +180,7 @@ extension SetReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromSetAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.equatableSet)
 
@@ -276,8 +197,7 @@ extension SetReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromSetAt: \.self
+            ]
         )
         .mapped(to: \MockClass.equatableSet)
 

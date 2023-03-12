@@ -1,39 +1,23 @@
 
-struct IdentifiableArrayReversion<Root, Element: Identifiable> {
+struct ArrayReversion<Root, Element> {
     
     // MARK: - Properties
     private let action: Action
     private let keyPath: WritableKeyPath<Root, [Element]>
     
     // MARK: - Initialisers
-    init(
-        insert elements: Set<Insertion>,
-        inArrayAt keyPath: WritableKeyPath<Root, [Element]>
-    ) {
+    init(insert elements: Set<Insertion>) where Root == [Element] {
 
         self.action = .insert(elements)
-        self.keyPath = keyPath
+        self.keyPath = \.self
     }
 
-    init(
-        remove indices: Set<Array<Element>.Index>,
-        fromArrayAt keyPath: WritableKeyPath<Root, [Element]>
-    ) {
+    init(remove indices: Set<Array<Element>.Index>) where Root == [Element] {
 
         self.action = .remove(indices)
-        self.keyPath = keyPath
+        self.keyPath = \.self
     }
-    
-    init(
-        move elementID: Element.ID,
-        to destination: Array<Element>.Index,
-        inArrayAt keyPath: WritableKeyPath<Root, [Element]>
-    ) {
-        
-        self.action = .move(elementID: elementID, destination: destination)
-        self.keyPath = keyPath
-    }
-    
+
     fileprivate init(
         action: Action,
         keyPath: WritableKeyPath<Root, [Element]>
@@ -45,7 +29,7 @@ struct IdentifiableArrayReversion<Root, Element: Identifiable> {
 }
 
 // MARK: - Value reversion
-extension IdentifiableArrayReversion: ValueReversion {
+extension ArrayReversion: ValueReversion {
             
     func revert(_ object: inout Root) {
         
@@ -62,18 +46,12 @@ extension IdentifiableArrayReversion: ValueReversion {
                 from: &object[keyPath: keyPath]
             )
             
-        case let .move(elementID, destination):
-            move(
-                elementID: elementID,
-                to: destination,
-                in: &object[keyPath: keyPath]
-            )
         }
     }
     
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
         
-        IdentifiableArrayReversion<NewRoot, Element>(
+        ArrayReversion<NewRoot, Element>(
             action: .init(action),
             keyPath: keyPath.appending(path: self.keyPath)
         )
@@ -82,7 +60,7 @@ extension IdentifiableArrayReversion: ValueReversion {
 }
 
 // MARK: - Utilities
-extension IdentifiableArrayReversion {
+extension ArrayReversion {
     
     private func insert(
         insertions: Set<Insertion>,
@@ -109,32 +87,17 @@ extension IdentifiableArrayReversion {
             array.remove(at: index)
         }
     }
-    
-    private func move(
-        elementID: Element.ID,
-        to destination: Array<Element>.Index,
-        in array: inout [Element]
-    ) {
-        
-        guard let elementIndex = array.firstIndex(where: { $0.id == elementID}) else {
-            return
-        }
-        
-        let element = array.remove(at: elementIndex)
-        array.insert(element, at: destination)
-    }
 }
 
 // MARK: - Action
-extension IdentifiableArrayReversion {
+extension ArrayReversion {
     
     fileprivate enum Action {
         
         case insert(Set<Insertion>)
         case remove(Set<Array<Element>.Index>)
-        case move(elementID: Element.ID, destination: Array<Element>.Index)
         
-        fileprivate init<OtherRoot>(_ other: IdentifiableArrayReversion<OtherRoot, Element>.Action) {
+        fileprivate init<OtherRoot>(_ other: ArrayReversion<OtherRoot, Element>.Action) {
         
             switch other {
             case let .insert(insertions):
@@ -144,16 +107,13 @@ extension IdentifiableArrayReversion {
             case let .remove(indices):
                 self = .remove(indices)
                 
-            case let .move(elementID, destination):
-                self = .move(elementID: elementID, destination: destination)
-                
             }
         }
     }
 }
 
 // MARK: - Insertion
-extension IdentifiableArrayReversion {
+extension ArrayReversion {
     
     struct Insertion {
         
@@ -169,7 +129,7 @@ extension IdentifiableArrayReversion {
             self.element = element
         }
         
-        fileprivate init<OtherRoot>(_ other: IdentifiableArrayReversion<OtherRoot, Element>.Insertion) {
+        fileprivate init<OtherRoot>(_ other: ArrayReversion<OtherRoot, Element>.Insertion) {
             
             self.index = other.index
             self.element = other.element
@@ -177,7 +137,7 @@ extension IdentifiableArrayReversion {
     }
 }
 
-extension IdentifiableArrayReversion.Insertion: Hashable {
+extension ArrayReversion.Insertion: Hashable {
     
     static func == (lhs: Self, rhs: Self) -> Bool {
         

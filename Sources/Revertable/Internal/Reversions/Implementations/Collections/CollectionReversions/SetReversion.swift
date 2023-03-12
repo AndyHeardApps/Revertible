@@ -6,22 +6,16 @@ struct SetReversion<Root, Element: Hashable> {
     private let keyPath: WritableKeyPath<Root, Set<Element>>
 
     // MARK: - Initialisers
-    init(
-        insert elements: Set<Element>,
-        inSetAt keyPath: WritableKeyPath<Root, Set<Element>>
-    ) {
+    init(insert elements: Set<Element>) where Root == Set<Element> {
         
         self.action = .insert(elements)
-        self.keyPath = keyPath
+        self.keyPath = \.self
     }
     
-    init(
-        remove elements: Set<Element>,
-        fromSetAt keyPath: WritableKeyPath<Root, Set<Element>>
-    ) {
+    init(remove elements: Set<Element>) where Root == Set<Element> {
         
         self.action = .remove(elements)
-        self.keyPath = keyPath
+        self.keyPath = \.self
     }
     
     private init(

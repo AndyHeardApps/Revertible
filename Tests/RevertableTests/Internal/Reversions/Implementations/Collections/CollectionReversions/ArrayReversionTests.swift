@@ -22,8 +22,7 @@ extension ArrayReversionTests {
                 .init(index: 7, element: MockStruct(id: 12)),
                 .init(index: 6, element: MockStruct(id: 11)),
                 .init(index: 2, element: MockStruct(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -58,8 +57,7 @@ extension ArrayReversionTests {
                 .init(index: 7, element: MockClass(id: 12)),
                 .init(index: 6, element: MockClass(id: 11)),
                 .init(index: 2, element: MockClass(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -79,44 +77,6 @@ extension ArrayReversionTests {
         )
     }
     
-    func testRevert_onInsertReversion_withValueChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockStruct()
-        
-        let reversion = ArrayReversion(
-            insert: [
-                .init(index: 0, element: 10),
-                .init(index: 7, element: 12),
-                .init(index: 6, element: 11),
-                .init(index: 2, element: 13)
-            ],
-            inArrayAt: \MockStruct.equatableArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableArray, [10, 0, 13, 1, 2, 3, 11, 12])
-    }
-
-    func testRevert_onInsertReversion_withReferenceChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockClass()
-        
-        let reversion = ArrayReversion(
-            insert: [
-                .init(index: 0, element: 10),
-                .init(index: 7, element: 12),
-                .init(index: 6, element: 11),
-                .init(index: 2, element: 13)
-            ],
-            inArrayAt: \MockClass.equatableArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableArray, [10, 0, 13, 1, 2, 3, 11, 12])
-    }
-    
     // MARK: Remove
     func testRevert_onRemoveReversion_withValueSelfKeyPath_willRemoveElementsCorrectly() {
         
@@ -131,8 +91,7 @@ extension ArrayReversionTests {
             remove: [
                 2,
                 1
-            ],
-            fromArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -159,8 +118,7 @@ extension ArrayReversionTests {
             remove: [
                 2,
                 1
-            ],
-            fromArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -174,40 +132,6 @@ extension ArrayReversionTests {
         )
     }
     
-    func testRevert_onRemoveReversion_withValueChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockStruct()
-        
-        let reversion = ArrayReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromArrayAt: \MockStruct.equatableArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableArray, [0, 3])
-    }
-
-    func testRevert_onRemoveReversion_withReferenceChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockClass()
-        
-        let reversion = ArrayReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromArrayAt: \MockClass.equatableArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(value.equatableArray, [0, 3])
-    }
-    
     // MARK: Mapped insertion
     func testRevert_onInsertReversion_withMappedValueChildKeyPath_willInsertElementsCorrectly() {
 
@@ -219,8 +143,7 @@ extension ArrayReversionTests {
                 .init(index: 7, element: 12),
                 .init(index: 6, element: 11),
                 .init(index: 2, element: 13)
-            ],
-            inArrayAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.equatableArray)
 
@@ -239,8 +162,7 @@ extension ArrayReversionTests {
                 .init(index: 7, element: 12),
                 .init(index: 6, element: 11),
                 .init(index: 2, element: 13)
-            ],
-            inArrayAt: \.self
+            ]
         )
         .mapped(to: \MockClass.equatableArray)
         
@@ -258,8 +180,7 @@ extension ArrayReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromArrayAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.equatableArray)
 
@@ -276,8 +197,7 @@ extension ArrayReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromArrayAt: \.self
+            ]
         )
         .mapped(to: \MockClass.equatableArray)
         

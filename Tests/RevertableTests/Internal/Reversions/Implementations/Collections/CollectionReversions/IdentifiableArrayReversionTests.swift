@@ -22,8 +22,7 @@ extension IdentifiableArrayReversionTests {
                 .init(index: 7, element: MockStruct(id: 12)),
                 .init(index: 6, element: MockStruct(id: 11)),
                 .init(index: 2, element: MockStruct(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -58,162 +57,13 @@ extension IdentifiableArrayReversionTests {
                 .init(index: 7, element: MockClass(id: 12)),
                 .init(index: 6, element: MockClass(id: 11)),
                 .init(index: 2, element: MockClass(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
         
         XCTAssertEqual(
             value,
-            [
-                MockClass(id: 10),
-                MockClass(id: 0),
-                MockClass(id: 13),
-                MockClass(id: 1),
-                MockClass(id: 2),
-                MockClass(id: 3),
-                MockClass(id: 11),
-                MockClass(id: 12)
-            ]
-        )
-    }
-    
-    func testRevert_onInsertReversion_withValueSelfValueChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockStruct()
-        value.identifiableValueArray = [
-            MockStruct(id: 0),
-            MockStruct(id: 1),
-            MockStruct(id: 2),
-            MockStruct(id: 3)
-        ]
-
-        let reversion = IdentifiableArrayReversion(
-            insert: [
-                .init(index: 0, element: MockStruct(id: 10)),
-                .init(index: 7, element: MockStruct(id: 12)),
-                .init(index: 6, element: MockStruct(id: 11)),
-                .init(index: 2, element: MockStruct(id: 13))
-            ],
-            inArrayAt: \MockStruct.identifiableValueArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableValueArray,
-            [
-                MockStruct(id: 10),
-                MockStruct(id: 0),
-                MockStruct(id: 13),
-                MockStruct(id: 1),
-                MockStruct(id: 2),
-                MockStruct(id: 3),
-                MockStruct(id: 11),
-                MockStruct(id: 12)
-            ]
-        )
-    }
-    
-    func testRevert_onInsertReversion_withValueSelfReferenceChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockStruct()
-        value.identifiableReferenceArray = [
-            MockClass(id: 0),
-            MockClass(id: 1),
-            MockClass(id: 2),
-            MockClass(id: 3)
-        ]
-
-        let reversion = IdentifiableArrayReversion(
-            insert: [
-                .init(index: 0, element: MockClass(id: 10)),
-                .init(index: 7, element: MockClass(id: 12)),
-                .init(index: 6, element: MockClass(id: 11)),
-                .init(index: 2, element: MockClass(id: 13))
-            ],
-            inArrayAt: \MockStruct.identifiableReferenceArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
-            [
-                MockClass(id: 10),
-                MockClass(id: 0),
-                MockClass(id: 13),
-                MockClass(id: 1),
-                MockClass(id: 2),
-                MockClass(id: 3),
-                MockClass(id: 11),
-                MockClass(id: 12)
-            ]
-        )
-    }
-
-    func testRevert_onInsertReversion_withReferenceSelfValueChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockClass()
-        value.identifiableValueArray = [
-            MockStruct(id: 0),
-            MockStruct(id: 1),
-            MockStruct(id: 2),
-            MockStruct(id: 3)
-        ]
-
-        let reversion = IdentifiableArrayReversion(
-            insert: [
-                .init(index: 0, element: MockStruct(id: 10)),
-                .init(index: 7, element: MockStruct(id: 12)),
-                .init(index: 6, element: MockStruct(id: 11)),
-                .init(index: 2, element: MockStruct(id: 13))
-            ],
-            inArrayAt: \MockClass.identifiableValueArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableValueArray,
-            [
-                MockStruct(id: 10),
-                MockStruct(id: 0),
-                MockStruct(id: 13),
-                MockStruct(id: 1),
-                MockStruct(id: 2),
-                MockStruct(id: 3),
-                MockStruct(id: 11),
-                MockStruct(id: 12)
-            ]
-        )
-    }
-
-    func testRevert_onInsertReversion_withReferenceSelfReferenceChildKeyPath_willInsertElementsCorrectly() {
-        
-        var value = MockClass()
-        value.identifiableReferenceArray = [
-            MockClass(id: 0),
-            MockClass(id: 1),
-            MockClass(id: 2),
-            MockClass(id: 3)
-        ]
-
-        let reversion = IdentifiableArrayReversion(
-            insert: [
-                .init(index: 0, element: MockClass(id: 10)),
-                .init(index: 7, element: MockClass(id: 12)),
-                .init(index: 6, element: MockClass(id: 11)),
-                .init(index: 2, element: MockClass(id: 13))
-            ],
-            inArrayAt: \MockClass.identifiableReferenceArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
             [
                 MockClass(id: 10),
                 MockClass(id: 0),
@@ -241,8 +91,7 @@ extension IdentifiableArrayReversionTests {
             remove: [
                 2,
                 1
-            ],
-            fromArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
@@ -269,130 +118,13 @@ extension IdentifiableArrayReversionTests {
             remove: [
                 2,
                 1
-            ],
-            fromArrayAt: \.self
+            ]
         )
         
         reversion.revert(&value)
         
         XCTAssertEqual(
             value,
-            [
-                MockClass(id: 0),
-                MockClass(id: 3)
-            ]
-        )
-    }
-    
-    func testRevert_onRemoveReversion_withValueSelfValueChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockStruct()
-        value.identifiableValueArray = [
-            MockStruct(id: 0),
-            MockStruct(id: 1),
-            MockStruct(id: 2),
-            MockStruct(id: 3)
-        ]
-        
-        let reversion = IdentifiableArrayReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromArrayAt: \MockStruct.identifiableValueArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableValueArray,
-            [
-                MockStruct(id: 0),
-                MockStruct(id: 3)
-            ]
-        )
-    }
-
-    func testRevert_onRemoveReversion_withValueSelfReferenceChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockStruct()
-        value.identifiableReferenceArray = [
-            MockClass(id: 0),
-            MockClass(id: 1),
-            MockClass(id: 2),
-            MockClass(id: 3)
-        ]
-
-        let reversion = IdentifiableArrayReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromArrayAt: \MockStruct.identifiableReferenceArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
-            [
-                MockClass(id: 0),
-                MockClass(id: 3)
-            ]
-        )
-    }
-    
-    func testRevert_onRemoveReversion_withReferenceSelfValueChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockClass()
-        value.identifiableValueArray = [
-            MockStruct(id: 0),
-            MockStruct(id: 1),
-            MockStruct(id: 2),
-            MockStruct(id: 3)
-        ]
-        
-        let reversion = IdentifiableArrayReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromArrayAt: \MockClass.identifiableValueArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableValueArray,
-            [
-                MockStruct(id: 0),
-                MockStruct(id: 3)
-            ]
-        )
-    }
-
-    func testRevert_onRemoveReversion_withReferenceSelfReferenceChildKeyPath_willRemoveElementsCorrectly() {
-        
-        var value = MockClass()
-        value.identifiableReferenceArray = [
-            MockClass(id: 0),
-            MockClass(id: 1),
-            MockClass(id: 2),
-            MockClass(id: 3)
-        ]
-        
-        let reversion = IdentifiableArrayReversion(
-            remove: [
-                1,
-                2
-            ],
-            fromArrayAt: \MockClass.identifiableReferenceArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
             [
                 MockClass(id: 0),
                 MockClass(id: 3)
@@ -412,8 +144,7 @@ extension IdentifiableArrayReversionTests {
         
         let reversion = IdentifiableArrayReversion<[MockStruct], MockStruct>(
             move: 0,
-            to: 3,
-            inArrayAt: \.self
+            to: 3
         )
         
         reversion.revert(&value)
@@ -440,130 +171,13 @@ extension IdentifiableArrayReversionTests {
         
         let reversion = IdentifiableArrayReversion<[MockClass], MockClass>(
             move: 0,
-            to: 3,
-            inArrayAt: \.self
+            to: 3
         )
         
         reversion.revert(&value)
         
         XCTAssertEqual(
             value,
-            [
-                MockClass(id: 1),
-                MockClass(id: 2),
-                MockClass(id: 3),
-                MockClass(id: 0)
-            ]
-        )
-    }
-    
-    func testRevert_onMoveReversion_withValueSelfValueChildKeyPath_willMoveElementsCorrectly() {
-        
-        var value = MockStruct()
-        value.identifiableValueArray = [
-            MockStruct(id: 0),
-            MockStruct(id: 1),
-            MockStruct(id: 2),
-            MockStruct(id: 3)
-        ]
-        
-        let reversion = IdentifiableArrayReversion(
-            move: 0,
-            to: 3,
-            inArrayAt: \MockStruct.identifiableValueArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableValueArray,
-            [
-                MockStruct(id: 1),
-                MockStruct(id: 2),
-                MockStruct(id: 3),
-                MockStruct(id: 0)
-            ]
-        )
-    }
-
-    func testRevert_onMoveReversion_withValueSelfReferenceChildKeyPath_willMoveElementsCorrectly() {
-        
-        var value = MockStruct()
-        value.identifiableReferenceArray = [
-            MockClass(id: 0),
-            MockClass(id: 1),
-            MockClass(id: 2),
-            MockClass(id: 3)
-        ]
-
-        let reversion = IdentifiableArrayReversion(
-            move: 0,
-            to: 3,
-            inArrayAt: \MockStruct.identifiableReferenceArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
-            [
-                MockClass(id: 1),
-                MockClass(id: 2),
-                MockClass(id: 3),
-                MockClass(id: 0)
-            ]
-        )
-    }
-    
-    func testRevert_onMoveReversion_withReferenceSelfValueChildKeyPath_willMoveElementsCorrectly() {
-        
-        var value = MockClass()
-        value.identifiableValueArray = [
-            MockStruct(id: 0),
-            MockStruct(id: 1),
-            MockStruct(id: 2),
-            MockStruct(id: 3)
-        ]
-        
-        let reversion = IdentifiableArrayReversion(
-            move: 0,
-            to: 3,
-            inArrayAt: \MockClass.identifiableValueArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableValueArray,
-            [
-                MockStruct(id: 1),
-                MockStruct(id: 2),
-                MockStruct(id: 3),
-                MockStruct(id: 0)
-            ]
-        )
-    }
-
-    func testRevert_onMoveReversion_withReferenceSelfReferenceChildKeyPath_willMoveElementsCorrectly() {
-        
-        var value = MockClass()
-        value.identifiableReferenceArray = [
-            MockClass(id: 0),
-            MockClass(id: 1),
-            MockClass(id: 2),
-            MockClass(id: 3)
-        ]
-        
-        let reversion = IdentifiableArrayReversion(
-            move: 0,
-            to: 3,
-            inArrayAt: \MockClass.identifiableReferenceArray
-        )
-        
-        reversion.revert(&value)
-        
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
             [
                 MockClass(id: 1),
                 MockClass(id: 2),
@@ -590,8 +204,7 @@ extension IdentifiableArrayReversionTests {
                 .init(index: 7, element: MockStruct(id: 12)),
                 .init(index: 6, element: MockStruct(id: 11)),
                 .init(index: 2, element: MockStruct(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.identifiableValueArray)
 
@@ -628,8 +241,7 @@ extension IdentifiableArrayReversionTests {
                 .init(index: 7, element: MockClass(id: 12)),
                 .init(index: 6, element: MockClass(id: 11)),
                 .init(index: 2, element: MockClass(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.identifiableReferenceArray)
 
@@ -666,8 +278,7 @@ extension IdentifiableArrayReversionTests {
                 .init(index: 7, element: MockStruct(id: 12)),
                 .init(index: 6, element: MockStruct(id: 11)),
                 .init(index: 2, element: MockStruct(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         .mapped(to: \MockClass.identifiableValueArray)
         
@@ -704,8 +315,7 @@ extension IdentifiableArrayReversionTests {
                 .init(index: 7, element: MockClass(id: 12)),
                 .init(index: 6, element: MockClass(id: 11)),
                 .init(index: 2, element: MockClass(id: 13))
-            ],
-            inArrayAt: \.self
+            ]
         )
         .mapped(to: \MockClass.identifiableReferenceArray)
         
@@ -741,8 +351,7 @@ extension IdentifiableArrayReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromArrayAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.identifiableValueArray)
 
@@ -771,8 +380,7 @@ extension IdentifiableArrayReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromArrayAt: \.self
+            ]
         )
         .mapped(to: \MockStruct.identifiableReferenceArray)
 
@@ -801,8 +409,7 @@ extension IdentifiableArrayReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromArrayAt: \.self
+            ]
         )
         .mapped(to: \MockClass.identifiableValueArray)
         
@@ -831,8 +438,7 @@ extension IdentifiableArrayReversionTests {
             remove: [
                 1,
                 2
-            ],
-            fromArrayAt: \.self
+            ]
         )
         .mapped(to: \MockClass.identifiableReferenceArray)
         
@@ -860,8 +466,7 @@ extension IdentifiableArrayReversionTests {
 
         let reversion = IdentifiableArrayReversion(
             move: 0,
-            to: 3,
-            inArrayAt: \.self
+            to: 3
         )
         .mapped(to: \MockStruct.identifiableValueArray)
 
@@ -890,8 +495,7 @@ extension IdentifiableArrayReversionTests {
 
         let reversion = IdentifiableArrayReversion(
             move: 0,
-            to: 3,
-            inArrayAt: \.self
+            to: 3
         )
         .mapped(to: \MockStruct.identifiableReferenceArray)
 
@@ -920,8 +524,7 @@ extension IdentifiableArrayReversionTests {
 
         let reversion = IdentifiableArrayReversion(
             move: 0,
-            to: 3,
-            inArrayAt: \.self
+            to: 3
         )
         .mapped(to: \MockClass.identifiableValueArray)
 
@@ -950,8 +553,7 @@ extension IdentifiableArrayReversionTests {
 
         let reversion = IdentifiableArrayReversion(
             move: 0,
-            to: 3,
-            inArrayAt: \.self
+            to: 3
         )
         .mapped(to: \MockClass.identifiableReferenceArray)
 
