@@ -27,21 +27,24 @@ extension Data: RevertableCollection {
         var reversions: [DataReversion<Data>] = []
 
         if !indicesToRemove.isEmpty {
-            
-            let reversion = DataReversion(remove: Set(indicesToRemove))
-            
+            let rangesToRemove = indicesToRemove.convertToRanges()
+            let reversion = DataReversion(remove: Set(rangesToRemove))
+
             reversions.append(reversion)
         }
         
         if !elementsToInsert.isEmpty {
-            let insertions = elementsToInsert.map { index, element in
+            let insertionDictionary = Dictionary(uniqueKeysWithValues: elementsToInsert)
+            let rangesToInsert = elementsToInsert.map(\.0).convertToRanges()
+
+            let insertions = rangesToInsert.map { range in
+                let elements = range.compactMap { insertionDictionary[$0] }
                 
                 return DataReversion<Data>.Insertion(
-                    index: index,
-                    element: element
+                    index: range.lowerBound,
+                    elements: Data.SubSequence(elements)
                 )
             }
-            
             let reversion = DataReversion(insert: Set(insertions))
             
             reversions.append(reversion)

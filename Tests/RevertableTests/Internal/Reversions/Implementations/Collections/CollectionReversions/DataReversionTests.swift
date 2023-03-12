@@ -13,10 +13,9 @@ extension DataReversionTests {
         
         let reversion = DataReversion(
             insert: [
-                .init(index: 0, element: .init(10)),
-                .init(index: 6, element: .init(11)),
-                .init(index: 7, element: .init(12)),
-                .init(index: 2, element: .init(13))
+                .init(index: 0, elements: .init(10...10)),
+                .init(index: 6, elements: .init(11...12)),
+                .init(index: 2, elements: .init(13...13))
             ]
         )
         
@@ -32,9 +31,8 @@ extension DataReversionTests {
         
         let reversion = DataReversion(
             remove: [
-                0,
-                2,
-                3
+                0...0,
+                2...3
             ]
         )
         
@@ -50,10 +48,9 @@ extension DataReversionTests {
         
         let reversion = DataReversion(
             insert: [
-                .init(index: 0, element: .init(10)),
-                .init(index: 6, element: .init(11)),
-                .init(index: 7, element: .init(12)),
-                .init(index: 2, element: .init(13))
+                .init(index: 0, elements: .init(10...10)),
+                .init(index: 6, elements: .init(11...12)),
+                .init(index: 2, elements: .init(13...13))
             ]
         )
         .mapped(to: \MockStruct.data)
@@ -69,10 +66,9 @@ extension DataReversionTests {
         
         let reversion = DataReversion(
             insert: [
-                .init(index: 0, element: .init(10)),
-                .init(index: 6, element: .init(11)),
-                .init(index: 7, element: .init(12)),
-                .init(index: 2, element: .init(13))
+                .init(index: 0, elements: .init(10...10)),
+                .init(index: 6, elements: .init(11...12)),
+                .init(index: 2, elements: .init(13...13))
             ]
         )
         .mapped(to: \MockClass.data)
@@ -89,9 +85,8 @@ extension DataReversionTests {
         
         let reversion = DataReversion(
             remove: [
-                0,
-                2,
-                3
+                0...0,
+                2...3
             ]
         )
         .mapped(to: \MockStruct.data)
@@ -107,9 +102,8 @@ extension DataReversionTests {
         
         let reversion = DataReversion(
             remove: [
-                0,
-                2,
-                3
+                0...0,
+                2...3
             ]
         )
         .mapped(to: \MockClass.data)

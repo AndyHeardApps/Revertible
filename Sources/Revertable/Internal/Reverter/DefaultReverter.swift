@@ -555,7 +555,7 @@ extension DefaultReverter {
     }
 }
 
-// MARK: - Equatable default reversions
+// MARK: - Equatable reversions
 extension DefaultReverter {
     
     private mutating func appendEquatableReversion<Value: Equatable>(at keyPath: WritableKeyPath<Root, Value>) {
@@ -574,7 +574,7 @@ extension DefaultReverter {
     }
 }
 
-// MARK: - Revertable collection
+// MARK: - Revertable collection reversions
 extension DefaultReverter {
     
     mutating func appendCollectionReversion(at keyPath: WritableKeyPath<Root, some RevertableCollection>) {
@@ -603,19 +603,6 @@ extension DefaultReverter {
             let reversions = currentValue.reversions(to: previousValue)
             appendMappedReversions(reversions, at: keyPath.appending(path: \.setUnsafelyUnwrapped))
 
-        }
-    }
-}
-
-// MARK: - Optional key path
-fileprivate extension Optional {
-    
-    var setUnsafelyUnwrapped: Wrapped {
-        get {
-            self.unsafelyUnwrapped
-        }
-        set {
-            self = newValue
         }
     }
 }

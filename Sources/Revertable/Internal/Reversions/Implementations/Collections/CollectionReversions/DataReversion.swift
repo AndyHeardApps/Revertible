@@ -13,7 +13,7 @@ struct DataReversion<Root> {
         self.keyPath = \.self
     }
 
-    init(remove indices: Set<Data.Index>) where Root == Data {
+    init(remove indices: Set<ClosedRange<Data.Index>>) where Root == Data {
 
         self.action = .remove(indices)
         self.keyPath = \.self
@@ -41,9 +41,9 @@ extension DataReversion: ValueReversion {
                 into: &object[keyPath: keyPath]
             )
             
-        case let .remove(indices):
+        case let .remove(indexRanges):
             remove(
-                indices: indices,
+                indexRanges: indexRanges,
                 from: &object[keyPath: keyPath]
             )
             
@@ -72,20 +72,20 @@ extension DataReversion {
             .sorted { $0.index < $1.index }
         
         for insertion in sortedInsertions {
-            data.insert(insertion.element, at: insertion.index)
+            data.insert(contentsOf: insertion.elements, at: insertion.index)
         }
     }
     
     private func remove(
-        indices: Set<Data.Index>,
+        indexRanges: Set<ClosedRange<Data.Index>>,
         from data: inout Data
     ) {
         
-        let sortedIndices = indices
-            .sorted { $0 > $1 }
+        let sortedIndexRanges = indexRanges
+            .sorted { $0.upperBound > $1.upperBound }
         
-        for index in sortedIndices {
-            data.remove(at: index)
+        for indexRange in sortedIndexRanges {
+            data.removeSubrange(indexRange)
         }
     }
 }
@@ -96,7 +96,7 @@ extension DataReversion {
     private enum Action {
         
         case insert(Set<Insertion>)
-        case remove(Set<Data.Index>)
+        case remove(Set<ClosedRange<Data.Index>>)
         
         init<OtherRoot>(_ other: DataReversion<OtherRoot>.Action) {
         
@@ -119,21 +119,21 @@ extension DataReversion {
     struct Insertion {
         
         fileprivate let index: Data.Index
-        fileprivate let element: Data.Element
+        fileprivate let elements: Data.SubSequence
         
         init(
             index: Data.Index,
-            element: Data.Element
+            elements: Data.SubSequence
         ) {
 
             self.index = index
-            self.element = element
+            self.elements = elements
         }
         
         fileprivate init<OtherRoot>(_ other: DataReversion<OtherRoot>.Insertion) {
             
             self.index = other.index
-            self.element = other.element
+            self.elements = other.elements
         }
     }
 }

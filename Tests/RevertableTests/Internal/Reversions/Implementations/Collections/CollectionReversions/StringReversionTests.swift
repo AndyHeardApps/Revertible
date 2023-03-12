@@ -22,15 +22,15 @@ extension StringReversionTests {
         
         let reversion = StringReversion(
             insert: [
-                .init(index: value.index(0), element: .init("z")),
-                .init(index: value.index(4), element: .init("e")),
-                .init(index: value.index(2), element: .init("y"))
+                .init(index: value.index(0), elements: .init("z")),
+                .init(index: value.index(4), elements: .init("ef")),
+                .init(index: value.index(2), elements: .init("y"))
             ]
         )
         
         reversion.revert(&value)
         
-        XCTAssertEqual(value, "zaybecd")
+        XCTAssertEqual(value, "zaybefcd")
     }
 
     // MARK: Remove
@@ -40,9 +40,8 @@ extension StringReversionTests {
 
         let reversion = StringReversion(
             remove: [
-                value.index(0),
-                value.index(2),
-                value.index(3)
+                value.index(0)...value.index(0),
+                value.index(2)...value.index(3),
             ]
         )
 
@@ -58,16 +57,16 @@ extension StringReversionTests {
 
         let reversion = StringReversion(
             insert: [
-                .init(index: value.string.index(0), element: .init("z")),
-                .init(index: value.string.index(4), element: .init("e")),
-                .init(index: value.string.index(2), element: .init("y"))
+                .init(index: value.string.index(0), elements: .init("z")),
+                .init(index: value.string.index(4), elements: .init("ef")),
+                .init(index: value.string.index(2), elements: .init("y"))
             ]
         )
         .mapped(to: \MockStruct.string)
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.string, "zaybecd")
+        XCTAssertEqual(value.string, "zaybefcd")
     }
 
     func testRevert_onInsertReversion_withMappedReferenceChildKeyPath_willInsertElementsCorrectly() {
@@ -76,16 +75,16 @@ extension StringReversionTests {
 
         let reversion = StringReversion(
             insert: [
-                .init(index: value.string.index(0), element: .init("z")),
-                .init(index: value.string.index(4), element: .init("e")),
-                .init(index: value.string.index(2), element: .init("y"))
+                .init(index: value.string.index(0), elements: .init("z")),
+                .init(index: value.string.index(4), elements: .init("ef")),
+                .init(index: value.string.index(2), elements: .init("y"))
             ]
         )
         .mapped(to: \MockClass.string)
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.string, "zaybecd")
+        XCTAssertEqual(value.string, "zaybefcd")
     }
 
     // MARK: Mapped removal
@@ -95,9 +94,8 @@ extension StringReversionTests {
 
         let reversion = StringReversion(
             remove: [
-                value.string.index(0),
-                value.string.index(2),
-                value.string.index(3)
+                value.string.index(0)...value.string.index(0),
+                value.string.index(2)...value.string.index(3),
             ]
         )
         .mapped(to: \MockStruct.string)
@@ -113,9 +111,8 @@ extension StringReversionTests {
 
         let reversion = StringReversion(
             remove: [
-                value.string.index(0),
-                value.string.index(2),
-                value.string.index(3)
+                value.string.index(0)...value.string.index(0),
+                value.string.index(2)...value.string.index(3),
             ]
         )
         .mapped(to: \MockClass.string)
