@@ -2,8 +2,8 @@
 protocol RevertableCollection {
     
     // MARK: - Associated types
-    associatedtype Reversion: ValueReversion<Self>
+    associatedtype CollectionReversion: ValueReversion<Self>
     
     // MARK: - Functions
-    func reversions(to previousValue: Self) -> [Reversion]
+    func collectionReversions(to previousValue: Self) -> [CollectionReversion]
 }

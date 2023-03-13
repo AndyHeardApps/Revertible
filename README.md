@@ -42,3 +42,76 @@ struct User: Revertable {
     }    
 }
 ```
+
+And a reversion can be made in a single line:
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion = user.reversion(to: original) // Reversion<User>
+```
+
+If no changes are made, then the `reversion(to:)` function returns nil.
+
+```swift
+let user = User(name: "", imageData: .init())
+let reversion = user.reversion(to: user) // nil
+```
+
+In order to apply a `Reversion`, use the `revert(_:)` function on the changed version of the object used to create the reversion:
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion = user.reversion(to: original) // Reversion<User>
+
+print(user.name) // "Johnny"
+try reversion.revert(&user)
+print(user.name) // ""
+```
+
+Attempting to revert a version of the object that wasn't used to create the reversion will throw an error:
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion = user.reversion(to: original) // Reversion<User>
+user.name = "Johnny Appleseed"
+
+try reversion.revert(&user) // throws error
+```
+
+Instead a new reversion needs to be made, either from the latest version, back to the original, or by using two reversions, and applying them from newest to oldest.
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion1 = user.reversion(to: original) // Reversion<User>
+user.name = "Johnny Appleseed"
+let reversion2 = user.reversion(to: original) // Reversion<User>
+
+print(user.name) // "Johnny Appleseed"
+try reversion2.revert(&user)
+print(user.name) // ""
+```
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion1 = user.reversion(to: original) // Reversion<User>
+user.name = "Johnny Appleseed"
+let reversion2 = user.reversion(to: original) // Reversion<User>
+
+print(user.name) // "Johnny Appleseed"
+try reversion2.revert(&user)
+print(user.name) // "Johnny"
+try reversion1.revert(&user)
+print(user.name) // ""
+```
+
+This way, reversions can be stored in a stack and applied as needed.

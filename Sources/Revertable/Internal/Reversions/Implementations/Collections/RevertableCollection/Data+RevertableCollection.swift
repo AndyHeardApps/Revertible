@@ -2,15 +2,17 @@ import Foundation
 
 extension Data: RevertableCollection {
     
-    func reversions(to previousValue: Data) -> [DataReversion<Data>] {
+    func collectionReversions(to previousValue: Self) -> [DataReversion<Self>] {
      
+        var reversions: [DataReversion<Self>] = []
+
         guard self != previousValue else {
-            return []
+            return reversions
         }
         
         let difference = self.difference(from: previousValue)
         
-        var elementsToInsert: [(Int, Data.Element)] = []
+        var elementsToInsert: [(Int, Element)] = []
         var indicesToRemove: [Int] = []
         
         for change in difference.reversed() {
@@ -23,8 +25,6 @@ extension Data: RevertableCollection {
                 
             }
         }
-        
-        var reversions: [DataReversion<Data>] = []
 
         if !indicesToRemove.isEmpty {
             let rangesToRemove = indicesToRemove.convertToRanges()
@@ -40,9 +40,9 @@ extension Data: RevertableCollection {
             let insertions = rangesToInsert.map { range in
                 let elements = range.compactMap { insertionDictionary[$0] }
                 
-                return DataReversion<Data>.Insertion(
+                return DataReversion<Self>.Insertion(
                     index: range.lowerBound,
-                    elements: Data.SubSequence(elements)
+                    elements: SubSequence(elements)
                 )
             }
             let reversion = DataReversion(insert: Set(insertions))

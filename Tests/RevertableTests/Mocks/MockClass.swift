@@ -104,13 +104,3 @@ struct User: Revertable {
         reverter.appendReversion(at: \.imageData)
     }
 }
-
-func t() {
-    
-    var user = User(name: "", imageData: .init())
-    let previous = user
-    let reversion = user.reversion(to: user)
-    user.name = "Johnny"
-//    let reversion = user.reversion(to: user)
-
-}

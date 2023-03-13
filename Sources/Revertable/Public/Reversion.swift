@@ -8,16 +8,16 @@ public struct Reversion<Root: Hashable> {
     
     // MARK: - Properties
     private let checkedHashValue: Int
-    private let reversions: [AnyValueReversion<Root>]
+    private let reversion: AnyValueReversion<Root>
     
     // MARK: - Initialiser
     init(
         root: Root,
-        reverter: DefaultReverter<Root>
+        reversion: AnyValueReversion<Root>
     ) {
         
         self.checkedHashValue = root.hashValue
-        self.reversions = reverter.reversions
+        self.reversion = reversion
     }
     
     // MARK: - Functions
@@ -31,9 +31,7 @@ public struct Reversion<Root: Hashable> {
             throw ReversionError.attemptingToRevertWrongVersion
         }
         
-        for reversion in reversions {
-            reversion.revert(&object)
-        }
+        reversion.revert(&object)
     }
 }
 

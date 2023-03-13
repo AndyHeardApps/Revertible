@@ -5,7 +5,10 @@ struct DefaultReverter<Root> {
     // MARK: - Properties
     private let current: Root
     private let previous: Root
-    private(set) var reversions: [AnyValueReversion<Root>] = []
+    private var reversions: [AnyValueReversion<Root>] = []
+    var count: Int {
+        reversions.count
+    }
     
     // MARK: - Initialiser
     init(
@@ -15,6 +18,26 @@ struct DefaultReverter<Root> {
         
         self.current = current
         self.previous = previous
+    }
+}
+
+// MARK: - Any value reversion conversion
+extension DefaultReverter {
+    
+    func erasedToAnyValueReversion() -> AnyValueReversion<Root>? {
+        
+        switch reversions.count {
+        case 0:
+            return nil
+            
+        case 1:
+            return reversions[0]
+            
+        default:
+            return MultipleValueReversion(reversions)
+                .erasedToAnyValueReversion()
+
+        }
     }
 }
 
@@ -29,40 +52,17 @@ extension DefaultReverter {
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
         
-        appendReversion(
-            to: previousValue,
-            from: currentValue,
-            at: keyPath
-        )
-    }
-    
-    private mutating func appendReversion<Value: Revertable>(
-        to previousValue: Value,
-        from currentValue: Value,
-        at keyPath: WritableKeyPath<Root, Value>
-    ) {
-        
         var reverter = DefaultReverter<Value>(
             current: currentValue,
             previous: previousValue
         )
         currentValue.addReversions(into: &reverter)
         
-        switch reverter.reversions.count {
-        case 0:
+        guard let reversion = reverter.erasedToAnyValueReversion()?.mapped(to: keyPath) else {
             return
-            
-        case 1:
-            let reversion = reverter.reversions[0]
-                .mapped(to: keyPath)
-            reversions.append(reversion)
-
-        default:
-            let reversion = MultipleValueReversion(reverter.reversions)
-                .mapped(to: keyPath)
-            reversions.append(reversion)
-            
         }
+        
+        reversions.append(reversion)
     }
 }
 
@@ -190,6 +190,18 @@ extension DefaultReverter {
     }
 }
 
+// MARK: - UUID
+extension DefaultReverter {
+    
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, UUID>) {
+        appendEquatableReversion(at: keyPath)
+    }
+    
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, UUID?>) {
+        appendEquatableReversion(at: keyPath)
+    }
+}
+
 // MARK: - String
 extension DefaultReverter {
     
@@ -217,177 +229,32 @@ extension DefaultReverter {
 // MARK: - Set
 extension DefaultReverter {
     
-    mutating func appendReversion<Element>(at keyPath: WritableKeyPath<Root, Set<Element>>) {
-        
-        let currentValue = current[keyPath: keyPath]
-        let previousValue = previous[keyPath: keyPath]
-        
-        guard currentValue != previousValue else {
-            return
-        }
-        
-        let elementsToRemove = currentValue.subtracting(previousValue)
-        let elementsToInsert = previousValue.subtracting(currentValue)
-        
-        if !elementsToRemove.isEmpty {
-            
-            let reversion = SetReversion(remove: elementsToRemove)
-                .mapped(to: keyPath)
-            
-            reversions.append(reversion)
-        }
-        
-        if !elementsToInsert.isEmpty {
-            
-            let reversion = SetReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, Set<some Hashable>>) {
+        appendCollectionReversion(at: keyPath)
+    }
+    
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, Set<some Hashable>?>) {
+        appendCollectionReversion(at: keyPath)
     }
 }
 
 // MARK: - Array
 extension DefaultReverter {
     
-    mutating func appendReversion<Element: Equatable>(at keyPath: WritableKeyPath<Root, [Element]>) {
-        
-        let currentValue = current[keyPath: keyPath]
-        let previousValue = previous[keyPath: keyPath]
-        
-        guard currentValue != previousValue else {
-            return
-        }
-        
-        let difference = currentValue.difference(from: previousValue)
-        
-        var indicesToRemove: Set<Array<Element>.Index> = []
-        var elementsToInsert: Set<ArrayReversion<[Element], Element>.Insertion> = []
-        
-        for change in difference {
-            switch change {
-            case let .insert(offset, _, _):
-                indicesToRemove.insert(offset)
-                
-            case let .remove(offset, element, _):
-                elementsToInsert.insert(.init(index: offset, element: element))
-                
-            }
-        }
-        
-        if !indicesToRemove.isEmpty {
-            
-            let reversion = ArrayReversion(remove: indicesToRemove)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
-        
-        if !elementsToInsert.isEmpty {
-            
-            let reversion = ArrayReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Equatable]>) {
+        appendCollectionReversion(at: keyPath)
     }
     
-    mutating func appendReversion<Element: Identifiable & Revertable>(at keyPath: WritableKeyPath<Root, [Element]>) {
-        
-        let currentValue = current[keyPath: keyPath]
-        let previousValue = previous[keyPath: keyPath]
-        
-        guard currentValue != previousValue else {
-            return
-        }
-        
-        let currentIDs = Set(currentValue.map(\.id))
-        let previousIDs = Set(previousValue.map(\.id))
-        
-        let idsToRemove = currentIDs.subtracting(previousIDs)
-        let idsToInsert = previousIDs.subtracting(currentIDs)
-        let idsToUpdate = currentIDs.intersection(previousIDs)
-        
-        var indicesToRemove: Set<Array<Element>.Index> = []
-        var elementsToInsert: Set<IdentifiableArrayReversion<[Element], Element>.Insertion> = []
-        var indicesOfMovedInPrevious: [Element.ID : Array<Element>.Index] = [:]
-        var indicesOfUpdatedInCurrent: [Element.ID : Array<Element>.Index] = [:]
-        
-        for (index, element) in currentValue.enumerated() {
-            if idsToRemove.contains(element.id) {
-                indicesToRemove.insert(index)
-                
-            } else if idsToUpdate.contains(element.id) {
-                
-                indicesOfUpdatedInCurrent[element.id] = index
-                
-                if
-                    previousValue.count <= index || previousValue[index].id != element.id,
-                    let previousIndex = previousValue.firstIndex(where: { $0.id == element.id })
-                {
-                    indicesOfMovedInPrevious[element.id] = previousIndex
-                }
-            }
-        }
-        
-        for (index, element) in previousValue.enumerated() where idsToInsert.contains(element.id) {
-            elementsToInsert.insert(.init(index: index, element: element))
-        }
-        
-        if !indicesToRemove.isEmpty {
-            
-            let reversion = IdentifiableArrayReversion(remove: indicesToRemove)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
-        
-        if !elementsToInsert.isEmpty {
-            
-            let reversion = IdentifiableArrayReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
-        
-        for updatedID in idsToUpdate {
-            
-            guard let currentValueIndex = indicesOfUpdatedInCurrent[updatedID] else {
-                continue
-            }
-            
-            let currentElementValue: Element
-            let previousElementValue: Element
-            let elementKeyPath: WritableKeyPath<Root, Element>
-            
-            if let previousValueIndex = indicesOfMovedInPrevious[updatedID] {
-                
-                let moveReversion = IdentifiableArrayReversion(
-                    move: updatedID,
-                    to: previousValueIndex
-                )
-                .mapped(to: keyPath)
-
-                reversions.append(moveReversion)
-
-                currentElementValue = currentValue[currentValueIndex]
-                previousElementValue = previousValue[previousValueIndex]
-                elementKeyPath = keyPath.appending(path: \.[previousValueIndex])
-                
-            } else {
-                
-                currentElementValue = currentValue[currentValueIndex]
-                previousElementValue = previousValue[currentValueIndex]
-                elementKeyPath = keyPath.appending(path: \.[currentValueIndex])
-                
-            }
-            
-            appendReversion(
-                to: previousElementValue,
-                from: currentElementValue,
-                at: elementKeyPath
-            )
-        }
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Revertable]>) {
+        appendIdentifiableCollectionReversion(at: keyPath)
+    }
+    
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Equatable]?>) {
+        appendCollectionReversion(at: keyPath)
+    }
+    
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Revertable]?>) {
+        appendIdentifiableCollectionReversion(at: keyPath)
     }
 }
 
@@ -395,144 +262,19 @@ extension DefaultReverter {
 extension DefaultReverter {
     
     mutating func appendReversion<Key, Value: Equatable>(at keyPath: WritableKeyPath<Root, [Key : Value]>) {
-        
-        let currentValue = current[keyPath: keyPath]
-        let previousValue = previous[keyPath: keyPath]
-        
-        guard currentValue != previousValue else {
-            return
-        }
-        
-        let currentKeys = Set(currentValue.map(\.key))
-        let previousKeys = Set(previousValue.map(\.key))
-        
-        let keysToRemove = currentKeys.subtracting(previousKeys)
-        let keysToInsert = previousKeys.subtracting(currentKeys)
-        let keysToUpdate = currentKeys.intersection(previousKeys)
-            .filter { currentValue[$0] != previousValue[$0] }
-        
-        let elementsToInsert = keysToInsert.union(keysToUpdate)
-            .compactMap { key -> (Key, Value)? in
-                guard let value = previousValue[key] else {
-                    return nil
-                }
-                
-                return (key, value)
-            }
-        
-        if !keysToRemove.isEmpty {
-            
-            let reversion = DictionaryReversion(remove: keysToRemove)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
-        
-        if !elementsToInsert.isEmpty {
-            
-            let reversion = DictionaryReversion(insert: Dictionary(uniqueKeysWithValues: elementsToInsert))
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
+        appendCollectionReversion(at: keyPath)
     }
     
     mutating func appendReversion<Key, Value: Identifiable & Revertable>(at keyPath: WritableKeyPath<Root, [Key : Value]>) {
-        
-        let currentValue = current[keyPath: keyPath]
-        let previousValue = previous[keyPath: keyPath]
-        
-        guard currentValue != previousValue else {
-            return
-        }
-        
-        let currentIDs = Set(currentValue.map(\.value.id))
-        let previousIDs = Set(previousValue.map(\.value.id))
-        
-        let idsToRemove = currentIDs.subtracting(previousIDs)
-        let idsToInsert = previousIDs.subtracting(currentIDs)
-        let idsToUpdate = currentIDs.intersection(previousIDs)
-        
-        var keysToRemove: Set<Key> = []
-        var elementsToInsert: [Key : Value] = [:]
-        var keysOfMovedInPrevious: [Value.ID : Key] = [:]
-        var keysOfUpdatedInCurrent: [Value.ID : Key] = [:]
-        
-        for (key, value) in currentValue {
-            if idsToRemove.contains(value.id) {
-                keysToRemove.insert(key)
-                
-            } else if idsToUpdate.contains(value.id) {
-                
-                keysOfUpdatedInCurrent[value.id] = key
-                
-                if
-                    previousValue[key]?.id != value.id,
-                    let previousKey = previousValue.first(where: { $0.value.id == value.id })?.key
-                {
-                    keysOfMovedInPrevious[value.id] = previousKey
-                }
-            }
-        }
-        
-        for (key, value) in previousValue where idsToInsert.contains(value.id) {
-            elementsToInsert[key] = value
-        }
-        
-        if !keysToRemove.isEmpty {
-            
-            let reversion = IdentifiableDictionaryReversion(remove: keysToRemove)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
-        
-        if !elementsToInsert.isEmpty {
-            
-            let reversion = IdentifiableDictionaryReversion(insert: elementsToInsert)
-                .mapped(to: keyPath)
-
-            reversions.append(reversion)
-        }
-        
-        for updatedID in idsToUpdate {
-            
-            guard let currentValueKey = keysOfUpdatedInCurrent[updatedID] else {
-                continue
-            }
-            
-            let currentElementValue: Value
-            let previousElementValue: Value
-            let elementKeyPath: WritableKeyPath<Root, Value>
-            
-            if let previousValueKey = keysOfMovedInPrevious[updatedID] {
-                
-                let moveReversion = IdentifiableDictionaryReversion(
-                    move: currentValueKey,
-                    to: previousValueKey
-                )
-                .mapped(to: keyPath)
-
-                reversions.append(moveReversion)
-
-                currentElementValue = currentValue[currentValueKey]!
-                previousElementValue = previousValue[previousValueKey]!
-                elementKeyPath = keyPath.appending(path: \.[previousValueKey].setUnsafelyUnwrapped)
-                
-            } else {
-                
-                currentElementValue = currentValue[currentValueKey]!
-                previousElementValue = previousValue[currentValueKey]!
-                elementKeyPath = keyPath.appending(path: \.[currentValueKey].setUnsafelyUnwrapped)
-                
-            }
-            
-            appendReversion(
-                to: previousElementValue,
-                from: currentElementValue,
-                at: elementKeyPath
-            )
-        }
+        appendIdentifiableCollectionReversion(at: keyPath)
+    }
+    
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Equatable]?>) {
+        appendCollectionReversion(at: keyPath)
+    }
+    
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Revertable]?>) {
+        appendIdentifiableCollectionReversion(at: keyPath)
     }
 }
 
@@ -582,7 +324,7 @@ extension DefaultReverter {
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
         
-        let reversions = currentValue.reversions(to: previousValue)
+        let reversions = currentValue.collectionReversions(to: previousValue)
         appendMappedReversions(reversions, at: keyPath)
     }
     
@@ -600,7 +342,40 @@ extension DefaultReverter {
             appendEquatableReversion(at: keyPath)
             
         case let (.some(currentValue), .some(previousValue)):
-            let reversions = currentValue.reversions(to: previousValue)
+            let reversions = currentValue.collectionReversions(to: previousValue)
+            appendMappedReversions(reversions, at: keyPath.appending(path: \.setUnsafelyUnwrapped))
+
+        }
+    }
+}
+
+// MARK: - Revertable identifiable collection reversions
+extension DefaultReverter {
+    
+    mutating func appendIdentifiableCollectionReversion(at keyPath: WritableKeyPath<Root, some RevertableIdentifiableCollection>) {
+        
+        let currentValue = current[keyPath: keyPath]
+        let previousValue = previous[keyPath: keyPath]
+        
+        let reversions = currentValue.identifiableCollectionReversions(to: previousValue)
+        appendMappedReversions(reversions, at: keyPath)
+    }
+    
+    mutating func appendIdentifiableCollectionReversion(at keyPath: WritableKeyPath<Root, (some RevertableIdentifiableCollection & Equatable)?>) {
+        
+        let currentValue = current[keyPath: keyPath]
+        let previousValue = previous[keyPath: keyPath]
+        
+        guard currentValue != previousValue else {
+            return
+        }
+
+        switch (currentValue, previousValue) {
+        case (.none, .some), (.some, .none), (.none, .none):
+            appendEquatableReversion(at: keyPath)
+            
+        case let (.some(currentValue), .some(previousValue)):
+            let reversions = currentValue.identifiableCollectionReversions(to: previousValue)
             appendMappedReversions(reversions, at: keyPath.appending(path: \.setUnsafelyUnwrapped))
 
         }

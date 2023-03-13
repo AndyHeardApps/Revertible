@@ -1,15 +1,17 @@
 
 extension String: RevertableCollection {
     
-    func reversions(to previousValue: String) -> [StringReversion<String>] {
+    func collectionReversions(to previousValue: Self) -> [StringReversion<Self>] {
         
+        var reversions: [StringReversion<Self>] = []
+
         guard self != previousValue else {
-            return []
+            return reversions
         }
         
         let difference = self.difference(from: previousValue)
         
-        var elementsToInsert: [(Int, String.Element)] = []
+        var elementsToInsert: [(Int, Element)] = []
         var indicesToRemove: [Int] = []
         
         for change in difference.reversed() {
@@ -22,9 +24,7 @@ extension String: RevertableCollection {
                 
             }
         }
-        
-        var reversions: [StringReversion<String>] = []
-        
+                
         if !indicesToRemove.isEmpty {
             let rangesToRemove = indicesToRemove.convertToRanges()
             let stringIndices = rangesToRemove
@@ -47,9 +47,9 @@ extension String: RevertableCollection {
                 let elements = range.compactMap { insertionDictionary[$0] }
                 let startIndex = previousValue.index(previousValue.startIndex, offsetBy: range.lowerBound)
                 
-                return StringReversion<String>.Insertion(
+                return StringReversion<Self>.Insertion(
                     index: startIndex,
-                    elements: Substring(elements)
+                    elements: SubSequence(elements)
                 )
             }
             let reversion = StringReversion(insert: Set(insertions))

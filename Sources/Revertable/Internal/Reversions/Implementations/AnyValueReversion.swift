@@ -33,12 +33,3 @@ extension ValueReversion {
         .init(self)
     }
 }
-
-// MARK: - Collection extensions
-extension Collection where Element: ValueReversion {
-    
-    func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Element.Root>) -> [AnyValueReversion<NewRoot>] {
-        
-        map { $0.mapped(to: keyPath) }
-    }
-}

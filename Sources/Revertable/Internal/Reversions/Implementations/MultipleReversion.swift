@@ -22,8 +22,8 @@ extension MultipleValueReversion: ValueReversion {
     }
 
     func mapped<NewRoot>(to keyPath: WritableKeyPath<NewRoot, Root>) -> AnyValueReversion<NewRoot> {
-
-        MultipleValueReversion<NewRoot>(reversions.mapped(to: keyPath))
+        
+        MultipleValueReversion<NewRoot>(reversions.map { $0.mapped(to: keyPath) } )
             .erasedToAnyValueReversion()
     }
 }

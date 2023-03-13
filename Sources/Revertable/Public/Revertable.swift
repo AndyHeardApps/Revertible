@@ -67,13 +67,13 @@ extension Revertable {
         var reverter = DefaultReverter(current: self, previous: previous)
         reverter.appendReversion(at: \.self)
         
-        guard !reverter.reversions.isEmpty else {
+        guard let reverterReversion = reverter.erasedToAnyValueReversion() else {
             return nil
         }
         
         let reversion = Reversion(
             root: self,
-            reverter: reverter
+            reversion: reverterReversion
         )
         
         return reversion
