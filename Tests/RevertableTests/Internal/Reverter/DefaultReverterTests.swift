@@ -2120,5 +2120,4 @@ extension DefaultReverterTests {
             XCTAssertEqual(reverter.count, 0)
         }
     }
-
 }

@@ -9,7 +9,7 @@ extension Array: RevertableIdentifiableCollection where Element: Revertable & Id
             return reversions
         }
         
-        let difference = previousValue.difference(from: self)
+        let difference = self.difference(from: previousValue)
         
         var insertions: [Element.ID : (Index, Element)] = [:]
         var removals: [Element.ID : (Index, Element)] = [:]

@@ -64,6 +64,31 @@ extension DefaultReverter {
         
         reversions.append(reversion)
     }
+    
+    mutating func appendReversion<Value: Revertable>(at keyPath: WritableKeyPath<Root, Value?>) {
+        
+        let currentValue = current[keyPath: keyPath]
+        let previousValue = previous[keyPath: keyPath]
+                
+        switch (currentValue, previousValue) {
+        case (.none, .some), (.some, .none), (.none, .none):
+            appendEquatableReversion(at: keyPath)
+            
+        case let (.some(currentValue), .some(previousValue)):
+            
+            var reverter = DefaultReverter<Value>(
+                current: currentValue,
+                previous: previousValue
+            )
+            currentValue.addReversions(into: &reverter)
+
+            guard let reversion = reverter.erasedToAnyValueReversion()?.mapped(to: keyPath.appending(path: \.setUnsafelyUnwrapped)) else {
+                return
+            }
+            
+            reversions.append(reversion)
+        }
+    }
 }
 
 // MARK: - Integers
