@@ -7,7 +7,7 @@
 public struct Reversion<Root: Hashable> {
     
     // MARK: - Properties
-    public let checkedHashValue: Int
+    private let checkedHashValue: Int
     private let reversion: AnyValueReversion<Root>
     
     // MARK: - Initialiser

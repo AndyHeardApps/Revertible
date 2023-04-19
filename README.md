@@ -115,3 +115,8 @@ print(user.name) // ""
 ```
 
 This way, reversions can be stored in a stack and applied as needed.
+
+## `UndoController`
+The `UndoController` is a class to help manage reversions.
+
+It has actions registered against it either as closures, or by providing some `Revertable` value. These are sorted into stacks and applied on a last in first out basis. When an action is undone, it is automatically converted to a redo action.
