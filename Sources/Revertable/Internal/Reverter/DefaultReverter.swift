@@ -286,11 +286,11 @@ extension DefaultReverter {
 // MARK: - Dictionary
 extension DefaultReverter {
     
-    mutating func appendReversion<Key, Value: Equatable>(at keyPath: WritableKeyPath<Root, [Key : Value]>) {
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Equatable]>) {
         appendCollectionReversion(at: keyPath)
     }
     
-    mutating func appendReversion<Key, Value: Identifiable & Revertable>(at keyPath: WritableKeyPath<Root, [Key : Value]>) {
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Revertable]>) {
         appendIdentifiableCollectionReversion(at: keyPath)
     }
     
