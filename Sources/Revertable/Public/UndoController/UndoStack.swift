@@ -32,6 +32,7 @@ extension UndoStack {
         
         if let action {
             undoStack.append(action)
+            redoStack.removeAll()
         }
     }
     
@@ -46,6 +47,7 @@ extension UndoStack {
         )
         
         undoStack.append(action)
+        redoStack.removeAll()
     }
 }
 
