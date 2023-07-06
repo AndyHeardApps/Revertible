@@ -262,6 +262,29 @@ extension String {
 // MARK: - Tests
 extension RevertableTests {
     
+    // MARK: Single value reversions
+    func testRevert_onOverwritingReversion_willRevertToOriginal() throws {
+        
+        struct Mock: Revertable {
+            let data: Data
+            
+            func addReversions(into reverter: inout some Reverter<Self>) {
+                reverter.appendOverwriteReversion(at: \.self)
+            }
+        }
+        
+        var value = Mock(data: Data(1...3))
+        let original = value
+        value = Mock(data: Data(3...7))
+        
+        let reversion = value.reversion(to: original)
+
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
     func testRevert_onNonOptional_nonIdentifiable_mutations_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
@@ -418,7 +441,7 @@ extension RevertableTests {
         try reversion?.revert(&value)
         XCTAssertEqual(value, original)
     }
-
+    
     func testRevert_onNoMutations_willCreateNilReversion() throws {
         
         let value = Mock(id: 0)
@@ -444,6 +467,212 @@ extension RevertableTests {
         XCTAssertThrowsError(try reversion?.revert(&value))
     }
     
+    // MARK: Set reversions
+    func testRevert_onHashableSet_withMutations_willRevertToOriginal() throws {
+        
+        var value = Set(1...3)
+        let original = value
+        value.remove(2)
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onHashableSet_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = Set(1...3)
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+    
+    func testRevert_onIdentifiableSet_withMutations_willRevertToOriginal() throws {
+        
+        var value = Set([Mock(id: 0), Mock(id: 1)])
+        let original = value
+        value.removeFirst()
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onIdentifiableSet_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = Set([Mock(id: 0), Mock(id: 1)])
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+    
+    // MARK: Array reversions
+    func testRevert_onHashableArray_withMutations_willRevertToOriginal() throws {
+        
+        var value = Array(1...3)
+        let original = value
+        value.remove(at: 1)
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onHashableArray_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = Array(1...3)
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+    
+    func testRevert_onIdentifiableArray_withMutations_willRevertToOriginal() throws {
+        
+        var value = [Mock(id: 0), Mock(id: 1)]
+        let original = value
+        value.removeFirst()
+        value[0].mutateAllIdentifiables()
+        value[0].mutateAllNonIdentifiables()
+        value.append(Mock(id: 2))
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onIdentifiableArray_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = [Mock(id: 0), Mock(id: 1)]
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+    
+    // MARK: Dictionary reversions
+    func testRevert_onHashableDictionary_withMutations_willRevertToOriginal() throws {
+        
+        var value = ["1" : 1, "2" : 2]
+        let original = value
+        value.removeValue(forKey: "1")
+        value["3"] = 3
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onHashableDictionary_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = ["1" : 1, "2" : 2]
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+    
+    func testRevert_onIdentifiableDictionary_withMutations_willRevertToOriginal() throws {
+        
+        var value = ["1" : Mock(id: 1), "2" : Mock(id: 2)]
+        let original = value
+        value.removeValue(forKey: "1")
+        value["2"]?.mutateAllIdentifiables()
+        value["2"]?.mutateAllNonIdentifiables()
+        value["3"] = Mock(id: 3)
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onIdentifiableDictionary_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = ["1" : Mock(id: 1), "2" : Mock(id: 2)]
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+    
+    // MARK: Data reversions
+    func testRevert_onData_withMutations_willRevertToOriginal() throws {
+        
+        var value = Data(1...3)
+        let original = value
+        value.remove(at: 1)
+        value.append(4)
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onData_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = Data(1...3)
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+
+    // MARK: String reversions
+    func testRevert_onString_withMutations_willRevertToOriginal() throws {
+        
+        var value = "1234"
+        let original = value
+        value = "1345"
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNotNil(reversion)
+        XCTAssertNotEqual(value, original)
+        try reversion?.revert(&value)
+        XCTAssertEqual(value, original)
+    }
+    
+    func testRevert_onString_withNoMutations_willRevertToOriginal() throws {
+        
+        let value = "1234"
+        let original = value
+        
+        let reversion = value.reversion(to: original)
+        
+        XCTAssertNil(reversion)
+    }
+
+    // MARK: - Efficiency
     func testEfficiency() {
         
         var value = Mock(id: 0)

@@ -47,6 +47,15 @@ extension DefaultReverter: Reverter {}
 // MARK: - Revertable
 extension DefaultReverter {
     
+    mutating func appendOverwriteReversion<Value>(at keyPath: WritableKeyPath<Root, Value>) {
+        
+        let previousValue = previous[keyPath: keyPath]
+
+        let reversion = SingleValueReversion(value: previousValue).mapped(to: keyPath)
+        
+        reversions.append(reversion)
+    }
+    
     mutating func appendReversion<Value: Revertable>(at keyPath: WritableKeyPath<Root, Value>) {
         
         let currentValue = current[keyPath: keyPath]
