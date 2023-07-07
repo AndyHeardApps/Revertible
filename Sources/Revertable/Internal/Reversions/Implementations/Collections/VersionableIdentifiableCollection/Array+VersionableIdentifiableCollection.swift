@@ -1,5 +1,5 @@
 
-extension Array: RevertableIdentifiableCollection where Element: Revertable & Identifiable {
+extension Array: VersionableIdentifiableCollection where Element: Versionable & Identifiable {
     
     func identifiableCollectionReversions(to previousValue: Self) -> [AnyValueReversion<Self>] {
         

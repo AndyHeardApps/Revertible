@@ -45,8 +45,8 @@ final class MockClass: Identifiable {
     }
 }
 
-// MARK: - Revertable
-extension MockClass: Revertable {
+// MARK: - Versionable
+extension MockClass: Versionable {
     
     func addReversions(into reverter: inout some Reverter<MockClass>) {
 
@@ -93,7 +93,7 @@ extension MockClass: Revertable {
     }
 }
 
-struct User: Revertable {
+struct User: Versionable {
 
     var name: String
     var imageData: Data?

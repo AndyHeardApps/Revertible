@@ -14,11 +14,11 @@ public protocol Reverter<Root> {
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, some Revertable>)
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, some Versionable>)
 
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, (some Revertable)?>)
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, (some Versionable)?>)
 
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
@@ -69,10 +69,11 @@ public protocol Reverter<Root> {
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Float>)
     
+    #if os(iOS)
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Float16>)
-
+    #endif
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
@@ -105,7 +106,7 @@ public protocol Reverter<Root> {
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Revertable]>)
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]>)
     
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
@@ -114,7 +115,7 @@ public protocol Reverter<Root> {
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Revertable]>)
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Versionable]>)
     
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
@@ -166,10 +167,11 @@ public protocol Reverter<Root> {
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Float?>)
     
+    #if os(iOS)
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Float16?>)
-
+    #endif
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
@@ -202,7 +204,7 @@ public protocol Reverter<Root> {
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Revertable]?>)
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]?>)
 
 
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
@@ -211,5 +213,5 @@ public protocol Reverter<Root> {
 
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Revertable]?>)
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Versionable]?>)
 }

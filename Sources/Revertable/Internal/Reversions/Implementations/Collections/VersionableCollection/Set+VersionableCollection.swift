@@ -1,5 +1,5 @@
 
-extension Set: RevertableCollection {
+extension Set: VersionableCollection {
     
     func collectionReversions(to previousValue: Self) -> [SetReversion<Self, Element>] {
         

@@ -787,6 +787,7 @@ extension DefaultReverterTests {
         }
     }
 
+    #if os(iOS)
     // MARK: - Float16
     func testAppendReversion_forChanges_onFloat16_willCreateCorrectReversions() {
         
@@ -851,6 +852,7 @@ extension DefaultReverterTests {
             XCTAssertEqual(reverter.count, 0)
         }
     }
+    #endif
     
     // MARK: - Date
     func testAppendReversion_forChanges_onDate_willCreateCorrectReversions() {

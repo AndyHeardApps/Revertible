@@ -6,7 +6,7 @@ final class RevertableTests: XCTestCase {}
 // MARK: - Mocks
 extension RevertableTests {
     
-    private struct Mock: Revertable, Identifiable {
+    private struct Mock: Versionable, Identifiable {
         
         let id: Int
         
@@ -46,9 +46,10 @@ extension RevertableTests {
         var float: Float = 0
         var optionalFloat: Float? = 0
         
+        #if os(iOS)
         var float16: Float16 = 0
         var optionalFloat16: Float16? = 0
-        
+        #endif
         var date: Date = .init(timeIntervalSinceReferenceDate: 0)
         var optionalDate: Date? = .init(timeIntervalSinceReferenceDate: 0)
         
@@ -106,8 +107,10 @@ extension RevertableTests {
             reverter.appendReversion(at: \.optionalDouble)
             reverter.appendReversion(at: \.float)
             reverter.appendReversion(at: \.optionalFloat)
+            #if os(iOS)
             reverter.appendReversion(at: \.float16)
             reverter.appendReversion(at: \.optionalFloat16)
+            #endif
             reverter.appendReversion(at: \.date)
             reverter.appendReversion(at: \.optionalDate)
             reverter.appendReversion(at: \.uuid)
@@ -150,7 +153,9 @@ extension RevertableTests {
             uint8 = .random(in: 1...10)
             double = .random(in: 1...10)
             float = .random(in: 1...10)
+            #if os(iOS)
             float16 = .random(in: 1...10)
+            #endif
             date = .init(timeIntervalSinceReferenceDate: .random(in: 1...10))
             uuid = .init()
             string = UUID().uuidString
@@ -174,7 +179,9 @@ extension RevertableTests {
             optionalUInt8 = .random(in: 1...10)
             optionalDouble = .random(in: 1...10)
             optionalFloat = .random(in: 1...10)
+            #if os(iOS)
             optionalFloat16 = .random(in: 1...10)
+            #endif
             optionalDate = .init(timeIntervalSinceReferenceDate: .random(in: 1...10))
             optionalUUID = .init()
             optionalString = UUID().uuidString
@@ -226,7 +233,9 @@ extension RevertableTests {
             optionalUInt8 = nil
             optionalDouble = nil
             optionalFloat = nil
+            #if os(iOS)
             optionalFloat16 = nil
+            #endif
             optionalDate = nil
             optionalUUID = nil
             optionalString = nil
@@ -240,7 +249,7 @@ extension RevertableTests {
         }
     }
 
-    private struct MockChild: Revertable, Identifiable {
+    private struct MockChild: Versionable, Identifiable {
         
         let id: Int
         var int: Int = 0
@@ -265,7 +274,7 @@ extension RevertableTests {
     // MARK: Single value reversions
     func testRevert_onOverwritingReversion_willRevertToOriginal() throws {
         
-        struct Mock: Revertable {
+        struct Mock: Versionable {
             let data: Data
             
             func addReversions(into reverter: inout some Reverter<Self>) {

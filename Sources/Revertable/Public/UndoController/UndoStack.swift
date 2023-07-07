@@ -16,7 +16,7 @@ final class UndoStack {
 // MARK: - Action appending
 extension UndoStack {
     
-    func append<Root: AnyObject, Value: Revertable>(
+    func append<Root: AnyObject, Value: Versionable>(
         changesOn root: Root,
         at keyPath: WritableKeyPath<Root, Value>,
         previousValue: Value

@@ -1,5 +1,5 @@
 
-extension Array: RevertableCollection where Element: Equatable {
+extension Array: VersionableCollection where Element: Equatable {
     
     func collectionReversions(to previousValue: Self) -> [ArrayReversion<Self, Element>] {
         

@@ -20,12 +20,12 @@ public final class UndoController {
 // MARK: - Action appending
 extension UndoController {
     
-    /// Appends a new undo action based on a ``Revertable`` type on a class.
+    /// Appends a new undo action based on a ``Versionable`` type on a class.
     /// - Parameters:
-    ///   - root: The root object that owns the ``Revertable`` value.
-    ///   - keyPath: The key path pointing towards the ``Revertable`` value.
+    ///   - root: The root object that owns the ``Versionable`` value.
+    ///   - keyPath: The key path pointing towards the ``Versionable`` value.
     ///   - previousValue: The previous value to be reverted to.
-    public func append<Root: AnyObject, Value: Revertable>(
+    public func append<Root: AnyObject, Value: Versionable>(
         changesOn root: Root,
         at keyPath: WritableKeyPath<Root, Value>,
         previousValue: Value
