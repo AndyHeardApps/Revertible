@@ -14,7 +14,7 @@ struct UndoAction {
         self.redoClosure = redo
     }
     
-    init?<Root: AnyObject, Value: Revertable>(
+    init?<Root: AnyObject, Value: Versionable>(
         root: Root,
         keyPath: WritableKeyPath<Root, Value>,
         currentValue: Value,

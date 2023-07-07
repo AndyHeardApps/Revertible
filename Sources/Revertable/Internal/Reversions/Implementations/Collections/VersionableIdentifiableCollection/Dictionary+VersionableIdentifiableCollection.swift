@@ -1,5 +1,5 @@
 
-extension Dictionary: RevertableIdentifiableCollection where Value: Identifiable & Revertable {
+extension Dictionary: VersionableIdentifiableCollection where Value: Identifiable & Versionable {
     
     func identifiableCollectionReversions(to previousValue: Self) -> [AnyValueReversion<Self>] {
         

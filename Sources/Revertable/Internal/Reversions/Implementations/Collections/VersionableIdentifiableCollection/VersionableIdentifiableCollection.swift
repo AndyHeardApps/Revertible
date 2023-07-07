@@ -1,5 +1,5 @@
 
-protocol RevertableIdentifiableCollection {
+protocol VersionableIdentifiableCollection {
     
     // MARK: - Associated types
     associatedtype IdentifiableCollectionReversion: ValueReversion<Self>

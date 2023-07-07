@@ -1,5 +1,5 @@
 
-extension Dictionary: RevertableCollection where Key: Equatable, Value: Equatable {
+extension Dictionary: VersionableCollection where Key: Equatable, Value: Equatable {
     
     func collectionReversions(to previousValue: Self) -> [DictionaryReversion<Self, Key, Value>] {
         

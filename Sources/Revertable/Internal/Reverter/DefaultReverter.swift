@@ -44,7 +44,7 @@ extension DefaultReverter {
 // MARK: - Reverter
 extension DefaultReverter: Reverter {}
 
-// MARK: - Revertable
+// MARK: - Versionable
 extension DefaultReverter {
     
     mutating func appendOverwriteReversion<Value>(at keyPath: WritableKeyPath<Root, Value>) {
@@ -56,7 +56,7 @@ extension DefaultReverter {
         reversions.append(reversion)
     }
     
-    mutating func appendReversion<Value: Revertable>(at keyPath: WritableKeyPath<Root, Value>) {
+    mutating func appendReversion<Value: Versionable>(at keyPath: WritableKeyPath<Root, Value>) {
         
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
@@ -74,7 +74,7 @@ extension DefaultReverter {
         reversions.append(reversion)
     }
     
-    mutating func appendReversion<Value: Revertable>(at keyPath: WritableKeyPath<Root, Value?>) {
+    mutating func appendReversion<Value: Versionable>(at keyPath: WritableKeyPath<Root, Value?>) {
         
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
@@ -195,10 +195,11 @@ extension DefaultReverter {
         appendEquatableReversion(at: keyPath)
     }
     
+    #if os(iOS)
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Float16>) {
         appendEquatableReversion(at: keyPath)
     }
-    
+    #endif
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Double?>) {
         appendEquatableReversion(at: keyPath)
     }
@@ -206,10 +207,11 @@ extension DefaultReverter {
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Float?>) {
         appendEquatableReversion(at: keyPath)
     }
-    
+    #if os(iOS)
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, Float16?>) {
         appendEquatableReversion(at: keyPath)
     }
+    #endif
 }
 
 // MARK: - Date
@@ -279,7 +281,7 @@ extension DefaultReverter {
         appendCollectionReversion(at: keyPath)
     }
     
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Revertable]>) {
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]>) {
         appendIdentifiableCollectionReversion(at: keyPath)
     }
     
@@ -287,7 +289,7 @@ extension DefaultReverter {
         appendCollectionReversion(at: keyPath)
     }
     
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Revertable]?>) {
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]?>) {
         appendIdentifiableCollectionReversion(at: keyPath)
     }
 }
@@ -299,7 +301,7 @@ extension DefaultReverter {
         appendCollectionReversion(at: keyPath)
     }
     
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Revertable]>) {
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Versionable]>) {
         appendIdentifiableCollectionReversion(at: keyPath)
     }
     
@@ -307,7 +309,7 @@ extension DefaultReverter {
         appendCollectionReversion(at: keyPath)
     }
     
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Revertable]?>) {
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Versionable]?>) {
         appendIdentifiableCollectionReversion(at: keyPath)
     }
 }
@@ -350,10 +352,10 @@ extension DefaultReverter {
     }
 }
 
-// MARK: - Revertable collection reversions
+// MARK: - Versionable collection reversions
 extension DefaultReverter {
     
-    mutating func appendCollectionReversion(at keyPath: WritableKeyPath<Root, some RevertableCollection>) {
+    mutating func appendCollectionReversion(at keyPath: WritableKeyPath<Root, some VersionableCollection>) {
         
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
@@ -362,7 +364,7 @@ extension DefaultReverter {
         appendMappedReversions(reversions, at: keyPath)
     }
     
-    mutating func appendCollectionReversion(at keyPath: WritableKeyPath<Root, (some RevertableCollection & Equatable)?>) {
+    mutating func appendCollectionReversion(at keyPath: WritableKeyPath<Root, (some VersionableCollection & Equatable)?>) {
         
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
@@ -383,10 +385,10 @@ extension DefaultReverter {
     }
 }
 
-// MARK: - Revertable identifiable collection reversions
+// MARK: - Versionable identifiable collection reversions
 extension DefaultReverter {
     
-    mutating func appendIdentifiableCollectionReversion(at keyPath: WritableKeyPath<Root, some RevertableIdentifiableCollection>) {
+    mutating func appendIdentifiableCollectionReversion(at keyPath: WritableKeyPath<Root, some VersionableIdentifiableCollection>) {
         
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
@@ -395,7 +397,7 @@ extension DefaultReverter {
         appendMappedReversions(reversions, at: keyPath)
     }
     
-    mutating func appendIdentifiableCollectionReversion(at keyPath: WritableKeyPath<Root, (some RevertableIdentifiableCollection & Equatable)?>) {
+    mutating func appendIdentifiableCollectionReversion(at keyPath: WritableKeyPath<Root, (some VersionableIdentifiableCollection & Equatable)?>) {
         
         let currentValue = current[keyPath: keyPath]
         let previousValue = previous[keyPath: keyPath]
