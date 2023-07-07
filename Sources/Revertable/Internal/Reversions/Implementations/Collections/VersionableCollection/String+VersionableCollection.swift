@@ -1,10 +1,9 @@
-import Foundation
 
-extension Data: RevertableCollection {
+extension String: VersionableCollection {
     
-    func collectionReversions(to previousValue: Self) -> [DataReversion<Self>] {
-     
-        var reversions: [DataReversion<Self>] = []
+    func collectionReversions(to previousValue: Self) -> [StringReversion<Self>] {
+        
+        var reversions: [StringReversion<Self>] = []
 
         guard self != previousValue else {
             return reversions
@@ -25,28 +24,36 @@ extension Data: RevertableCollection {
                 
             }
         }
-
+                
         if !indicesToRemove.isEmpty {
             let rangesToRemove = indicesToRemove.convertToRanges()
-            let reversion = DataReversion(remove: Set(rangesToRemove))
+            let stringIndices = rangesToRemove
+                .map { range in
+                    let lowerBound = self.index(self.startIndex, offsetBy: range.lowerBound)
+                    let upperBound = self.index(self.startIndex, offsetBy: range.upperBound)
+                    return lowerBound...upperBound
+                }
+            
+            let reversion = StringReversion(remove: Set(stringIndices))
 
             reversions.append(reversion)
         }
-        
+
         if !elementsToInsert.isEmpty {
+            
             let insertionDictionary = Dictionary(uniqueKeysWithValues: elementsToInsert)
             let rangesToInsert = elementsToInsert.map(\.0).convertToRanges()
-
             let insertions = rangesToInsert.map { range in
                 let elements = range.compactMap { insertionDictionary[$0] }
+                let startIndex = previousValue.index(previousValue.startIndex, offsetBy: range.lowerBound)
                 
-                return DataReversion<Self>.Insertion(
-                    index: range.lowerBound,
+                return StringReversion<Self>.Insertion(
+                    index: startIndex,
                     elements: SubSequence(elements)
                 )
             }
-            let reversion = DataReversion(insert: Set(insertions))
-            
+            let reversion = StringReversion(insert: Set(insertions))
+
             reversions.append(reversion)
         }
         

@@ -21,7 +21,7 @@ Should the user update the `name` property, and you want to be able to store pre
 This package aims to provide a lightweight, simple, type-safe and efficient way of storing only the changes on an object, and allowing a single function to restore an object to a previous state.
 
 ## Revertable Protocol
-The main point of contact with this package is the `Revertable` protocol. This protocol requires that a `addReversions(into:)` be implemented. This function is intended to be very simple to implement, in a similar style to `Codable`.
+The main point of contact with this package is the `Revertable` protocol. This protocol requires that `addReversions(into:)` be implemented. This function is intended to be very simple to implement, in a similar style to `Codable`.
 
 The `addReversions(into:)` function provides a single `Reverter` parameter. The `Reverter` is specialised to the calling type (i.e. `Reverter<Self>`), and can be used to register the properties to be monitored for changes by passing `KeyPath`s to the assorted `appendReversion(at:)` functions in a type-safe manner.
 
@@ -52,7 +52,7 @@ user.name = "Johnny"
 let reversion = user.reversion(to: original) // Reversion<User>
 ```
 
-If no changes are made, then the `reversion(to:)` function returns nil.
+If no changes are made, then the `reversion(to:)` function returns `nil`.
 
 ```swift
 let user = User(name: "", imageData: .init())
