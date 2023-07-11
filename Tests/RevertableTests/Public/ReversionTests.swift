@@ -65,14 +65,8 @@ extension RevertableTests {
         var set: Set<Int> = []
         var optionalSet: Set<Int>? = []
         
-        var equatableArray: [Int] = []
-        var optionalEquatableArray: [Int]? = []
-        
         var identifiableArray: [Mock] = []
         var optionalIdentifiableArray: [Mock]? = []
-        
-        var equatableDictionary: [Int : String] = [:]
-        var optionalEquatableDictionary: [Int : String]? = [:]
         
         var identifiableDictionary: [Int : Mock] = [:]
         var optionalIdentifiableDictionary: [Int : Mock]? = [:]
@@ -121,12 +115,8 @@ extension RevertableTests {
             reverter.appendReversion(at: \.optionalData)
             reverter.appendReversion(at: \.set)
             reverter.appendReversion(at: \.optionalSet)
-            reverter.appendReversion(at: \.equatableArray)
-            reverter.appendReversion(at: \.optionalEquatableArray)
             reverter.appendReversion(at: \.identifiableArray)
             reverter.appendReversion(at: \.optionalIdentifiableArray)
-            reverter.appendReversion(at: \.equatableDictionary)
-            reverter.appendReversion(at: \.optionalEquatableDictionary)
             reverter.appendReversion(at: \.identifiableDictionary)
             reverter.appendReversion(at: \.optionalIdentifiableDictionary)
             reverter.appendReversion(at: \.identifiableChild)
@@ -161,8 +151,6 @@ extension RevertableTests {
             string = UUID().uuidString
             data = UUID().uuidString.data(using: .utf8)!
             set = [.random(in: 1...10), .random(in: 1...10), .random(in: 1...10), .random(in: 1...10)]
-            equatableArray = [.random(in: 1...10), .random(in: 1...10), .random(in: 1...10), .random(in: 1...10)]
-            equatableDictionary = [0 : .randomCharacter(), 1 : .randomCharacter(), 2 : .randomCharacter()]
         }
         
         mutating func mutateOptionalNonIdentifiables() {
@@ -187,8 +175,6 @@ extension RevertableTests {
             optionalString = UUID().uuidString
             optionalData = UUID().uuidString.data(using: .utf8)!
             optionalSet = [.random(in: 1...10), .random(in: 1...10), .random(in: 1...10), .random(in: 1...10)]
-            optionalEquatableArray = [.random(in: 1...10), .random(in: 1...10), .random(in: 1...10), .random(in: 1...10)]
-            optionalEquatableDictionary = [0 : .randomCharacter(), 1 : .randomCharacter(), 2 : .randomCharacter()]
         }
         
         mutating func mutateAllIdentifiables() {
@@ -241,9 +227,7 @@ extension RevertableTests {
             optionalString = nil
             optionalData = nil
             optionalSet = nil
-            optionalEquatableArray = nil
             optionalIdentifiableArray = nil
-            optionalEquatableDictionary = nil
             optionalIdentifiableDictionary = nil
             optionalIdentifiableChild = nil
         }
@@ -526,30 +510,6 @@ extension RevertableTests {
     }
     
     // MARK: Array reversions
-    func testRevert_onHashableArray_withMutations_willRevertToOriginal() throws {
-        
-        var value = Array(1...3)
-        let original = value
-        value.remove(at: 1)
-        
-        let reversion = value.reversion(to: original)
-        
-        XCTAssertNotNil(reversion)
-        XCTAssertNotEqual(value, original)
-        try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
-    }
-    
-    func testRevert_onHashableArray_withNoMutations_willRevertToOriginal() throws {
-        
-        let value = Array(1...3)
-        let original = value
-        
-        let reversion = value.reversion(to: original)
-        
-        XCTAssertNil(reversion)
-    }
-    
     func testRevert_onIdentifiableArray_withMutations_willRevertToOriginal() throws {
         
         var value = [Mock(id: 0), Mock(id: 1)]
@@ -577,32 +537,7 @@ extension RevertableTests {
         XCTAssertNil(reversion)
     }
     
-    // MARK: Dictionary reversions
-    func testRevert_onHashableDictionary_withMutations_willRevertToOriginal() throws {
-        
-        var value = ["1" : 1, "2" : 2]
-        let original = value
-        value.removeValue(forKey: "1")
-        value["3"] = 3
-        
-        let reversion = value.reversion(to: original)
-        
-        XCTAssertNotNil(reversion)
-        XCTAssertNotEqual(value, original)
-        try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
-    }
-    
-    func testRevert_onHashableDictionary_withNoMutations_willRevertToOriginal() throws {
-        
-        let value = ["1" : 1, "2" : 2]
-        let original = value
-        
-        let reversion = value.reversion(to: original)
-        
-        XCTAssertNil(reversion)
-    }
-    
+    // MARK: Dictionary reversions    
     func testRevert_onIdentifiableDictionary_withMutations_willRevertToOriginal() throws {
         
         var value = ["1" : Mock(id: 1), "2" : Mock(id: 2)]
