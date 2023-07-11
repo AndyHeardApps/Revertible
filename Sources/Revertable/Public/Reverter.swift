@@ -102,16 +102,8 @@ public protocol Reverter<Root> {
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Equatable]>)
-    
-    /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
-    /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]>)
     
-    
-    /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
-    /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Equatable]>)
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
@@ -200,16 +192,8 @@ public protocol Reverter<Root> {
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Equatable]?>)
-    
-    /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
-    /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]?>)
 
-
-    /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
-    /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Equatable]?>)
 
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.

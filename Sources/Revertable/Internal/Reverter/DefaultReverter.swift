@@ -276,17 +276,9 @@ extension DefaultReverter {
 
 // MARK: - Array
 extension DefaultReverter {
-    
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Equatable]>) {
-        appendCollectionReversion(at: keyPath)
-    }
-    
+        
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]>) {
         appendIdentifiableCollectionReversion(at: keyPath)
-    }
-    
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Equatable]?>) {
-        appendCollectionReversion(at: keyPath)
     }
     
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Identifiable & Versionable]?>) {
@@ -297,16 +289,8 @@ extension DefaultReverter {
 // MARK: - Dictionary
 extension DefaultReverter {
     
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Equatable]>) {
-        appendCollectionReversion(at: keyPath)
-    }
-    
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Versionable]>) {
         appendIdentifiableCollectionReversion(at: keyPath)
-    }
-    
-    mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Equatable]?>) {
-        appendCollectionReversion(at: keyPath)
     }
     
     mutating func appendReversion(at keyPath: WritableKeyPath<Root, [some Hashable : some Identifiable & Versionable]?>) {
