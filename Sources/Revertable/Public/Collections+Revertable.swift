@@ -22,7 +22,7 @@ extension Set: Revertable where Self: Hashable, Element: Hashable {
 }
 
 // MARK: - Array
-extension Array where Self: Hashable, Element: Identifiable & Versionable {
+extension Array: Revertable where Self: Hashable, Element: Identifiable & Versionable {
     
     public func reversion(to previous: Self) -> Reversion<Self>? {
         
@@ -43,7 +43,7 @@ extension Array where Self: Hashable, Element: Identifiable & Versionable {
 }
 
 // MARK: - Dictionary
-extension Dictionary where Self: Hashable, Key: Hashable, Value: Identifiable & Versionable {
+extension Dictionary: Revertable where Self: Hashable, Key: Hashable, Value: Identifiable & Versionable {
 
     public func reversion(to previous: Self) -> Reversion<Self>? {
         
