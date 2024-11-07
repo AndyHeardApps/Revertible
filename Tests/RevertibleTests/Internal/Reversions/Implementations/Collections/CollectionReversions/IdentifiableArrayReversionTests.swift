@@ -1,5 +1,5 @@
 import XCTest
-@testable import Revertable
+@testable import Revertible
 
 final class IdentifiableArrayReversionTests: XCTestCase {}
 

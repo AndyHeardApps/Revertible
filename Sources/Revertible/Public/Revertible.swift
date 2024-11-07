@@ -1,9 +1,9 @@
 
 /// Defines an interface for types to be able to produce a ``Reversion`` object, allowing changes to the object to be tracked and stored for later reversion to a prior state.
 ///
-/// Many common types conform to this protocol by default, including collections like `Array`, `Set`, `Dictionary`, `Data` and `String`. The simplest way to conform to this protocol is to instead adopt the ``Versionable`` protocol, which extends ``Revertable/Revertable``.
+/// Many common types conform to this protocol by default, including collections like `Array`, `Set`, `Dictionary`, `Data` and `String`. The simplest way to conform to this protocol is to instead adopt the ``Versionable`` protocol, which extends ``Revertible/Revertible``.
 ///
-/// A ``Reversion`` can be created by calling the ``Revertable/Revertable/reversion(to:)`` and applied using the ``Reversion/revert(_:)`` functions:
+/// A ``Reversion`` can be created by calling the ``Revertible/Revertible/reversion(to:)`` and applied using the ``Reversion/revert(_:)`` functions:
 ///
 /// ```swift
 /// var person = Person(name: "Nick", age: 10)
@@ -17,7 +17,7 @@
 /// ```
 ///
 /// While it's intended that this protocol be used on value types, it can be used on `class` types too, as long as the properties are delcared as `var`.
-public protocol Revertable: Hashable {
+public protocol Revertible: Hashable {
         
     /// Creates a ``Reversion`` to the previous version of the object.
     ///

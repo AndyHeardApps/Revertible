@@ -3,9 +3,9 @@
 ///
 /// The instance that the ``Reversion`` is applied to must produce the same `hashValue` as the instance that was used to create the ``Reversion`` or an error will be thrown.
 ///
-/// A ``Reversion`` is created by calling the ``Revertable/Revertable/reversion(to:)`` function on some ``Revertable/Revertable`` instance. This can then be stored and used to revert the instance back to its initial state.
+/// A ``Reversion`` is created by calling the ``Revertible/Revertible/reversion(to:)`` function on some ``Revertible/Revertible`` instance. This can then be stored and used to revert the instance back to its initial state.
 ///
-/// Conforming a type to ``Versionable`` provides a simple interface allowing the automatic synthesis of the ``Revertable/Revertable/reversion(to:)`` function by simply implementing the ``Versionable/addReversions(into:)`` function.
+/// Conforming a type to ``Versionable`` provides a simple interface allowing the automatic synthesis of the ``Revertible/Revertible/reversion(to:)`` function by simply implementing the ``Versionable/addReversions(into:)`` function.
 public struct Reversion<Root: Hashable> {
     
     // MARK: - Properties

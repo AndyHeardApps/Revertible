@@ -1,4 +1,4 @@
-@testable import Revertable
+@testable import Revertible
 
 final class MockValueReversion<Root> {
     

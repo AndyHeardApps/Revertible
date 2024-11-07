@@ -1,5 +1,5 @@
 import XCTest
-import Revertable
+import Revertible
 
 final class UndoControllerTests: XCTestCase {
     
@@ -26,7 +26,7 @@ extension UndoControllerTests {
 // MARK: - Tests
 extension UndoControllerTests {
     
-    func testUndoController_willUndoAndRedo_singleRevertableAction() throws {
+    func testUndoController_willUndoAndRedo_singleRevertibleAction() throws {
                 
         let undoController = UndoController()
 
@@ -55,7 +55,7 @@ extension UndoControllerTests {
         XCTAssertNotEqual(previousValue, mockStruct)
     }
     
-    func testUndoController_willUndoAndRedo_multipleRevertableActions() throws {
+    func testUndoController_willUndoAndRedo_multipleRevertibleActions() throws {
                 
         let undoController = UndoController()
 
@@ -164,7 +164,7 @@ extension UndoControllerTests {
         try undoController.redo()
     }
     
-    func testUndoController_willWeaklyReferenceRevertableRoots() throws {
+    func testUndoController_willWeaklyReferenceRevertibleRoots() throws {
         
         class Mock {
             var value = MockStruct()

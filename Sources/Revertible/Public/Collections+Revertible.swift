@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Set
-extension Set: Revertable where Self: Hashable, Element: Hashable {
+extension Set: Revertible where Self: Hashable, Element: Hashable {
     
     public func reversion(to previous: Self) -> Reversion<Self>? {
         
@@ -22,7 +22,7 @@ extension Set: Revertable where Self: Hashable, Element: Hashable {
 }
 
 // MARK: - Array
-extension Array: Revertable where Self: Hashable, Element: Identifiable & Versionable {
+extension Array: Revertible where Self: Hashable, Element: Identifiable & Versionable {
     
     public func reversion(to previous: Self) -> Reversion<Self>? {
         
@@ -43,7 +43,7 @@ extension Array: Revertable where Self: Hashable, Element: Identifiable & Versio
 }
 
 // MARK: - Dictionary
-extension Dictionary: Revertable where Self: Hashable, Key: Hashable, Value: Identifiable & Versionable {
+extension Dictionary: Revertible where Self: Hashable, Key: Hashable, Value: Identifiable & Versionable {
 
     public func reversion(to previous: Self) -> Reversion<Self>? {
         
@@ -64,7 +64,7 @@ extension Dictionary: Revertable where Self: Hashable, Key: Hashable, Value: Ide
 }
 
 // MARK: - Data
-extension Data: Revertable {
+extension Data: Revertible {
 
     public func reversion(to previous: Self) -> Reversion<Self>? {
         
@@ -85,7 +85,7 @@ extension Data: Revertable {
 }
 
 // MARK: - String
-extension String: Revertable {
+extension String: Revertible {
 
     public func reversion(to previous: Self) -> Reversion<Self>? {
         

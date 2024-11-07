@@ -1,10 +1,10 @@
 import XCTest
-import Revertable
+import Revertible
 
-final class RevertableTests: XCTestCase {}
+final class RevertibleTests: XCTestCase {}
 
 // MARK: - Mocks
-extension RevertableTests {
+extension RevertibleTests {
     
     private struct Mock: Versionable, Identifiable {
         
@@ -253,7 +253,7 @@ extension String {
 }
 
 // MARK: - Tests
-extension RevertableTests {
+extension RevertibleTests {
     
     // MARK: Single value reversions
     func testRevert_onOverwritingReversion_willRevertToOriginal() throws {

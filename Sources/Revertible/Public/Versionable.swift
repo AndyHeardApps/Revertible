@@ -1,6 +1,6 @@
-/// Provides a simplified interface for conforming a type to the ``Revertable`` protocol, by registering which keypaths are to be monitored for changes.
+/// Provides a simplified interface for conforming a type to the ``Revertible`` protocol, by registering which keypaths are to be monitored for changes.
 ///
-/// The adopting type must implement the ``Versionable/addReversions(into:)`` function and register the properties that will have changes tracked and stored in the ``Reversion`` produced by the ``Revertable/Revertable/reversion(to:)`` function.
+/// The adopting type must implement the ``Versionable/addReversions(into:)`` function and register the properties that will have changes tracked and stored in the ``Reversion`` produced by the ``Revertible/Revertible/reversion(to:)`` function.
 ///
 /// For example:
 ///
@@ -17,11 +17,11 @@
 ///     }
 /// }
 /// ```
-public protocol Versionable: Revertable {
+public protocol Versionable: Revertible {
     
     // MARK: - Functions
     
-    /// Adds reversions to the ``Reverter`` via using the assorted ``Reverter/appendReversion(at:)-2k3an`` functions and passing `KeyPath`s for each revertable property.
+    /// Adds reversions to the ``Reverter`` via using the assorted ``Reverter/appendReversion(at:)-2k3an`` functions and passing `KeyPath`s for each revertible property.
     /// - Parameter reverter: The ``Reverter`` to be used to provide reversion information about the type.
     ///
     /// - NOTE: Swift autocomplete will sometimes auto-insert / auto-complete this function with an unspecialised ``Reverter``:
@@ -38,7 +38,7 @@ public protocol Versionable: Revertable {
     func addReversions(into reverter: inout some Reverter<Self>)
 }
 
-// MARK: - Default revertable implementation
+// MARK: - Default revertible implementation
 extension Versionable {
     
     public func reversion(to previous: Self) -> Reversion<Self>? {

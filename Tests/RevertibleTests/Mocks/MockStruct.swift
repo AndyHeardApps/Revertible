@@ -1,5 +1,5 @@
 import Foundation
-import Revertable
+import Revertible
 
 struct MockStruct: Identifiable {
     
