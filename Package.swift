@@ -1,29 +1,38 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
-    name: "Revertable",
+    name: "Revertible",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v16),
-        .watchOS(.v9)
+        .macOS(.v15),
+        .iOS(.v18),
+        .watchOS(.v11),
+        .tvOS(.v18),
+        .visionOS(.v1)
     ],
     products: [
         .library(
-            name: "Revertable",
-            targets: ["Revertable"]
+            name: "Revertible",
+            targets: ["Revertible"]
         )
     ],
     targets: [
         .target(
-            name: "Revertable",
-            dependencies: []
+            name: "Revertible",
+            dependencies: [],
+            swiftSettings: swiftSettings
         ),
         .testTarget(
-            name: "RevertableTests",
-            dependencies: ["Revertable"]
+            name: "RevertibleTests",
+            dependencies: ["Revertible"],
+            swiftSettings: swiftSettings
         )
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )
+
+var swiftSettings: [SwiftSetting] { [
+    .enableExperimentalFeature("StrictConcurrency"),
+] }

@@ -1,4 +1,4 @@
-# Revertable
+# Revertible
 
 Allows some value type to be able to create a `Reversion` object, that will revert any changed properties back to their original values. This allows states to be stored without storing copies of the whole object.
 

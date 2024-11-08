@@ -28,7 +28,7 @@ extension UndoControllerTests {
     
     func testUndoController_willUndoAndRedo_singleRevertibleAction() throws {
                 
-        let undoController = UndoController()
+        let undoController = VersioningController()
 
         XCTAssertFalse(undoController.hasUndo)
         XCTAssertFalse(undoController.hasRedo)
@@ -57,7 +57,7 @@ extension UndoControllerTests {
     
     func testUndoController_willUndoAndRedo_multipleRevertibleActions() throws {
                 
-        let undoController = UndoController()
+        let undoController = VersioningController()
 
         XCTAssertFalse(undoController.hasUndo)
         XCTAssertFalse(undoController.hasRedo)
@@ -108,7 +108,7 @@ extension UndoControllerTests {
     
     func testUndoController_willUndoAndRedo_multipleClosureActions() throws {
         
-        let undoController = UndoController()
+        let undoController = VersioningController()
 
         XCTAssertFalse(undoController.hasUndo)
         XCTAssertFalse(undoController.hasRedo)
@@ -158,7 +158,7 @@ extension UndoControllerTests {
     
     func testUndoController_undoAndRedo_willDoNothingWithNoChangesRegistered() throws {
         
-        let undoController = UndoController()
+        let undoController = VersioningController()
 
         try undoController.undo()
         try undoController.redo()
@@ -178,7 +178,7 @@ extension UndoControllerTests {
         let initialValue = mockClass!.value
         mockClass?.value.string = UUID().uuidString
         
-        let undoController = UndoController()
+        let undoController = VersioningController()
 
         undoController.append(changesOn: mockClass!, at: \.value, previousValue: initialValue)
         
@@ -191,7 +191,7 @@ extension UndoControllerTests {
     
     func testUndoController_willPushAndPopScopesCorrectly() throws {
         
-        let undoController = UndoController()
+        let undoController = VersioningController()
 
         XCTAssertFalse(undoController.hasUndo)
         XCTAssertFalse(undoController.hasRedo)
