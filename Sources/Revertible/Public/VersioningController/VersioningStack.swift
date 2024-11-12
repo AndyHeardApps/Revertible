@@ -48,10 +48,8 @@ extension VersioningStack {
 
     mutating func undoAll(_ value: inout Value) throws {
 
-        try $undoStack {
-            while !$0.isEmpty {
-                try undo(&value)
-            }
+        while !undoStack.isEmpty {
+            try undo(&value)
         }
     }
 
@@ -67,10 +65,8 @@ extension VersioningStack {
 
     mutating func redoAll(_ value: inout Value) throws {
 
-        try $redoStack {
-            while !$0.isEmpty {
-                try redo(&value)
-            }
+        while !redoStack.isEmpty {
+            try redo(&value)
         }
     }
 

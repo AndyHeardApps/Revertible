@@ -38,14 +38,6 @@ extension ReversionAction {
 
         try undoReversion.revert(&value)
     }
-    
-    mutating func invert() {
-
-        self = .init(
-            undoReversion: redoReversion,
-            redoReversion: undoReversion
-        )
-    }
 
     func inverted() -> Self {
 

@@ -176,7 +176,7 @@ extension VersioningController {
         value = referenceValue
     }
 
-    public func undo(_ root: inout Root) throws {
+    public func undo(root: inout Root) throws {
         try currentStack.undo(&referenceValue)
         root[keyPath: keyPath] = referenceValue
     }
@@ -227,7 +227,7 @@ extension VersioningController {
         value = referenceValue
     }
 
-    public func redo(_ root: inout Root) throws {
+    public func redo(root: inout Root) throws {
         try currentStack.redo(&referenceValue)
         root[keyPath: keyPath] = referenceValue
     }
@@ -243,7 +243,7 @@ extension VersioningController {
         value = referenceValue
     }
 
-    public func redoCurrentScope(_ root: inout Root) throws {
+    public func redoCurrentScope(root: inout Root) throws {
         try currentStack.redoAll(&referenceValue)
         root[keyPath: keyPath] = referenceValue
     }
