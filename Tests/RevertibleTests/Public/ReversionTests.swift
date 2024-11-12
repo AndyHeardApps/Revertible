@@ -1,7 +1,9 @@
-import XCTest
+import Foundation
+import Testing
 import Revertible
 
-final class RevertibleTests: XCTestCase {}
+@Suite("Integration")
+struct RevertibleTests {}
 
 // MARK: - Mocks
 extension RevertibleTests {
@@ -256,7 +258,8 @@ extension String {
 extension RevertibleTests {
     
     // MARK: Single value reversions
-    func testRevert_onOverwritingReversion_willRevertToOriginal() throws {
+    @Test
+    func Revert_onOverwritingReversion_willRevertToOriginal() throws {
         
         struct Mock: Versionable {
             let data: Data
@@ -275,10 +278,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onNonOptional_nonIdentifiable_mutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onNonOptional_nonIdentifiable_mutations_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         let original = value
@@ -290,10 +294,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onOptional_nonIdentifiable_mutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onOptional_nonIdentifiable_mutations_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         let original = value
@@ -305,10 +310,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
 
-    func testRevert_onNonOptional_identifiable_insertions_willRevertToOriginal() throws {
+    @Test
+    func Revert_onNonOptional_identifiable_insertions_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         value.mutateNonOptionalIdentifiables()
@@ -322,10 +328,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onOptional_identifiable_insertions_willRevertToOriginal() throws {
+    @Test
+    func Revert_onOptional_identifiable_insertions_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         let original = value
@@ -337,10 +344,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onNonOptional_identifiable_removals_willRevertToOriginal() throws {
+    @Test
+    func Revert_onNonOptional_identifiable_removals_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         value.mutateNonOptionalIdentifiables()
@@ -353,10 +361,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onOptional_identifiable_removals_willRevertToOriginal() throws {
+    @Test
+    func Revert_onOptional_identifiable_removals_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         value.mutateOptionalIdentifiables()
@@ -369,10 +378,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
 
-    func testRevert_onNonOptional_identifiable_mutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onNonOptional_identifiable_mutations_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         value.mutateNonOptionalIdentifiables()
@@ -392,10 +402,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onOptional_identifiable_mutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onOptional_identifiable_mutations_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         value.mutateOptionalIdentifiables()
@@ -415,10 +426,11 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_whenAllOptionalsAreNil_willRevertToOriginal() throws {
+    @Test
+    func Revert_whenAllOptionalsAreNil_willRevertToOriginal() throws {
         
         var value = Mock(id: 0)
         value.mutateAllNonIdentifiables()
@@ -432,20 +444,22 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onNoMutations_willCreateNilReversion() throws {
+    @Test
+    func Revert_onNoMutations_willCreateNilReversion() throws {
         
         let value = Mock(id: 0)
         let original = value
         
         let reversion = value.reversion(to: original)
         
-        XCTAssertNil(reversion)
+        #expect(reversion == nil)
     }
     
-    func testRevert_onWrongObjectVersion_willThrowError() throws {
+    @Test
+    func Revert_onWrongObjectVersion_willThrowError() throws {
         
         var value = Mock(id: 0)
         let original = value
@@ -461,7 +475,8 @@ extension RevertibleTests {
     }
     
     // MARK: Set reversions
-    func testRevert_onHashableSet_withMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onHashableSet_withMutations_willRevertToOriginal() throws {
         
         var value = Set(1...3)
         let original = value
@@ -472,20 +487,22 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onHashableSet_withNoMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onHashableSet_withNoMutations_willRevertToOriginal() throws {
         
         let value = Set(1...3)
         let original = value
         
         let reversion = value.reversion(to: original)
         
-        XCTAssertNil(reversion)
+        #expect(reversion == nil)
     }
     
-    func testRevert_onIdentifiableSet_withMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onIdentifiableSet_withMutations_willRevertToOriginal() throws {
         
         var value = Set([Mock(id: 0), Mock(id: 1)])
         let original = value
@@ -496,21 +513,23 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onIdentifiableSet_withNoMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onIdentifiableSet_withNoMutations_willRevertToOriginal() throws {
         
         let value = Set([Mock(id: 0), Mock(id: 1)])
         let original = value
         
         let reversion = value.reversion(to: original)
         
-        XCTAssertNil(reversion)
+        #expect(reversion == nil)
     }
     
     // MARK: Array reversions
-    func testRevert_onIdentifiableArray_withMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onIdentifiableArray_withMutations_willRevertToOriginal() throws {
         
         var value = [Mock(id: 0), Mock(id: 1)]
         let original = value
@@ -524,21 +543,23 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onIdentifiableArray_withNoMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onIdentifiableArray_withNoMutations_willRevertToOriginal() throws {
         
         let value = [Mock(id: 0), Mock(id: 1)]
         let original = value
         
         let reversion = value.reversion(to: original)
         
-        XCTAssertNil(reversion)
+        #expect(reversion == nil)
     }
     
     // MARK: Dictionary reversions    
-    func testRevert_onIdentifiableDictionary_withMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onIdentifiableDictionary_withMutations_willRevertToOriginal() throws {
         
         var value = ["1" : Mock(id: 1), "2" : Mock(id: 2)]
         let original = value
@@ -552,21 +573,23 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onIdentifiableDictionary_withNoMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onIdentifiableDictionary_withNoMutations_willRevertToOriginal() throws {
         
         let value = ["1" : Mock(id: 1), "2" : Mock(id: 2)]
         let original = value
         
         let reversion = value.reversion(to: original)
         
-        XCTAssertNil(reversion)
+        #expect(reversion == nil)
     }
     
     // MARK: Data reversions
-    func testRevert_onData_withMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onData_withMutations_willRevertToOriginal() throws {
         
         var value = Data(1...3)
         let original = value
@@ -578,21 +601,23 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onData_withNoMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onData_withNoMutations_willRevertToOriginal() throws {
         
         let value = Data(1...3)
         let original = value
         
         let reversion = value.reversion(to: original)
         
-        XCTAssertNil(reversion)
+        #expect(reversion == nil)
     }
 
     // MARK: String reversions
-    func testRevert_onString_withMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onString_withMutations_willRevertToOriginal() throws {
         
         var value = "1234"
         let original = value
@@ -603,21 +628,23 @@ extension RevertibleTests {
         XCTAssertNotNil(reversion)
         XCTAssertNotEqual(value, original)
         try reversion?.revert(&value)
-        XCTAssertEqual(value, original)
+        #expect(value == original)
     }
     
-    func testRevert_onString_withNoMutations_willRevertToOriginal() throws {
+    @Test
+    func Revert_onString_withNoMutations_willRevertToOriginal() throws {
         
         let value = "1234"
         let original = value
         
         let reversion = value.reversion(to: original)
         
-        XCTAssertNil(reversion)
+        #expect(reversion == nil)
     }
 
     // MARK: - Efficiency
-    func testEfficiency() {
+    @Test
+    func Efficiency() {
         
         var value = Mock(id: 0)
         value.mutateAllIdentifiables()

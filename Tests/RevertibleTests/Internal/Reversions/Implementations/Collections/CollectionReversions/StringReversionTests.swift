@@ -1,7 +1,8 @@
-import XCTest
+import Testing
 @testable import Revertible
 
-final class StringReversionTests: XCTestCase {}
+@Suite("String reversion")
+struct StringReversionTests {}
 
 // MARK: - Helpers
 extension String {
@@ -16,8 +17,9 @@ extension String {
 extension StringReversionTests {
     
     // MARK: Insert
-    func testRevert_onInsertReversion_withSelfKeyPath_willInsertElementsCorrectly() {
-        
+    @Test("Insert reversion with self key path")
+    func insertReversionWithSelfKeyPath() {
+
         var value = "abcd"
         
         let reversion = StringReversion(
@@ -30,11 +32,12 @@ extension StringReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(value, "zaybefcd")
+        #expect(value == "zaybefcd")
     }
 
     // MARK: Remove
-    func testRevert_onRemoveReversion_withSelfKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with self key path")
+    func removeReversionWithSelfKeyPath() {
 
         var value = "abcd"
 
@@ -47,11 +50,12 @@ extension StringReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value, "b")
+        #expect(value == "b")
     }
 
     // MARK: Mapped insertion
-    func testRevert_onInsertReversion_withMappedValueChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped value child key path")
+    func insertReversionWithMappedValueChildKeyPath() {
 
         var value = MockStruct()
 
@@ -66,10 +70,11 @@ extension StringReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.string, "zaybefcd")
+        #expect(value.string == "zaybefcd")
     }
 
-    func testRevert_onInsertReversion_withMappedReferenceChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped reference child key path")
+    func insertReversionWithMappedReferenceChildKeyPath() {
 
         var value = MockClass()
 
@@ -84,11 +89,12 @@ extension StringReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.string, "zaybefcd")
+        #expect(value.string == "zaybefcd")
     }
 
     // MARK: Mapped removal
-    func testRevert_onRemovalReversion_withMappedValueChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped value child key path")
+    func removeReversionWithMappedValueChildKeyPath() {
 
         var value = MockStruct()
 
@@ -102,10 +108,11 @@ extension StringReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.string, "b")
+        #expect(value.string == "b")
     }
 
-    func testRevert_onRemoveReversion_withMappedReferenceChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped reference child key path")
+    func removeReversionWithMappedReferenceChildKeyPath() {
 
         var value = MockClass()
 
@@ -119,6 +126,6 @@ extension StringReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.string, "b")
+        #expect(value.string == "b")
     }
 }

@@ -1,13 +1,15 @@
-import XCTest
+import Testing
 @testable import Revertible
 
-final class SetReversionTests: XCTestCase {}
+@Suite("Set reversion")
+struct SetReversionTests {}
 
 // MARK: - Tests
 extension SetReversionTests {
     
     // MARK: Insert
-    func testRevert_onInsertReversion_withValueSelfKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with value self key path")
+    func insertReversionOnValueSelfKeyPath() {
         
         var value = Set([
             MockStruct(id: 0),
@@ -27,8 +29,8 @@ extension SetReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockStruct(id: 10),
                 MockStruct(id: 0),
@@ -42,7 +44,8 @@ extension SetReversionTests {
         )
     }
 
-    func testRevert_onInsertReversion_withReferenceSelfKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with reference self key path")
+    func insertReversionOnReferenceSelfKeyPath() {
 
         var value = Set([
             MockClass(id: 0),
@@ -62,8 +65,8 @@ extension SetReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockClass(id: 10),
                 MockClass(id: 0),
@@ -78,7 +81,8 @@ extension SetReversionTests {
     }
 
     // MARK: Remove
-    func testRevert_onRemoveReversion_withValueSelfKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with value self key path")
+    func removeReversionOnValueSelfKeyPath() {
 
         var value = Set([
             MockStruct(id: 0),
@@ -96,8 +100,8 @@ extension SetReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockStruct(id: 0),
                 MockStruct(id: 3)
@@ -105,7 +109,8 @@ extension SetReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withReferenceSelfKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with reference self key path")
+    func removeReversionOnReferenceSelfKeyPath() {
 
         var value = Set([
             MockClass(id: 0),
@@ -123,8 +128,8 @@ extension SetReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockClass(id: 0),
                 MockClass(id: 3)
@@ -133,7 +138,8 @@ extension SetReversionTests {
     }
 
     // MARK: Mapped insertion
-    func testRevert_onInsertReversion_withMappedValueChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped value child key")
+    func insertReversionWithMappedValueChildKey() {
 
         var value = MockStruct()
 
@@ -149,10 +155,11 @@ extension SetReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.equatableSet, [10, 0, 13, 1, 2, 3, 11, 12])
+        #expect(value.equatableSet == [10, 0, 13, 1, 2, 3, 11, 12])
     }
 
-    func testRevert_onInsertReversion_withMappedReferenceChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped reference child key path")
+    func insertReversionWithMappedReferenceChildKeyPath() {
 
         var value = MockClass()
 
@@ -168,11 +175,12 @@ extension SetReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.equatableSet, [10, 0, 13, 1, 2, 3, 11, 12])
+        #expect(value.equatableSet == [10, 0, 13, 1, 2, 3, 11, 12])
     }
 
     // MARK: Mapped removal
-    func testRevert_onRemovalReversion_withMappedValueChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Removal reversion with mapped value child key path")
+    func removalReversionWithMappedValueChildKeyPath() {
 
         var value = MockStruct()
 
@@ -186,10 +194,11 @@ extension SetReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.equatableSet, [0, 3])
+        #expect(value.equatableSet == [0, 3])
     }
 
-    func testRevert_onRemoveReversion_withMappedReferenceChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Removal reversion with mapped reference child key path")
+    func removalReversionWithMappedReferenceChildKeyPath() {
 
         var value = MockClass()
 
@@ -203,6 +212,6 @@ extension SetReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(value.equatableSet, [0, 3])
+        #expect(value.equatableSet == [0, 3])
     }
 }

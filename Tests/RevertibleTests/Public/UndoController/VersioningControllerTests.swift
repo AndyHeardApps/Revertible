@@ -40,12 +40,13 @@ extension VersioningControllerTests {
         #expect(originalValue != mockStruct)
     }
     
-//    func testversioningController_willUndoAndRedo_multipleRevertibleActions() throws {
+//    @Test
+    func versioningController_willUndoAndRedo_multipleRevertibleActions() throws {
 //                
 //        let versioningController = VersioningController()
 //
-//        XCTAssertFalse(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == false)
+//        #expect(versioningController.hasRedo == false)
 //        
 //        let previousValue1 = mockStruct!
 //        mockStruct.string = UUID().uuidString
@@ -57,46 +58,47 @@ extension VersioningControllerTests {
 //
 //        versioningController.append(changesOn: self, at: \.mockStruct, previousValue: previousValue2)
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
 //        XCTAssertNotEqual(previousValue1, mockStruct)
 //        XCTAssertNotEqual(previousValue2, mockStruct)
 //
 //        try versioningController.undo()
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertTrue(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == true)
 //        XCTAssertNotEqual(previousValue1, mockStruct)
-//        XCTAssertEqual(previousValue2, mockStruct)
+//        #expect(previousValue2 == mockStruct)
 //        
 //        try versioningController.undo()
 //        
-//        XCTAssertFalse(versioningController.hasUndo)
-//        XCTAssertTrue(versioningController.hasRedo)
-//        XCTAssertEqual(previousValue1, mockStruct)
+//        #expect(versioningController.hasUndo == false)
+//        #expect(versioningController.hasRedo == true)
+//        #expect(previousValue1 == mockStruct)
 //        XCTAssertNotEqual(previousValue2, mockStruct)
 //
 //        try versioningController.redo()
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertTrue(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == true)
 //        XCTAssertNotEqual(previousValue1, mockStruct)
-//        XCTAssertEqual(previousValue2, mockStruct)
+//        #expect(previousValue2 == mockStruct)
 //        
 //        try versioningController.redo()
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
 //        XCTAssertNotEqual(previousValue1, mockStruct)
 //        XCTAssertNotEqual(previousValue2, mockStruct)
 //    }
 //    
-//    func testversioningController_willUndoAndRedo_multipleClosureActions() throws {
+//    @Test
+    func versioningController_willUndoAndRedo_multipleClosureActions() throws {
 //        
 //        let versioningController = VersioningController()
 //
-//        XCTAssertFalse(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == false)
+//        #expect(versioningController.hasRedo == false)
 //
 //        var value = 0
 //        
@@ -112,36 +114,37 @@ extension VersioningControllerTests {
 //        )
 //        value = 2
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
-//        XCTAssertEqual(value, 2)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
+//        #expect(value == 2)
 //
 //        try versioningController.undo()
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertTrue(versioningController.hasRedo)
-//        XCTAssertEqual(value, 1)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == true)
+//        #expect(value == 1)
 //        
 //        try versioningController.undo()
 //        
-//        XCTAssertFalse(versioningController.hasUndo)
-//        XCTAssertTrue(versioningController.hasRedo)
-//        XCTAssertEqual(value, 0)
+//        #expect(versioningController.hasUndo == false)
+//        #expect(versioningController.hasRedo == true)
+//        #expect(value == 0)
 //
 //        try versioningController.redo()
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertTrue(versioningController.hasRedo)
-//        XCTAssertEqual(value, 1)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == true)
+//        #expect(value == 1)
 //        
 //        try versioningController.redo()
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
-//        XCTAssertEqual(value, 2)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
+//        #expect(value == 2)
 //    }
 //    
-//    func testversioningController_undoAndRedo_willDoNothingWithNoChangesRegistered() throws {
+//    @Test
+    func versioningController_undoAndRedo_willDoNothingWithNoChangesRegistered() throws {
 //        
 //        let versioningController = VersioningController()
 //
@@ -149,7 +152,8 @@ extension VersioningControllerTests {
 //        try versioningController.redo()
 //    }
 //    
-//    func testversioningController_willWeaklyReferenceRevertibleRoots() throws {
+//    @Test
+    func versioningController_willWeaklyReferenceRevertibleRoots() throws {
 //        
 //        class Mock {
 //            var value = MockStruct()
@@ -168,55 +172,56 @@ extension VersioningControllerTests {
 //        versioningController.append(changesOn: mockClass!, at: \.value, previousValue: initialValue)
 //        
 //        mockClass = nil
-//        XCTAssertNil(weakReference)
+//        #expect(weakReference == nil)
 //        
 //        try versioningController.undo()
 //        try versioningController.redo()
 //    }
 //    
-//    func testversioningController_willPushAndPopScopesCorrectly() throws {
+//    @Test
+    func versioningController_willPushAndPopScopesCorrectly() throws {
 //        
 //        let versioningController = VersioningController()
 //
-//        XCTAssertFalse(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == false)
+//        #expect(versioningController.hasRedo == false)
 //        
 //        var previousValue = mockStruct!
 //        mockStruct.int = 1
 //        versioningController.append(changesOn: self, at: \.mockStruct, previousValue: previousValue)
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
 //        
 //        versioningController.pushNewScope()
 //        
-//        XCTAssertFalse(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == false)
+//        #expect(versioningController.hasRedo == false)
 //
 //        previousValue = mockStruct
 //        mockStruct.int = 2
 //        versioningController.append(changesOn: self, at: \.mockStruct, previousValue: previousValue)
 //
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
 //
 //        previousValue = mockStruct
 //        mockStruct.int = 3
 //        versioningController.append(changesOn: self, at: \.mockStruct, previousValue: previousValue)
 //
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
 //
 //        versioningController.discardCurrentScope()
 //        mockStruct.int = 1
 //        
-//        XCTAssertTrue(versioningController.hasUndo)
-//        XCTAssertFalse(versioningController.hasRedo)
+//        #expect(versioningController.hasUndo == true)
+//        #expect(versioningController.hasRedo == false)
 //        
 //        try versioningController.undo()
 //        
-//        XCTAssertFalse(versioningController.hasUndo)
-//        XCTAssertTrue(versioningController.hasRedo)
-//        XCTAssertEqual(mockStruct.int, 0)
+//        #expect(versioningController.hasUndo == false)
+//        #expect(versioningController.hasRedo == true)
+//        #expect(mockStruct.int == 0)
 //    }
 }

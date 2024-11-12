@@ -1,13 +1,15 @@
-import XCTest
+import Testing
 @testable import Revertible
 
-final class IdentifiableArrayReversionTests: XCTestCase {}
+@Suite("Identifiable array reversion")
+struct IdentifiableArrayReversionTests {}
 
 // MARK: - Tests
 extension IdentifiableArrayReversionTests {
     
     // MARK: Insert
-    func testRevert_onInsertReversion_withValueSelfKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with value self key path")
+    func insertReversionOnValueSelfKeyPath() {
         
         var value = [
             MockStruct(id: 0),
@@ -27,8 +29,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockStruct(id: 10),
                 MockStruct(id: 0),
@@ -42,8 +44,9 @@ extension IdentifiableArrayReversionTests {
         )
     }
     
-    func testRevert_onInsertReversion_withReferenceSelfKeyPath_willInsertElementsCorrectly() {
-        
+    @Test("Insert reversion with reference self key path")
+    func insertReversionOnReferenceSelfKeyPath() {
+
         var value = [
             MockClass(id: 0),
             MockClass(id: 1),
@@ -62,8 +65,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockClass(id: 10),
                 MockClass(id: 0),
@@ -78,7 +81,8 @@ extension IdentifiableArrayReversionTests {
     }
     
     // MARK: Remove
-    func testRevert_onRemoveReversion_withValueSelfKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with value self key path")
+    func removeReversionOnValueSelfKeyPath() {
         
         var value = [
             MockStruct(id: 0),
@@ -96,8 +100,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockStruct(id: 0),
                 MockStruct(id: 3)
@@ -105,8 +109,9 @@ extension IdentifiableArrayReversionTests {
         )
     }
     
-    func testRevert_onRemoveReversion_withReferenceSelfKeyPath_willRemoveElementsCorrectly() {
-        
+    @Test("Remove reversion with reference self key path")
+    func removeReversionOnReferenceSelfKeyPath() {
+
         var value = [
             MockClass(id: 0),
             MockClass(id: 1),
@@ -123,8 +128,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockClass(id: 0),
                 MockClass(id: 3)
@@ -133,8 +138,9 @@ extension IdentifiableArrayReversionTests {
     }
     
     // MARK: Move
-    func testRevert_onMoveReversion_withValueSelfKeyPath_willMoveElementsCorrectly() {
-        
+    @Test("Move reversion with value self key path")
+    func moveReversionOnValueSelfKeyPath() {
+
         var value = [
             MockStruct(id: 0),
             MockStruct(id: 1),
@@ -149,8 +155,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockStruct(id: 1),
                 MockStruct(id: 2),
@@ -160,7 +166,8 @@ extension IdentifiableArrayReversionTests {
         )
     }
     
-    func testRevert_onMoveReversion_withReferenceSelfKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with reference self key path")
+    func moveReversionOnReferenceSelfKeyPath() {
         
         var value = [
             MockClass(id: 0),
@@ -176,8 +183,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 MockClass(id: 1),
                 MockClass(id: 2),
@@ -188,7 +195,8 @@ extension IdentifiableArrayReversionTests {
     }
     
     // MARK: Mapped insertion
-    func testRevert_onInsertReversion_withMappedValueSelfValueChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped value self value child key path")
+    func insertReversionOnMappedValueSelfValueChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableValueArray = [
@@ -210,8 +218,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueArray,
+        #expect(
+            value.identifiableValueArray ==
             [
                 MockStruct(id: 10),
                 MockStruct(id: 0),
@@ -225,7 +233,8 @@ extension IdentifiableArrayReversionTests {
         )
     }
     
-    func testRevert_onInsertReversion_withMappedValueSelfReferenceChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped value self reference child key path")
+    func insertReversionOnMappedValueSelfReferenceChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableReferenceArray = [
@@ -247,8 +256,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
+        #expect(
+            value.identifiableReferenceArray ==
             [
                 MockClass(id: 10),
                 MockClass(id: 0),
@@ -262,7 +271,8 @@ extension IdentifiableArrayReversionTests {
         )
     }
 
-    func testRevert_onInsertReversion_withMappedReferenceSelfValueChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped reference self value child key path")
+    func insertReversionOnMappedReferenceSelfValueChildKeyPath() {
         
         var value = MockClass()
         value.identifiableValueArray = [
@@ -284,8 +294,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value.identifiableValueArray,
+        #expect(
+            value.identifiableValueArray ==
             [
                 MockStruct(id: 10),
                 MockStruct(id: 0),
@@ -299,8 +309,9 @@ extension IdentifiableArrayReversionTests {
         )
     }
     
-    func testRevert_onInsertReversion_withMappedReferenceSelfReferenceChildKeyPath_willInsertElementsCorrectly() {
-        
+    @Test("Insert reversion with mapped reference self reference child key path")
+    func insertReversionOnMappedReferenceSelfReferenceChildKeyPath() {
+
         var value = MockClass()
         value.identifiableReferenceArray = [
             MockClass(id: 0),
@@ -321,8 +332,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
+        #expect(
+            value.identifiableReferenceArray ==
             [
                 MockClass(id: 10),
                 MockClass(id: 0),
@@ -337,7 +348,8 @@ extension IdentifiableArrayReversionTests {
     }
     
     // MARK: Mapped removal
-    func testRevert_onRemoveReversion_withMappedValueSelfValueChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped value self value child key path")
+    func removeReversionOnMappedValueSelfValueChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableValueArray = [
@@ -357,8 +369,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueArray,
+        #expect(
+            value.identifiableValueArray ==
             [
                 MockStruct(id: 0),
                 MockStruct(id: 3)
@@ -366,7 +378,8 @@ extension IdentifiableArrayReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withMappedValueSelfReferenceChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped value self reference child key path")
+    func removeReversionOnMappedValueSelfReferenceChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableReferenceArray = [
@@ -386,8 +399,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
+        #expect(
+            value.identifiableReferenceArray ==
             [
                 MockClass(id: 0),
                 MockClass(id: 3)
@@ -395,8 +408,9 @@ extension IdentifiableArrayReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withMappedReferenceSelfValueChildKeyPath_willRemoveElementsCorrectly() {
-        
+    @Test("Remove reversion with mapped reference self value child key path")
+    func removeReversionWithMappedReferenceSelfValueChildKeyPath() {
+
         var value = MockClass()
         value.identifiableValueArray = [
             MockStruct(id: 0),
@@ -415,8 +429,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value.identifiableValueArray,
+        #expect(
+            value.identifiableValueArray ==
             [
                 MockStruct(id: 0),
                 MockStruct(id: 3)
@@ -424,8 +438,9 @@ extension IdentifiableArrayReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withMappedReferenceSelfReferenceChildKeyPath_willRemoveElementsCorrectly() {
-        
+    @Test("Remove reversion with mapped reference self reference child key path")
+    func removeReversionWithMappedReferenceSelfReferenceChildKeyPath() {
+
         var value = MockClass()
         value.identifiableReferenceArray = [
             MockClass(id: 0),
@@ -444,8 +459,8 @@ extension IdentifiableArrayReversionTests {
         
         reversion.revert(&value)
         
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
+        #expect(
+            value.identifiableReferenceArray ==
             [
                 MockClass(id: 0),
                 MockClass(id: 3)
@@ -454,7 +469,8 @@ extension IdentifiableArrayReversionTests {
     }
 
     // MARK: Mapped move
-    func testRevert_onMoveReversion_withMappedValueSelfValueChildKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with mapped value self value child key path")
+    func moveReversionWithMappedValueSelfValueChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableValueArray = [
@@ -472,8 +488,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueArray,
+        #expect(
+            value.identifiableValueArray ==
             [
                 MockStruct(id: 1),
                 MockStruct(id: 2),
@@ -482,8 +498,9 @@ extension IdentifiableArrayReversionTests {
             ]
         )
     }
-    
-    func testRevert_onMoveReversion_withMappedValueSelfReferenceChildKeyPath_willMoveElementsCorrectly() {
+
+    @Test("Move reversion with mapped value self reference child key path")
+    func moveReversionWithMappedValueSelfReferenceChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableReferenceArray = [
@@ -501,8 +518,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
+        #expect(
+            value.identifiableReferenceArray ==
             [
                 MockClass(id: 1),
                 MockClass(id: 2),
@@ -511,8 +528,9 @@ extension IdentifiableArrayReversionTests {
             ]
         )
     }
-    
-    func testRevert_onMoveReversion_withMappedReferenceSelfValueChildKeyPath_willMoveElementsCorrectly() {
+
+    @Test("Move reversion with mapped reference self value child key path")
+    func moveReversionWithMappedReferenceSelfValueChildKeyPath() {
 
         var value = MockClass()
         value.identifiableValueArray = [
@@ -530,8 +548,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueArray,
+        #expect(
+            value.identifiableValueArray ==
             [
                 MockStruct(id: 1),
                 MockStruct(id: 2),
@@ -540,8 +558,9 @@ extension IdentifiableArrayReversionTests {
             ]
         )
     }
-    
-    func testRevert_onMoveReversion_withMappedReferenceSelfReferenceChildKeyPath_willMoveElementsCorrectly() {
+
+    @Test("Move reversion with mapped reference self reference child key path")
+    func moveReversionWithMappedReferenceSelfReferenceChildKeyPath() {
 
         var value = MockClass()
         value.identifiableReferenceArray = [
@@ -559,8 +578,8 @@ extension IdentifiableArrayReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceArray,
+        #expect(
+            value.identifiableReferenceArray ==
             [
                 MockClass(id: 1),
                 MockClass(id: 2),

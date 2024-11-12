@@ -1,30 +1,33 @@
-import XCTest
+import Testing
 @testable import Revertible
 
-final class AnyValueReversionTests: XCTestCase {}
+@Suite("Any value reversion")
+struct AnyValueReversionTests {}
 
 // MARK: - Tests
 extension AnyValueReversionTests {
     
-    func testRevert_willInvokeRevertOnWrappedReversion() {
-        
+    @Test("Invokes revert on wrapped reversion")
+    func invokesRevertOnWrappedReversion() {
+
         let reversion = MockValueReversion<Int>()
         let anyReversion = reversion.erasedToAnyValueReversion()
         
         var value = 1
         
-        XCTAssertNil(reversion.revertedObject)
+        #expect(reversion.revertedObject == nil)
         anyReversion.revert(&value)
-        XCTAssertEqual(reversion.revertedObject, 1)
+        #expect(reversion.revertedObject == 1)
     }
-    
-    func testMapped_willInvokeMappedOnWrappedReversion() {
-        
+
+    @Test("Mapped reversion invokes revert on wrapped reversion")
+    func mappedReversionInvokesRevertOnWrappedReversion() {
+
         let reversion = MockValueReversion<Int>()
         let anyReversion = reversion.erasedToAnyValueReversion()
                 
-        XCTAssertFalse(reversion.mappedCalled)
+        #expect(reversion.mappedCalled == false)
         let _ = anyReversion.mapped(to: \Int.self)
-        XCTAssertTrue(reversion.mappedCalled)
+        #expect(reversion.mappedCalled == true)
     }
 }

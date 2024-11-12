@@ -1,13 +1,16 @@
-import XCTest
+import Foundation
+import Testing
 @testable import Revertible
 
-final class DefaultReverterTests: XCTestCase {}
+@Suite("Default reverter")
+struct DefaultReverterTests {}
 
 // MARK: - Tests
 extension DefaultReverterTests {
     
     // MARK: - Int
-    func testAppendReversion_forChanges_onInt_willCreateCorrectReversions() {
+    @Test("Append reversion for Int changes")
+    func appendReversionForIntChanges() {
         
         var reverter = DefaultReverter(
             current: Int(1),
@@ -16,10 +19,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onInt_willCreateZeroReversions() {
+    @Test("Append reversion for no Int changes")
+    func appendReversionForNoIntChanges() {
         
         var reverter = DefaultReverter(
             current: Int(0),
@@ -28,11 +32,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Int
-    func testAppendReversion_forChanges_onOptionalInt_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Int changes")
+    func appendReversionForOptionalIntChanges() {
         
         let values: [(Int?, Int?)] = [
             (0, 1),
@@ -48,11 +53,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalInt_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Int changes")
+    func appendReversionForNoOptionalIntChanges() {
         
         let values: [(Int?, Int?)] = [
             (0, 0),
@@ -67,12 +73,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - Int64
-    func testAppendReversion_forChanges_onInt64_willCreateCorrectReversions() {
+    @Test("Append reversion for Int64 changes")
+    func appendReversionForInt64Changes() {
         
         var reverter = DefaultReverter(
             current: Int64(1),
@@ -81,10 +88,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onInt64_willCreateZeroReversions() {
+    @Test("Append reversion for no Int64 changes")
+    func appendReversionForNoInt64Changes() {
         
         var reverter = DefaultReverter(
             current: Int64(0),
@@ -93,11 +101,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Int64
-    func testAppendReversion_forChanges_onOptionalInt64_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Int64 changes")
+    func appendReversionForOptionalInt64Changes() {
         
         let values: [(Int64?, Int64?)] = [
             (0, 1),
@@ -113,11 +122,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalInt64_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Int64 changes")
+    func appendReversionForNoOptionalInt64Changes() {
         
         let values: [(Int64?, Int64?)] = [
             (0, 0),
@@ -132,12 +142,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     // MARK: - Int32
-    func testAppendReversion_forChanges_onInt32_willCreateCorrectReversions() {
+    @Test("Append reversion for Int32 changes")
+    func appendReversionForInt32Changes() {
         
         var reverter = DefaultReverter(
             current: Int32(1),
@@ -146,10 +157,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onInt32_willCreateZeroReversions() {
+    @Test("Append reversion for no Int32 changes")
+    func appendReversionForNoInt32Changes() {
         
         var reverter = DefaultReverter(
             current: Int32(0),
@@ -158,11 +170,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Int32
-    func testAppendReversion_forChanges_onOptionalInt32_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Int32 changes")
+    func appendReversionForOptionalInt32Changes() {
         
         let values: [(Int32?, Int32?)] = [
             (0, 1),
@@ -178,11 +191,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalInt32_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Int32 changes")
+    func appendReversionForNoOptionalInt32Changes() {
         
         let values: [(Int32?, Int32?)] = [
             (0, 0),
@@ -197,12 +211,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     // MARK: - Int16
-    func testAppendReversion_forChanges_onInt16_willCreateCorrectReversions() {
+    @Test("Append reversion for Int16 changes")
+    func appendReversionForInt16Changes() {
         
         var reverter = DefaultReverter(
             current: Int16(1),
@@ -211,10 +226,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onInt16_willCreateZeroReversions() {
+    @Test("Append reversion for no Int16 changes")
+    func appendReversionForNoInt16Changes() {
         
         var reverter = DefaultReverter(
             current: Int16(0),
@@ -223,11 +239,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Int16
-    func testAppendReversion_forChanges_onOptionalInt16_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Int16 changes")
+    func appendReversionForOptionalInt16Changes() {
         
         let values: [(Int16?, Int16?)] = [
             (0, 1),
@@ -243,11 +260,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalInt16_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Int16 changes")
+    func appendReversionForNoOptionalInt16Changes() {
         
         let values: [(Int16?, Int16?)] = [
             (0, 0),
@@ -262,12 +280,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - Int8
-    func testAppendReversion_forChanges_onInt8_willCreateCorrectReversions() {
+    @Test("Append reversion for Int8 changes")
+    func appendReversionForInt8Changes() {
         
         var reverter = DefaultReverter(
             current: Int8(1),
@@ -276,10 +295,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onInt8_willCreateZeroReversions() {
+    @Test("Append reversion for no Int8 changes")
+    func appendReversionForNoInt8Changes() {
         
         var reverter = DefaultReverter(
             current: Int8(0),
@@ -288,11 +308,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Int8
-    func testAppendReversion_forChanges_onOptionalInt8_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Int8 changes")
+    func appendReversionForOptionalInt8Changes() {
         
         let values: [(Int8?, Int8?)] = [
             (0, 1),
@@ -308,11 +329,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalInt8_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Int8 changes")
+    func appendReversionForNoOptionalInt8Changes() {
         
         let values: [(Int8?, Int8?)] = [
             (0, 0),
@@ -327,12 +349,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - UInt
-    func testAppendReversion_forChanges_onUInt_willCreateCorrectReversions() {
+    @Test("Append reversion for UInt changes")
+    func appendReversionForUIntChanges() {
         
         var reverter = DefaultReverter(
             current: UInt(1),
@@ -341,10 +364,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onUInt_willCreateZeroReversions() {
+    @Test("Append reversion for no UInt changes")
+    func appendReversionForNoUIntChanges() {
         
         var reverter = DefaultReverter(
             current: UInt(0),
@@ -353,11 +377,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional UInt
-    func testAppendReversion_forChanges_onOptionalUInt_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional UInt changes")
+    func appendReversionForOptionalUIntChanges() {
         
         let values: [(UInt?, UInt?)] = [
             (0, 1),
@@ -373,11 +398,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalUInt_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional UInt changes")
+    func appendReversionForNoOptionalUIntChanges() {
         
         let values: [(UInt?, UInt?)] = [
             (0, 0),
@@ -392,12 +418,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - UInt64
-    func testAppendReversion_forChanges_onUInt64_willCreateCorrectReversions() {
+    @Test("Append reversion for UInt64 changes")
+    func appendReversionForUInt64Changes() {
         
         var reverter = DefaultReverter(
             current: UInt64(1),
@@ -406,10 +433,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onUInt64_willCreateZeroReversions() {
+    @Test("Append reversion for no UInt64 changes")
+    func appendReversionForNoUInt64Changes() {
         
         var reverter = DefaultReverter(
             current: UInt64(0),
@@ -418,11 +446,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional UInt64
-    func testAppendReversion_forChanges_onOptionalUInt64_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional UInt64 changes")
+    func appendReversionForOptionalUInt64Changes() {
         
         let values: [(UInt64?, UInt64?)] = [
             (0, 1),
@@ -438,11 +467,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalUInt64_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional UInt64 changes")
+    func appendReversionForNoOptionalUInt64Changes() {
         
         let values: [(UInt64?, UInt64?)] = [
             (0, 0),
@@ -457,12 +487,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - UInt32
-    func testAppendReversion_forChanges_onUInt32_willCreateCorrectReversions() {
+    @Test("Append reversion for UInt32 changes")
+    func appendReversionForUInt32Changes() {
         
         var reverter = DefaultReverter(
             current: UInt32(1),
@@ -471,10 +502,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onUInt32_willCreateZeroReversions() {
+    @Test("Append reversion for no UInt32 changes")
+    func appendReversionForNoUInt32Changes() {
         
         var reverter = DefaultReverter(
             current: UInt32(0),
@@ -483,11 +515,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional UInt32
-    func testAppendReversion_forChanges_onOptionalUInt32_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional UInt32 changes")
+    func appendReversionForOptionalUInt32Changes() {
         
         let values: [(UInt32?, UInt32?)] = [
             (0, 1),
@@ -503,11 +536,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalUInt32_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional UInt32 changes")
+    func appendReversionForNoOptionalUInt32Changes() {
         
         let values: [(UInt32?, UInt32?)] = [
             (0, 0),
@@ -522,12 +556,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - UInt16
-    func testAppendReversion_forChanges_onUInt16_willCreateCorrectReversions() {
+    @Test("Append reversion for UInt16 changes")
+    func appendReversionForUInt16Changes() {
         
         var reverter = DefaultReverter(
             current: UInt16(1),
@@ -536,10 +571,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onUInt16_willCreateZeroReversions() {
+    @Test("Append reversion for no UInt16 changes")
+    func appendReversionForNoUInt16Changes() {
         
         var reverter = DefaultReverter(
             current: UInt16(0),
@@ -548,11 +584,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional UInt16
-    func testAppendReversion_forChanges_onOptionalUInt16_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional UInt16 changes")
+    func appendReversionForOptionalUInt16Changes() {
         
         let values: [(UInt16?, UInt16?)] = [
             (0, 1),
@@ -568,11 +605,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalUInt16_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional UInt16 changes")
+    func appendReversionForNoOptionalUInt16Changes() {
         
         let values: [(UInt16?, UInt16?)] = [
             (0, 0),
@@ -587,13 +625,14 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     
     // MARK: - UInt8
-    func testAppendReversion_forChanges_onUInt8_willCreateCorrectReversions() {
+    @Test("Append reversion for UInt8 changes")
+    func appendReversionForUInt8Changes() {
         
         var reverter = DefaultReverter(
             current: UInt8(1),
@@ -602,10 +641,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onUInt8_willCreateZeroReversions() {
+    @Test("Append reversion for no UInt8 changes")
+    func appendReversionForNoUInt8Changes() {
         
         var reverter = DefaultReverter(
             current: UInt8(0),
@@ -614,11 +654,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional UInt8
-    func testAppendReversion_forChanges_onOptionalUInt8_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional UInt8 changes")
+    func appendReversionForOptionalUInt8Changes() {
         
         let values: [(UInt8?, UInt8?)] = [
             (0, 1),
@@ -634,11 +675,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalUInt8_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional UInt8 changes")
+    func appendReversionForNoOptionalUInt8Changes() {
         
         let values: [(UInt8?, UInt8?)] = [
             (0, 0),
@@ -653,12 +695,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - Double
-    func testAppendReversion_forChanges_onDouble_willCreateCorrectReversions() {
+    @Test("Append reversion for Double changes")
+    func appendReversionForDoubleChanges() {
         
         var reverter = DefaultReverter(
             current: Double(1),
@@ -667,10 +710,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onDouble_willCreateZeroReversions() {
+    @Test("Append reversion for no Double changes")
+    func appendReversionForNoDoubleChanges() {
         
         var reverter = DefaultReverter(
             current: Double(0),
@@ -679,11 +723,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Double
-    func testAppendReversion_forChanges_onOptionalDouble_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Double changes")
+    func appendReversionForOptionalDoubleChanges() {
         
         let values: [(Double?, Double?)] = [
             (0, 1),
@@ -699,11 +744,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalDouble_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Double changes")
+    func appendReversionForNoOptionalDoubleChanges() {
         
         let values: [(Double?, Double?)] = [
             (0, 0),
@@ -718,12 +764,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     // MARK: - Float
-    func testAppendReversion_forChanges_onFloat_willCreateCorrectReversions() {
+    @Test("Append reversion for Float changes")
+    func appendReversionForFloatChanges() {
         
         var reverter = DefaultReverter(
             current: Float(1),
@@ -732,10 +779,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onFloat_willCreateZeroReversions() {
+    @Test("Append reversion for no Float changes")
+    func appendReversionForNoFloatChanges() {
         
         var reverter = DefaultReverter(
             current: Float(0),
@@ -744,11 +792,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Float
-    func testAppendReversion_forChanges_onOptionalFloat_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Float changes")
+    func appendReversionForOptionalFloatChanges() {
         
         let values: [(Float?, Float?)] = [
             (0, 1),
@@ -764,11 +813,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalFloat_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Float changes")
+    func appendReversionForNoOptionalFloatChanges() {
         
         let values: [(Float?, Float?)] = [
             (0, 0),
@@ -783,13 +833,14 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     #if os(iOS)
     // MARK: - Float16
-    func testAppendReversion_forChanges_onFloat16_willCreateCorrectReversions() {
+    @Test("Append reversion for Float16 changes")
+    func appendReversionForFloat16Changes() {
         
         var reverter = DefaultReverter(
             current: Float16(1),
@@ -798,10 +849,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onFloat16_willCreateZeroReversions() {
+    @Test("Append reversion for no Float16 changes")
+    func appendReversionForNoFloat16Changes() {
         
         var reverter = DefaultReverter(
             current: Float16(0),
@@ -810,11 +862,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Float16
-    func testAppendReversion_forChanges_onOptionalFloat16_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Float16 changes")
+    func appendReversionForOptionalFloat16Changes() {
         
         let values: [(Float16?, Float16?)] = [
             (0, 1),
@@ -830,11 +883,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalFloat16_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Float16 changes")
+    func appendReversionForNoOptionalFloat16Changes() {
         
         let values: [(Float?, Float?)] = [
             (0, 0),
@@ -849,13 +903,14 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     #endif
     
     // MARK: - Date
-    func testAppendReversion_forChanges_onDate_willCreateCorrectReversions() {
+    @Test("Append reversion for Date changes")
+    func appendReversionForDateChanges() {
         
         var reverter = DefaultReverter(
             current: Date(timeIntervalSinceReferenceDate: 0),
@@ -864,10 +919,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onDate_willCreateZeroReversions() {
+    @Test("Append reversion for no Date changes")
+    func appendReversionForNoDateChanges() {
         
         var reverter = DefaultReverter(
             current: Date(timeIntervalSinceReferenceDate: 0),
@@ -876,11 +932,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Date
-    func testAppendReversion_forChanges_onOptionalDate_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional Date changes")
+    func appendReversionForOptionalDateChanges() {
         
         let values: [(Date?, Date?)] = [
             (Date(timeIntervalSinceReferenceDate: 0), Date(timeIntervalSinceReferenceDate: 1)),
@@ -896,11 +953,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalDate_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Date changes")
+    func appendReversionForNoOptionalDateChanges() {
         
         let values: [(Date?, Date?)] = [
             (Date(timeIntervalSinceReferenceDate: 0), Date(timeIntervalSinceReferenceDate: 0)),
@@ -915,12 +973,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - UUID
-    func testAppendReversion_forChanges_onUUID_willCreateCorrectReversions() {
+    @Test("Append reversion for UUID changes")
+    func appendReversionForUUIDChanges() {
         
         var reverter = DefaultReverter(
             current: UUID(),
@@ -929,10 +988,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forNoChanges_onUUID_willCreateZeroReversions() {
+    @Test("Append reversion for no UUID changes")
+    func appendReversionForNoUUIDChanges() {
         
         let value = UUID()
         var reverter = DefaultReverter(
@@ -942,11 +1002,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Date
-    func testAppendReversion_forChanges_onOptionalUUID_willCreateCorrectReversions() {
+    @Test("Append reversion for Optional UUID changes")
+    func appendReversionForOptionalUUIDChanges() {
         
         let values: [(UUID?, UUID?)] = [
             (UUID(), UUID()),
@@ -962,11 +1023,12 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 1)
+            #expect(reverter.count == 1)
         }
     }
     
-    func testAppendReversion_forNoChanges_onOptionalUUID_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional UUID changes")
+    func appendReversionForNoOptionalUUIDChanges() {
         
         let value = UUID()
         let values: [(UUID?, UUID?)] = [
@@ -982,12 +1044,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     // MARK: - String
-    func testAppendReversion_forSingleInsertionChange_onString_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleInsertionChange_onString_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -996,10 +1059,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleInsertionChanges_onString_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleInsertionChanges_onString_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1008,10 +1072,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forSingleRemovalChange_onString_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleRemovalChange_onString_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1020,10 +1085,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forMultipleRemovalChanges_onString_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleRemovalChanges_onString_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1032,10 +1098,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forRemovalChanges_andInsertionChanges_onString_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forRemovalChanges_andInsertionChanges_onString_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1044,10 +1111,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 2)
+        #expect(reverter.count == 2)
     }
 
-    func testAppendReversion_forNoChanges_onString_willCreateZeroReversions() {
+    @Test("Append reversion for no String changes")
+    func appendReversionForNoStringChanges() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1056,11 +1124,12 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
 
     // MARK: - Optional String
-    func testAppendReversion_forFullInsertionChange_onOptionalString_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullInsertionChange_onOptionalString_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1069,10 +1138,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forFullRemovalChange_onOptionalString_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullRemovalChange_onOptionalString_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1081,10 +1151,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forNoChanges_onOptionalString_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional String changes")
+    func appendReversionForNoOptionalStringChanges() {
         
         let values: [(String?, String?)] = [
             ("abc", "abc"),
@@ -1099,12 +1170,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     // MARK: - Data
-    func testAppendReversion_forSingleInsertionChange_onData_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleInsertionChange_onData_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1113,10 +1185,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleInsertionChanges_onData_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleInsertionChanges_onData_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1125,10 +1198,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forSingleRemovalChange_onData_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleRemovalChange_onData_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1137,10 +1211,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleRemovalChanges_onData_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleRemovalChanges_onData_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1149,10 +1224,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forRemovalChanges_andInsertionChanges_onData_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forRemovalChanges_andInsertionChanges_onData_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1161,10 +1237,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 2)
+        #expect(reverter.count == 2)
     }
 
-    func testAppendReversion_forNoChanges_onData_willCreateZeroReversions() {
+    @Test("Append reversion for no Data changes")
+    func appendReversionForNoDataChanges() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1173,11 +1250,12 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Data
-    func testAppendReversion_forFullInsertionChange_onOptionalData_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullInsertionChange_onOptionalData_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1186,10 +1264,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forFullRemovalChange_onOptionalData_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullRemovalChange_onOptionalData_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1198,10 +1277,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forNoChanges_onOptionalData_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Data changes")
+    func appendReversionForNoOptionalDataChanges() {
         
         let values: [(Data?, Data?)] = [
             (Data([0, 1, 2, 3]), Data([0, 1, 2, 3])),
@@ -1216,12 +1296,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
     
     // MARK: - Set
-    func testAppendReversion_forSingleInsertionChange_onSet_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleInsertionChange_onSet_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1230,10 +1311,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleInsertionChanges_onSet_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleInsertionChanges_onSet_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1242,10 +1324,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forSingleRemovalChange_onSet_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleRemovalChange_onSet_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1254,10 +1337,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleRemovalChanges_onSet_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleRemovalChanges_onSet_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1266,10 +1350,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forRemovalChanges_andInsertionChanges_onSet_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forRemovalChanges_andInsertionChanges_onSet_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1278,10 +1363,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 2)
+        #expect(reverter.count == 2)
     }
 
-    func testAppendReversion_forNoChanges_onSet_willCreateZeroReversions() {
+    @Test("Append reversion for no Set changes")
+    func appendReversionForNoSetChanges() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1290,11 +1376,12 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
     // MARK: - Optional Set
-    func testAppendReversion_forFullInsertionChange_onOptionalSet_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullInsertionChange_onOptionalSet_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1303,10 +1390,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forFullRemovalChange_onOptionalSet_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullRemovalChange_onOptionalSet_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1315,10 +1403,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forNoChanges_onOptionalSet_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional Set changes")
+    func appendReversionForNoOptionalSetChanges() {
         
         let values: [(Set<Int>?, Set<Int>?)] = [
             (Set([0, 1, 2, 3]), Set([0, 1, 2, 3])),
@@ -1333,12 +1422,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     // MARK: - Identifiable array
-    func testAppendReversion_forSingleInsertionChange_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleInsertionChange_onIdentifiableArray_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1356,10 +1446,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleInsertionChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleInsertionChanges_onIdentifiableArray_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1377,10 +1468,11 @@ extension DefaultReverterTests {
         )
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forSingleRemovalChange_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleRemovalChange_onIdentifiableArray_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1395,10 +1487,11 @@ extension DefaultReverterTests {
         )
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleRemovalChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleRemovalChanges_onIdentifiableArray_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1413,10 +1506,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forSingleMoveChange_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleMoveChange_onIdentifiableArray_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1432,10 +1526,11 @@ extension DefaultReverterTests {
         )
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleMoveChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleMoveChanges_onIdentifiableArray_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1454,10 +1549,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 2)
+        #expect(reverter.count == 2)
     }
 
-    func testAppendReversion_forRemovalChanges_andInsertionChanges_andMoveChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forRemovalChanges_andInsertionChanges_andMoveChanges_onIdentifiableArray_willCreateCorrectReversions() {
 
             var reverter = DefaultReverter(
                 current: [
@@ -1475,10 +1571,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 3)
+        #expect(reverter.count == 3)
     }
 
-    func testAppendReversion_forNoChanges_onIdentifiableArray_willCreateZeroReversions() {
+    @Test("Append reversion for no IdentifiableArray changes")
+    func appendReversionForNoIdentifiableArrayChanges() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1495,10 +1592,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
-    func testAppendReversion_forChildChanges_onIdentifiableArray_willCreateZeroReversions() {
+    @Test
+    func AppendReversion_forChildChanges_onIdentifiableArray_willCreateZeroReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1515,11 +1613,12 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
     // MARK: - Optional Identifiable array
-    func testAppendReversion_forFullInsertionChange_onOptionalIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullInsertionChange_onOptionalIdentifiableArray_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1532,10 +1631,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forFullRemovalChange_onOptionalIdentifiableArray_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullRemovalChange_onOptionalIdentifiableArray_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1548,10 +1648,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forNoChanges_onOptionalIdentifiableArray_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional IdentifiableArray changes")
+    func appendReversionForNoOptionalIdentifiableArrayChanges() {
         
         let value: [MockStruct]? = [
             MockStruct(id: 0),
@@ -1571,12 +1672,13 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 
     // MARK: - Identifiable dictionary
-    func testAppendReversion_forSingleInsertionChange_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleInsertionChange_onIdentifiableDictionary_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1594,10 +1696,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleInsertionChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleInsertionChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1615,10 +1718,11 @@ extension DefaultReverterTests {
         )
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forSingleRemovalChange_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleRemovalChange_onIdentifiableDictionary_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1633,10 +1737,11 @@ extension DefaultReverterTests {
         )
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forMultipleRemovalChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleRemovalChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1651,10 +1756,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
     
-    func testAppendReversion_forSingleMoveChange_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forSingleMoveChange_onIdentifiableDictionary_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1670,10 +1776,11 @@ extension DefaultReverterTests {
         )
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 2)
+        #expect(reverter.count == 2)
     }
 
-    func testAppendReversion_forMultipleMoveChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forMultipleMoveChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1692,10 +1799,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 4)
+        #expect(reverter.count == 4)
     }
 
-    func testAppendReversion_forRemovalChanges_andInsertionChanges_andMoveChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forRemovalChanges_andInsertionChanges_andMoveChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
 
             var reverter = DefaultReverter(
                 current: [
@@ -1712,10 +1820,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 3)
+        #expect(reverter.count == 3)
     }
 
-    func testAppendReversion_forNoChanges_onIdentifiableDictionary_willCreateZeroReversions() {
+    @Test("Append reversion for no IdentifiableDictionary changes")
+    func appendReversionForNoIdentifiableDictionaryChanges() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1732,10 +1841,11 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 0)
+        #expect(reverter.count == 0)
     }
     
-    func testAppendReversion_forChildChanges_onIdentifiableDictionary_willCreateZeroReversions() {
+    @Test
+    func AppendReversion_forChildChanges_onIdentifiableDictionary_willCreateZeroReversions() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1752,11 +1862,12 @@ extension DefaultReverterTests {
 
         reverter.appendReversion(at: \.self)
 
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
     // MARK: - Optional identifiable dictionary
-    func testAppendReversion_forFullInsertionChange_onOptionalIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullInsertionChange_onOptionalIdentifiableDictionary_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1769,10 +1880,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forFullRemovalChange_onOptionalIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test
+    func AppendReversion_forFullRemovalChange_onOptionalIdentifiableDictionary_willCreateCorrectReversions() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1785,10 +1897,11 @@ extension DefaultReverterTests {
         
         reverter.appendReversion(at: \.self)
         
-        XCTAssertEqual(reverter.count, 1)
+        #expect(reverter.count == 1)
     }
 
-    func testAppendReversion_forNoChanges_onOptionalIdentifiableDictionary_willCreateZeroReversions() {
+    @Test("Append reversion for no Optional IdentifiableDictionary changes")
+    func appendReversionForNoOptionalIdentifiableDictionaryChanges() {
         
         let value: [Int : MockStruct]? = [
             0 : MockStruct(id: 0),
@@ -1808,7 +1921,7 @@ extension DefaultReverterTests {
             
             reverter.appendReversion(at: \.self)
             
-            XCTAssertEqual(reverter.count, 0)
+            #expect(reverter.count == 0)
         }
     }
 }

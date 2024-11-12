@@ -1,13 +1,15 @@
-import XCTest
+import Testing
 @testable import Revertible
 
-final class IdentifiableDictionaryReversionTests: XCTestCase {}
+@Suite("Identifiable dictionary reversion")
+struct IdentifiableDictionaryReversionTests {}
 
 // MARK: - Tests
 extension IdentifiableDictionaryReversionTests {
     
     // MARK: Insert
-    func testRevert_onInsertReversion_withValueSelfKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with value self key path")
+    func insertReversionOnValueSelfKeyPath() {
 
         var value = [
             0 : MockStruct(id: 0),
@@ -25,8 +27,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 0 : MockStruct(id: 5),
                 1 : MockStruct(id: 1),
@@ -37,7 +39,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onInsertReversion_withReferenceSelfKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with reference self key path")
+    func insertReversionOnReferenceSelfKeyPath() {
 
         var value = [
             0 : MockClass(id: 0),
@@ -55,8 +58,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 0 : MockClass(id: 5),
                 1 : MockClass(id: 1),
@@ -68,7 +71,8 @@ extension IdentifiableDictionaryReversionTests {
     }
 
     // MARK: Remove
-    func testRevert_onRemoveReversion_withValueSelfKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with value self key path")
+    func removeReversionOnValueSelfKeyPath() {
 
         var value = [
             0 : MockStruct(id: 0),
@@ -86,8 +90,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 0 : MockStruct(id: 0),
                 3 : MockStruct(id: 3)
@@ -95,7 +99,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withReferenceSelfKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with reference self key path")
+    func removeReversionOnReferenceSelfKeyPath() {
 
         var value = [
             0 : MockClass(id: 0),
@@ -113,8 +118,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 0 : MockClass(id: 0),
                 3 : MockClass(id: 3)
@@ -123,7 +128,8 @@ extension IdentifiableDictionaryReversionTests {
     }
 
     // MARK: Move
-    func testRevert_onMoveReversion_withValueSelfKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with value self key path")
+    func moveReversionOnValueSelfKeyPath() {
 
         var value = [
             0 : MockStruct(id: 0),
@@ -139,8 +145,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 1 : MockStruct(id: 1),
                 2 : MockStruct(id: 2),
@@ -149,7 +155,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onMoveReversion_withReferenceSelfKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with reference self key path")
+    func moveReversionOnReferenceSelfKeyPath() {
 
         var value = [
             0 : MockClass(id: 0),
@@ -165,8 +172,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value,
+        #expect(
+            value ==
             [
                 1 : MockClass(id: 1),
                 2 : MockClass(id: 2),
@@ -176,7 +183,8 @@ extension IdentifiableDictionaryReversionTests {
     }
 
     // MARK: Mapped insertion
-    func testRevert_onInsertReversion_withMappedValueSelfValueChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped value self value child key path")
+    func insertReversionOnMappedValueSelfValueChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableValueDictionary = [
@@ -196,8 +204,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueDictionary,
+        #expect(
+            value.identifiableValueDictionary ==
             [
                 0 : MockStruct(id: 5),
                 1 : MockStruct(id: 1),
@@ -208,7 +216,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onInsertReversion_withMappedValueSelfReferenceChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped value self reference child key path")
+    func insertReversionOnMappedValueSelfReferenceChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableReferenceDictionary = [
@@ -228,8 +237,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceDictionary,
+        #expect(
+            value.identifiableReferenceDictionary ==
             [
                 0 : MockClass(id: 5),
                 1 : MockClass(id: 1),
@@ -240,7 +249,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onInsertReversion_withMappedReferenceSelfValueChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped reference self value child key path")
+    func insertReversionOnMappedReferenceSelfValueChildKeyPath() {
 
         var value = MockClass()
         value.identifiableValueDictionary = [
@@ -260,8 +270,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueDictionary,
+        #expect(
+            value.identifiableValueDictionary ==
             [
                 0 : MockStruct(id: 5),
                 1 : MockStruct(id: 1),
@@ -272,7 +282,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onInsertReversion_withMappedReferenceSelfReferenceChildKeyPath_willInsertElementsCorrectly() {
+    @Test("Insert reversion with mapped reference self reference child key path")
+    func insertReversionOnMappedReferenceSelfReferenceChildKeyPath() {
 
         var value = MockClass()
         value.identifiableReferenceDictionary = [
@@ -292,8 +303,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceDictionary,
+        #expect(
+            value.identifiableReferenceDictionary ==
             [
                 0 : MockClass(id: 5),
                 1 : MockClass(id: 1),
@@ -305,7 +316,8 @@ extension IdentifiableDictionaryReversionTests {
     }
 
     // MARK: Mapped removal
-    func testRevert_onRemoveReversion_withMappedValueSelfValueChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped value self value child key path")
+    func removeReversionOnMappedValueSelfValueChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableValueDictionary = [
@@ -325,8 +337,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueDictionary,
+        #expect(
+            value.identifiableValueDictionary ==
             [
                 0 : MockStruct(id: 0),
                 3 : MockStruct(id: 3)
@@ -334,7 +346,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withMappedValueSelfReferenceChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped value self reference child key path")
+    func removeReversionOnMappedValueSelfReferenceChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableReferenceDictionary = [
@@ -354,8 +367,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceDictionary,
+        #expect(
+            value.identifiableReferenceDictionary ==
             [
                 0 : MockClass(id: 0),
                 3 : MockClass(id: 3)
@@ -363,7 +376,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withMappedReferenceSelfValueChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped reference self value child key path")
+    func removeReversionWithMappedReferenceSelfValueChildKeyPath() {
 
         var value = MockClass()
         value.identifiableValueDictionary = [
@@ -383,8 +397,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueDictionary,
+        #expect(
+            value.identifiableValueDictionary ==
             [
                 0 : MockStruct(id: 0),
                 3 : MockStruct(id: 3)
@@ -392,7 +406,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onRemoveReversion_withMappedReferenceSelfReferenceChildKeyPath_willRemoveElementsCorrectly() {
+    @Test("Remove reversion with mapped reference self reference child key path")
+    func removeReversionWithMappedReferenceSelfReferenceChildKeyPath() {
 
         var value = MockClass()
         value.identifiableReferenceDictionary = [
@@ -412,8 +427,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceDictionary,
+        #expect(
+            value.identifiableReferenceDictionary ==
             [
                 0 : MockClass(id: 0),
                 3 : MockClass(id: 3)
@@ -422,7 +437,8 @@ extension IdentifiableDictionaryReversionTests {
     }
 
     // MARK: Mapped move
-    func testRevert_onMoveReversion_withMappedValueSelfValueChildKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with mapped value self value child key path")
+    func moveReversionWithMappedValueSelfValueChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableValueDictionary = [
@@ -440,8 +456,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueDictionary,
+        #expect(
+            value.identifiableValueDictionary ==
             [
                 1 : MockStruct(id: 1),
                 2 : MockStruct(id: 2),
@@ -450,7 +466,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onMoveReversion_withMappedValueSelfReferenceChildKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with mapped value self reference child key path")
+    func moveReversionWithMappedValueSelfReferenceChildKeyPath() {
 
         var value = MockStruct()
         value.identifiableReferenceDictionary = [
@@ -468,8 +485,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceDictionary,
+        #expect(
+            value.identifiableReferenceDictionary ==
             [
                 1 : MockClass(id: 1),
                 2 : MockClass(id: 2),
@@ -478,7 +495,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onMoveReversion_withMappedReferenceSelfValueChildKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with mapped reference self value child key path")
+    func moveReversionWithMappedReferenceSelfValueChildKeyPath() {
 
         var value = MockClass()
         value.identifiableValueDictionary = [
@@ -496,8 +514,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableValueDictionary,
+        #expect(
+            value.identifiableValueDictionary ==
             [
                 1 : MockStruct(id: 1),
                 2 : MockStruct(id: 2),
@@ -506,7 +524,8 @@ extension IdentifiableDictionaryReversionTests {
         )
     }
 
-    func testRevert_onMoveReversion_withMappedReferenceSelfReferenceChildKeyPath_willMoveElementsCorrectly() {
+    @Test("Move reversion with mapped reference self reference child key path")
+    func moveReversionWithMappedReferenceSelfReferenceChildKeyPath() {
 
         var value = MockClass()
         value.identifiableReferenceDictionary = [
@@ -524,8 +543,8 @@ extension IdentifiableDictionaryReversionTests {
 
         reversion.revert(&value)
 
-        XCTAssertEqual(
-            value.identifiableReferenceDictionary,
+        #expect(
+            value.identifiableReferenceDictionary ==
             [
                 1 : MockClass(id: 1),
                 2 : MockClass(id: 2),
