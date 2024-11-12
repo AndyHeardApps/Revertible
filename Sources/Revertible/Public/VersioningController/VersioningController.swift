@@ -170,6 +170,10 @@ extension VersioningController {
     public var scopeLevel: Int {
         stacks.count-1
     }
+
+    func reset() {
+        stacks = [.init()]
+    }
 }
 
 // MARK: - Undo / redo
