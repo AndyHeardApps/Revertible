@@ -21,7 +21,7 @@ public protocol Versionable: Revertible {
     
     // MARK: - Functions
     
-    /// Adds reversions to the ``Reverter`` via using the assorted ``Reverter/appendReversion(at:)-2k3an`` functions and passing `KeyPath`s for each revertible property.
+    /// Adds reversions to the ``Reverter`` via using the assorted ``Reverter/appendReversion(at:)-7657i`` functions and passing `KeyPath`s for each revertible property.
     /// - Parameter reverter: The ``Reverter`` to be used to provide reversion information about the type.
     ///
     /// - NOTE: Swift autocomplete will sometimes auto-insert / auto-complete this function with an unspecialised ``Reverter``:

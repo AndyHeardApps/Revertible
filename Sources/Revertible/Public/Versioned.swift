@@ -4,6 +4,13 @@
 /// This type only supports value types, as reference semantics makes it difficult to track separate instances of a value.
 ///
 /// This type is driven by the ``VersioningController``, so for further information refer to it's documentation.
+///
+/// ```
+/// @Versioned var value = myStruct()   // id = 0
+/// value.id = 5                        // id = 5
+/// try $value.undo()                   // id = 0
+/// try $value.redo()                   // id = 5
+/// ```
 @propertyWrapper
 public struct Versioned<Value: Versionable & Sendable>: Sendable {
 

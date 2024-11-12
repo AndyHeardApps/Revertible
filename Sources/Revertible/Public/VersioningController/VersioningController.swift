@@ -6,7 +6,7 @@ import Foundation
 ///
 /// This class is used to register modifications to a single value, and perform undo and redo actions on that value. Changes are stored in a stack on a last in - first out bases, and any undo actions are automatically converted into redo actions when applied.
 ///
-/// There a several functions that allow for pushing and popping of additional scopes, which provides a way to group together sets of changes. This can be used in cases such as when a new screen is pushed, and content is modified, but not saved. A new scope can be pushed for the new screen, and when the changes are abandonded the scope can be undone and popped. A new scope is created using the ``pushNewScope()`` function and the ``undoAndPopCurrentScope()`` function and it's variants can be used to pop the scope.
+/// There a several functions that allow for pushing and popping of additional scopes, which provides a way to group together sets of changes. This can be used in cases such as when a new screen is pushed, and content is modified, but not saved. A new scope can be pushed for the new screen, and when the changes are abandonded the scope can be undone and popped. A new scope is created using the ``pushNewScope()`` function and the ``undoAndPopCurrentScope()-8nyo4`` function and it's variants can be used to pop the scope.
 ///
 /// There are a couple of different ways to use this class, each having it's own initializer.
 ///
