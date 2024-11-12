@@ -404,7 +404,7 @@ extension VersioningControllerTests {
         #expect(versioningController.hasUndo == true)
         #expect(versioningController.hasRedo == false)
 
-        mockStruct = try versioningController.undoAndDiscardCurrentScope()
+        mockStruct = try versioningController.undoAndPopCurrentScope()
 
         #expect(versioningController.hasUndo == true)
         #expect(versioningController.hasRedo == false)

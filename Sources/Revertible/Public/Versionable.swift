@@ -1,4 +1,4 @@
-/// Provides a simplified interface for conforming a type to the ``Revertible`` protocol, by registering which keypaths are to be monitored for changes.
+/// Provides a simplified interface for conforming a type to the ``Revertible`` protocol, by registering which key paths are to be checked for changes.
 ///
 /// The adopting type must implement the ``Versionable/addReversions(into:)`` function and register the properties that will have changes tracked and stored in the ``Reversion`` produced by the ``Revertible/Revertible/reversion(to:)`` function.
 ///

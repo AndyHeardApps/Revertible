@@ -16,7 +16,7 @@
 /// print(person.age) // 10
 /// ```
 ///
-/// While it's intended that this protocol be used on value types, it can be used on `class` types too, as long as the properties are delcared as `var`.
+/// While it's intended that this protocol be used on value types, it can be used on reference types too, however be wary of reference semantics as the protocol relies on a current and previous instance to compare. In reference types, both values may be pointing to the same underlying instance.
 public protocol Revertible: Hashable {
         
     /// Creates a ``Reversion`` to the previous version of the object.

@@ -37,9 +37,6 @@ extension Versioned {
         controller.pushNewScope()
     }
 
-    public func discardCurrentScope() {
-        controller.discardCurrentScope()
-    }
 
     public var scopeLevel: Int {
         controller.scopeLevel
@@ -61,8 +58,8 @@ extension Versioned {
         storage = try controller.undoCurrentScope()
     }
 
-    public func undoAndDiscardCurrentScope() throws {
-        storage = try controller.undoAndDiscardCurrentScope()
+    public func undoAndPopCurrentScope() throws {
+        storage = try controller.undoAndPopCurrentScope()
     }
 
     public func redo() throws {
