@@ -1,7 +1,7 @@
 import Foundation
 import Revertible
 
-struct MockStruct: Identifiable {
+struct MockStruct: Identifiable, Sendable {
     
     // MARK: - Properties
     let id: Int

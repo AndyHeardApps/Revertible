@@ -75,10 +75,10 @@ extension VersioningStack {
     }
 
     var hasUndo: Bool {
-        undoStack.isEmpty
+        !undoStack.isEmpty
     }
 
     var hasRedo: Bool {
-        redoStack.isEmpty
+        !redoStack.isEmpty
     }
 }

@@ -1,8 +1,8 @@
 import Foundation
 import Revertible
 
-final class MockClass: Identifiable {
-    
+final class MockClass: Identifiable, @unchecked Sendable {
+
     // MARK: - Properties
     let id: Int
     var int: Int

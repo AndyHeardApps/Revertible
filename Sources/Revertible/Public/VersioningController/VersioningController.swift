@@ -17,7 +17,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
     ) where Root == Value {
 
         if type(of: value) is AnyClass {
-            assertionFailure("UndoController can only be used on value types.")
+            assertionFailure("VersioningController can only be used on value types.")
         }
 
         self.stacks = [.init()]
@@ -39,7 +39,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
 
         let referenceValue = root[keyPath: keyPath]
         if type(of: referenceValue) is AnyClass {
-            assertionFailure("UndoController can only be used on value types.")
+            assertionFailure("VersioningController can only be used on value types.")
         }
 
         self.stacks = [.init()]
@@ -61,7 +61,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
 
         let referenceValue = root[keyPath: keyPath]
         if type(of: referenceValue) is AnyClass {
-            assertionFailure("UndoController can only be used on value types.")
+            assertionFailure("VersioningController can only be used on value types.")
         }
 
         self.stacks = [.init()]
@@ -114,9 +114,9 @@ extension VersioningController {
         }
     }
 
-    /// The current scope level, with the root being `1`.
+    /// The current scope level, with the root being `0`.
     public var scopeLevel: Int {
-        stacks.count
+        stacks.count-1
     }
 }
 
