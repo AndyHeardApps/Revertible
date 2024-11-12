@@ -41,7 +41,7 @@ extension VersioningControllerTests {
     }
     
 //    @Test
-    func versioningController_willUndoAndRedo_multipleRevertibleActions() throws {
+//    func versioningController_willUndoAndRedo_multipleRevertibleActions() throws {
 //                
 //        let versioningController = VersioningController()
 //
@@ -60,14 +60,14 @@ extension VersioningControllerTests {
 //        
 //        #expect(versioningController.hasUndo == true)
 //        #expect(versioningController.hasRedo == false)
-//        XCTAssertNotEqual(previousValue1, mockStruct)
-//        XCTAssertNotEqual(previousValue2, mockStruct)
+//        #expect(previousValue1 != mockStruct)
+//        #expect(previousValue2 != mockStruct)
 //
 //        try versioningController.undo()
 //        
 //        #expect(versioningController.hasUndo == true)
 //        #expect(versioningController.hasRedo == true)
-//        XCTAssertNotEqual(previousValue1, mockStruct)
+//        #expect(previousValue1 != mockStruct)
 //        #expect(previousValue2 == mockStruct)
 //        
 //        try versioningController.undo()
@@ -75,25 +75,25 @@ extension VersioningControllerTests {
 //        #expect(versioningController.hasUndo == false)
 //        #expect(versioningController.hasRedo == true)
 //        #expect(previousValue1 == mockStruct)
-//        XCTAssertNotEqual(previousValue2, mockStruct)
+//        #expect(previousValue2 != mockStruct)
 //
 //        try versioningController.redo()
 //        
 //        #expect(versioningController.hasUndo == true)
 //        #expect(versioningController.hasRedo == true)
-//        XCTAssertNotEqual(previousValue1, mockStruct)
+//        #expect(previousValue1 != mockStruct)
 //        #expect(previousValue2 == mockStruct)
 //        
 //        try versioningController.redo()
 //        
 //        #expect(versioningController.hasUndo == true)
 //        #expect(versioningController.hasRedo == false)
-//        XCTAssertNotEqual(previousValue1, mockStruct)
-//        XCTAssertNotEqual(previousValue2, mockStruct)
+//        #expect(previousValue1 != mockStruct)
+//        #expect(previousValue2 != mockStruct)
 //    }
 //    
 //    @Test
-    func versioningController_willUndoAndRedo_multipleClosureActions() throws {
+//    func versioningController_willUndoAndRedo_multipleClosureActions() throws {
 //        
 //        let versioningController = VersioningController()
 //
@@ -144,7 +144,7 @@ extension VersioningControllerTests {
 //    }
 //    
 //    @Test
-    func versioningController_undoAndRedo_willDoNothingWithNoChangesRegistered() throws {
+//    func versioningController_undoAndRedo_willDoNothingWithNoChangesRegistered() throws {
 //        
 //        let versioningController = VersioningController()
 //
@@ -153,7 +153,7 @@ extension VersioningControllerTests {
 //    }
 //    
 //    @Test
-    func versioningController_willWeaklyReferenceRevertibleRoots() throws {
+//    func versioningController_willWeaklyReferenceRevertibleRoots() throws {
 //        
 //        class Mock {
 //            var value = MockStruct()
@@ -162,7 +162,7 @@ extension VersioningControllerTests {
 //        var mockClass: Mock? = Mock()
 //        weak var weakReference = mockClass
 //        
-//        XCTAssertNotNil(weakReference)
+//        #expect(weakReference != nil)
 //        
 //        let initialValue = mockClass!.value
 //        mockClass?.value.string = UUID().uuidString
@@ -179,7 +179,7 @@ extension VersioningControllerTests {
 //    }
 //    
 //    @Test
-    func versioningController_willPushAndPopScopesCorrectly() throws {
+//    func versioningController_willPushAndPopScopesCorrectly() throws {
 //        
 //        let versioningController = VersioningController()
 //

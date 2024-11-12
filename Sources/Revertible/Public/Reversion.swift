@@ -38,12 +38,9 @@ public struct Reversion<Root: Hashable> {
 }
 
 // MARK: - Errors
-extension Reversion {
-    
-    /// Errors that can be thrown by the ``Reversion/revert(_:)`` function.
-    public enum ReversionError: Error {
-        
-        /// The ``Reversion`` was applied to the wrong instance. A ``Reversion`` can only be applied to an instance that was used to create it.
-        case attemptingToRevertWrongVersion
-    }
+/// Errors that can be thrown by the ``Reversion/revert(_:)`` function.
+public enum ReversionError: Error {
+
+    /// The ``Reversion`` was applied to the wrong instance. A ``Reversion`` can only be applied to an instance that was used to create it.
+    case attemptingToRevertWrongVersion
 }

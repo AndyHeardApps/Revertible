@@ -1049,8 +1049,8 @@ extension DefaultReverterTests {
     }
 
     // MARK: - String
-    @Test
-    func AppendReversion_forSingleInsertionChange_onString_willCreateCorrectReversions() {
+     @Test("Append reversion for Single Insertion Change on String")
+    func appendReversionForSingleInsertionChangeOnString() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1062,8 +1062,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleInsertionChanges_onString_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Insertion Changes on String")
+    func appendReversionForMultipleInsertionChangesOnString() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1075,8 +1075,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forSingleRemovalChange_onString_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Removal Change on String")
+    func appendReversionForSingleRemovalChangeOnString() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1088,8 +1088,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
     
-    @Test
-    func AppendReversion_forMultipleRemovalChanges_onString_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Removal Changes on String")
+    func appendReversionForMultipleRemovalChangesOnString() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1101,9 +1101,9 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forRemovalChanges_andInsertionChanges_onString_willCreateCorrectReversions() {
-        
+    @Test("Append reversion for Removal Changes and Insertion Changes on String")
+    func appendReversionForRemovalChangesAndInsertionChangesOnString() {
+
         var reverter = DefaultReverter(
             current: "abc",
             previous: "11b22"
@@ -1128,8 +1128,8 @@ extension DefaultReverterTests {
     }
 
     // MARK: - Optional String
-    @Test
-    func AppendReversion_forFullInsertionChange_onOptionalString_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Insertion Change on Optional String")
+    func appendReversionForFullInsertionChangeOnOptionalString() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1141,8 +1141,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forFullRemovalChange_onOptionalString_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Removal Change on Optional String")
+    func appendReversionForFullRemovalChangeOnOptionalString() {
         
         var reverter = DefaultReverter(
             current: "abc",
@@ -1175,8 +1175,8 @@ extension DefaultReverterTests {
     }
 
     // MARK: - Data
-    @Test
-    func AppendReversion_forSingleInsertionChange_onData_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Insertion Change on Data")
+    func appendReversionForSingleInsertionChangeOnData() {
         
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1188,8 +1188,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleInsertionChanges_onData_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Insertion Changes on Data")
+    func appendReversionForMultipleInsertionChangesOnData() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1201,8 +1201,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forSingleRemovalChange_onData_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Removal Change on Data")
+    func appendReversionForSingleRemovalChangeOnData() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1214,8 +1214,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleRemovalChanges_onData_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Removal Changes on Data")
+    func appendReversionForMultipleRemovalChangesOnData() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1227,8 +1227,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forRemovalChanges_andInsertionChanges_onData_willCreateCorrectReversions() {
+    @Test("Append reversion for Removal Changes and Insertion Changes on Data")
+    func appendReversionForRemovalChangesAndInsertionChangesOnData() {
 
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1254,8 +1254,8 @@ extension DefaultReverterTests {
     }
     
     // MARK: - Optional Data
-    @Test
-    func AppendReversion_forFullInsertionChange_onOptionalData_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Insertion Change on Optional Data")
+    func appendReversionForFullInsertionChangeOnOptionalData() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1267,8 +1267,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forFullRemovalChange_onOptionalData_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Removal Change on Optional Data")
+    func appendReversionForFullRemovalChangeOnOptionalData() {
         
         var reverter = DefaultReverter(
             current: Data([0, 1, 2, 3]),
@@ -1301,8 +1301,8 @@ extension DefaultReverterTests {
     }
     
     // MARK: - Set
-    @Test
-    func AppendReversion_forSingleInsertionChange_onSet_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Insertion Change on Set")
+    func appendReversionForSingleInsertionChangeOnSet() {
         
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1314,8 +1314,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleInsertionChanges_onSet_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Insertion Changes on Set")
+    func appendReversionForMultipleInsertionChangesOnSet() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1327,8 +1327,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forSingleRemovalChange_onSet_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Removal Change on Set")
+    func appendReversionForSingleRemovalChangeOnSet() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1340,8 +1340,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleRemovalChanges_onSet_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Removal Changes on Set")
+    func appendReversionForMultipleRemovalChangesOnSet() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1353,8 +1353,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forRemovalChanges_andInsertionChanges_onSet_willCreateCorrectReversions() {
+    @Test("Append reversion for Removal Changes and Insertion Changes on Set")
+    func appendReversionForRemovalChangesAndInsertionChangesOnSet() {
 
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1380,8 +1380,8 @@ extension DefaultReverterTests {
     }
     
     // MARK: - Optional Set
-    @Test
-    func AppendReversion_forFullInsertionChange_onOptionalSet_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Insertion Change on Optional Set")
+    func appendReversionForFullInsertionChangeOnOptionalSet() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1393,8 +1393,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forFullRemovalChange_onOptionalSet_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Removal Change on Optional Set")
+    func appendReversionForFullRemovalChangeOnOptionalSet() {
         
         var reverter = DefaultReverter(
             current: Set([0, 1, 2, 3]),
@@ -1427,8 +1427,8 @@ extension DefaultReverterTests {
     }
 
     // MARK: - Identifiable array
-    @Test
-    func AppendReversion_forSingleInsertionChange_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Insertion Change on Identifiable Array")
+    func appendReversionForSingleInsertionChangeOnIdentifiableArray() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1449,8 +1449,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleInsertionChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Insertion Changes on Identifiable Array")
+    func appendReversionForMultipleInsertionChangesOnIdentifiableArray() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1471,8 +1471,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forSingleRemovalChange_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Removal Change on Identifiable Array")
+    func appendReversionForSingleRemovalChangeOnIdentifiableArray() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1490,8 +1490,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleRemovalChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Removal Changes on Identifiable Array")
+    func appendReversionForMultipleRemovalChangesOnIdentifiableArray() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1509,8 +1509,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
     
-    @Test
-    func AppendReversion_forSingleMoveChange_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Move Change on Identifiable Array")
+    func appendReversionForSingleMoveChangeOnIdentifiableArray() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1529,8 +1529,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleMoveChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Move Changes on Identifiable Array")
+    func appendReversionForMultipleMoveChangesOnIdentifiableArray() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1552,8 +1552,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 2)
     }
 
-    @Test
-    func AppendReversion_forRemovalChanges_andInsertionChanges_andMoveChanges_onIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Removal Changes and Insertion Changes and Move Changes on Identifiable Array")
+    func appendReversionForRemovalChangesAndInsertionChangesAndMoveChangesOnIdentifiableArray() {
 
             var reverter = DefaultReverter(
                 current: [
@@ -1574,7 +1574,7 @@ extension DefaultReverterTests {
         #expect(reverter.count == 3)
     }
 
-    @Test("Append reversion for no IdentifiableArray changes")
+    @Test("Append reversion for no Identifiable Array changes")
     func appendReversionForNoIdentifiableArrayChanges() {
 
         var reverter = DefaultReverter(
@@ -1595,8 +1595,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 0)
     }
     
-    @Test
-    func AppendReversion_forChildChanges_onIdentifiableArray_willCreateZeroReversions() {
+    @Test("Append reversion for child changes on Identifiable Array")
+    func AppendReversionForChildChangesOnIdentifiableArray() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1617,8 +1617,8 @@ extension DefaultReverterTests {
     }
 
     // MARK: - Optional Identifiable array
-    @Test
-    func AppendReversion_forFullInsertionChange_onOptionalIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Insertion Change on Optional Identifiable Array")
+    func appendReversionForFullInsertionChangeOnOptionalIdentifiableArray() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1634,8 +1634,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forFullRemovalChange_onOptionalIdentifiableArray_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Removal Change on Optional Identifiable Array")
+    func appendReversionForFullRemovalChangeOnOptionalIdentifiableArray() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1651,7 +1651,7 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test("Append reversion for no Optional IdentifiableArray changes")
+    @Test("Append reversion for no Optional Identifiable Array changes")
     func appendReversionForNoOptionalIdentifiableArrayChanges() {
         
         let value: [MockStruct]? = [
@@ -1677,8 +1677,8 @@ extension DefaultReverterTests {
     }
 
     // MARK: - Identifiable dictionary
-    @Test
-    func AppendReversion_forSingleInsertionChange_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Insertion Change on Identifiable Dictionary")
+    func appendReversionForSingleInsertionChangeOnIdentifiableDictionary() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1699,8 +1699,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleInsertionChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Insertion Changes on Identifiable Dictionary")
+    func appendReversionForMultipleInsertionChangesOnIdentifiableDictionary() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1721,8 +1721,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forSingleRemovalChange_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Removal Change on Identifiable Dictionary")
+    func appendReversionForSingleRemovalChangeOnIdentifiableDictionary() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1740,8 +1740,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forMultipleRemovalChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Multiple Removal Changes on Identifiable Dictionary")
+    func appendReversionForMultipleRemovalChangesOnIdentifiableDictionary() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1759,8 +1759,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
     
-    @Test
-    func AppendReversion_forSingleMoveChange_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Single Move Change on Identifiable Dictionary")
+    func appendReversionForSingleMoveChangeOnIdentifiableDictionary() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1779,8 +1779,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 2)
     }
 
-    @Test
-    func AppendReversion_forMultipleMoveChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Move Changes on Identifiable Dictionary")
+    func appendReversionForMultipleMoveChangesOnIdentifiableDictionary() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1802,8 +1802,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 4)
     }
 
-    @Test
-    func AppendReversion_forRemovalChanges_andInsertionChanges_andMoveChanges_onIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Removal Changes and Insertion Changes and Move Changes on Identifiable Dictionary")
+    func appendReversionForRemovalChangesAndInsertionChangesAndMoveChangesOnIdentifiableDictionary() {
 
             var reverter = DefaultReverter(
                 current: [
@@ -1823,7 +1823,7 @@ extension DefaultReverterTests {
         #expect(reverter.count == 3)
     }
 
-    @Test("Append reversion for no IdentifiableDictionary changes")
+    @Test("Append reversion for no Identifiable Dictionary changes")
     func appendReversionForNoIdentifiableDictionaryChanges() {
 
         var reverter = DefaultReverter(
@@ -1844,8 +1844,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 0)
     }
     
-    @Test
-    func AppendReversion_forChildChanges_onIdentifiableDictionary_willCreateZeroReversions() {
+    @Test("Append reversion for child changes on Identifiable Dictionary")
+    func AppendReversionForChildChangesOnIdentifiableDictionary() {
 
         var reverter = DefaultReverter(
             current: [
@@ -1866,8 +1866,8 @@ extension DefaultReverterTests {
     }
 
     // MARK: - Optional identifiable dictionary
-    @Test
-    func AppendReversion_forFullInsertionChange_onOptionalIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Insertion Change on Optional Identifiable Dictionary")
+    func appendReversionForFullInsertionChangeOnOptionalIdentifiableDictionary() {
         
         var reverter = DefaultReverter(
             current: nil,
@@ -1883,8 +1883,8 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test
-    func AppendReversion_forFullRemovalChange_onOptionalIdentifiableDictionary_willCreateCorrectReversions() {
+    @Test("Append reversion for Full Removal Change on Optional Identifiable Dictionary")
+    func appendReversionForFullRemovalChangeOnOptionalIdentifiableDictionary() {
         
         var reverter = DefaultReverter(
             current: [
@@ -1900,7 +1900,7 @@ extension DefaultReverterTests {
         #expect(reverter.count == 1)
     }
 
-    @Test("Append reversion for no Optional IdentifiableDictionary changes")
+    @Test("Append reversion for no Optional Identifiable Dictionary changes")
     func appendReversionForNoOptionalIdentifiableDictionaryChanges() {
         
         let value: [Int : MockStruct]? = [
