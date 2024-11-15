@@ -10,7 +10,7 @@ import Foundation
 ///
 /// There are a couple of different ways to use this class, each having it's own initializer.
 ///
-/// 1. In place
+/// 1. Direct
 ///
 /// This involves a single value being provided to the ``init(_:debounceInterval:)`` initializer and tracked in place. Changes can be tracked by calling the ``append(_:)`` function, which will register those changes, and store them. The ``undo()-2yfov`` and ``redo()-3hmai`` functions can then be used to navigate through those changes.
 ///
@@ -50,7 +50,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
 
     // MARK: - Initialisers
     
-    /// Creates a controller for in place registering and application of changes.
+    /// Creates a controller for direct registration of changes and application of reversions.
     /// - Parameters:
     ///   - value: The initial value to be tracked.
     ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
