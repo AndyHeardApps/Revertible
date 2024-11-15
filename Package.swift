@@ -2,6 +2,7 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
     name: "Revertible",
@@ -18,15 +19,30 @@ let package = Package(
             targets: ["Revertible"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "600.0.0")
+    ],
     targets: [
+        .macro(
+            name: "RevertibleMacros",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
+            ],
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "Revertible",
-            dependencies: [],
+            dependencies: ["RevertibleMacros"],
             swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "RevertibleTests",
-            dependencies: ["Revertible"],
+            dependencies: [
+                "Revertible",
+                "RevertibleMacros",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax")
+            ],
             swiftSettings: swiftSettings
         )
     ],

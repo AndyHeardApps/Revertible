@@ -34,7 +34,7 @@ extension Debounce {
 
         task = Task { [output, weak self] in
             var localDueTime = dueTime
-            loop: while true {
+            loop: while !Task.isCancelled {
                 try? await Task.sleep(until: localDueTime, clock: .continuous)
 
                 guard let action = self?.stateMachine.sleepIsOver() else {

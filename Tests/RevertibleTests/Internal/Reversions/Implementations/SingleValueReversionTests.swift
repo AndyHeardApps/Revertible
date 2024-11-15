@@ -39,7 +39,7 @@ extension SingleValueReversionTests {
 
         var value = MockClass()
         let reversion = SingleValueReversion(value: value.int)
-        .mapped(to: \MockClass.int)
+            .mapped(to: \MockClass.int)
         
         value.int = 1
         

@@ -8,9 +8,14 @@ public protocol Reverter<Root> {
     
     // MARK: - Functions
     
+    /// Indicates whether or not the property at the provided key path is different to the previous value.
+    /// - Parameter keyPath: The key path the check for changes.
+    /// - Returns: Whether or not the value at the key path has changed.
+    func hasChanged<Value: Equatable>(at keyPath: KeyPath<Root, Value>) -> Bool
+
     /// Registers a `WritableKeyPath` on the type to be overwritten on reversion. This is considerably less efficient than the diffing `appendReversion` functions available and should only be used when necessary, such as when a property is immutable and `\.self` must be used, or when the diffing logic is not needed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
-    mutating func appendOverwriteReversion<Value>(at keyPath: WritableKeyPath<Root, Value>)
+    mutating func appendOverwriteReversion<Value: Equatable>(at keyPath: WritableKeyPath<Root, Value>)
     
     /// Registers a `WritableKeyPath` on the type to be reverted if it has changed.
     /// - Parameter keyPath: The `WritableKeyPath` pointing towards the property to be reverted.
