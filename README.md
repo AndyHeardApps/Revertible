@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FErrorCode%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/AndyHeardApps/ErrorCode)
 ![GitHub License](https://img.shields.io/github/license/andyheardapps/Revertible)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/andyheardapps/revertible/build.yml?branch=develop)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/andyheardapps/revertible/build.yml)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FErrorCode%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/AndyHeardApps/ErrorCode)
 
 This framework aims to add a low friction way to track changes in state, and allow for simple traversal through state history with `undo()` and `redo()` functions.
@@ -113,18 +113,230 @@ For instance if some state is used across several screens, when a child screen i
 
 ## Type conformance
 
-The framework is driven by a few base types.
+The framework is driven by a few base types that buld upon eachother. This section outlines how they work and how they can be used manually.
 
 ### `Revertible`
 
+This protocol defines the basic interface for tracking changes. The conforming type implements the `func reversion(to previous: Self) -> Reversion<Self>?`. The implementation should compare the current value to the provided previous value. If they are the same, then return `nil`, and if they have changes, then some `Reversion` is returned. This is a simplified interface and not directly used that often, instead the `Versionable` protocol is adopted for conformance, and the `Reverter` is used to creating reversions.
+
+This protocol extends `Hashable`, which is used to confirm the `hashValue` of an object before reverting it, and because a lot of logic requires an `Equatable` implementation.
+
 ### `Versionable`
+
+This type extends the `Revertible` protocol, by providing a default implementation for `func reversion(to previous: Self) -> Reversion<Self>?` and in its place requires a `func addReversions(into reverter: inout some Reverter<Self>)` implementation. This function provides a `Reverter<Self>` that can stores a previous value and allows key paths to be appended to check for differences. This allows multiple changes to be stored in a single call. The `@Versionable` macro creates an implementation of this, providing all mutable stored properties as key paths.
 
 ### `Reversion`
 
+This type contains a single change from one version of a value to another. This single change can contain multiple individual changes along multiple key paths. The `revert(_ object: inout Root) throws` function provides functionality to revert the current version of the value back to the previous version. 
+
+It is important to remember that a `Reversion` can only be applied to the version of the value that was used to make it. For instance, if an account has it's name changed, and a reversion back to the previous name made, and then the name changed again, the created reversion will not work on the current value, as the value has changed since the reversion was created. This is done to prevent `Reversion` objects being applied in the incorrect order and jumbling the state.
+
+```swift
+var account = Account(
+    id: 0,
+    name: "",
+    imageData: .init(),
+    accountType: .anonymous
+)
+let original = account
+account.name = "Johnny"
+let reversion = account.reversion(to: original) // Reversion<Account>
+account.name = "Johnny Appleseed"
+
+try reversion.revert(&account) // throws error
+```
+
 ### `Reverter`
+
+The `Reverter` is a type that allows key paths to be registered and checked for changes. It includes several `func appendReversion(at: _)` functions that accept key paths to basic types, such as Int, Bool, String, Array etc, as well as ones that allow other `Versionable` types to be checked, allowing for deep checks in nested types.
+
+It also provides the `func hasChanged(at: _)` to check for changes before registering them, and `func appendOverwriteReversion(at: _)` that does not perform any diffing, and instead stores a whole value to overwrite the existing value when the reversion is applied. This is less performant, but can be hepful with `enum` types when changing between cases.
 
 ### Macros
 
+The macros provided provide a default implementation for `Versionable` for value types, and are not exhaustive, they just intend to avoid boilerplate code where possible.
+
+For a `struct`, every mutable, stored property is added to the generated `func addReversions(into reverter: inout some Reverter<Self>)` function, which is suitable for many models.
+
+For an `enum`, every associated value has a private getter and setter generated, as well as a child `CaseName` `enum` ghosting the parent `enum`, but with no associated values. The `func addReversions(into reverter: inout some Reverter<Self>)` function first checks if the case of the enum has changed, and if so the whole value is overwritten. If the case is the same, and just some of the associated values have changed, then those changes are appended for each key path, much the same as with the `struct` implementation.
+
+For some models, you may wish to ignore individual properties, but not want to have to manually declare `func addReversions(into reverter: inout some Reverter<Self>)` to simply omit one property. The `@VersionableIgnored` macro instructs the `@Versionable` macro to ignore that property when generating the code. This macro can only be applied to `struct` properties, as in an `enum`, individual associated values are required to track `self` at all.
+
 ### Manual conformance
 
+To manually conform to the `Versionable` protocol, simply implement the `func addReversions(into reverter: inout some Reverter<Self>)` function yourself:
+
+```swift
+struct Account: Versionable {
+
+    let id: Int
+    var name: String
+    var imageData: Data
+    var accountType: AccountType
+    
+    func addReversions(into reverter: inout some Reverter<Self>) {
+        reverter.appendReversion(at: \.name)
+        reverter.appendReversion(at: \.imageData)
+        reverter.appendReversion(at: \.accountType)
+    }
+}
+```
+
+Note that the `id` property has not been included as it is immutable.
+
+```swift
+enum AccountType {
+
+    case anonymous
+    case verified(emailAddress: String)
+    case admin
+    
+    func addReversions(into reverter: inout some Reverter<Self>) {
+        guard reverter.hasChanged(at: \.caseName) == false else {
+            reverter.appendOverwriteReversion(at: \.self)
+            return
+        }
+        reverter.appendReversion(at: \.verified_emailAddress)
+    }
+
+    private enum CaseName {
+        case anonymous
+        case verified
+        case admin
+    }
+
+    private var caseName: CaseName {
+        switch self {
+        case .anonymous:
+            .anonymous
+        case .verified:
+            .verified
+        case .admin:
+            .admin
+        }
+    }
+
+    private var verified_emailAddress: String? {
+        get {
+            guard case let .verified(verified_emailAddress) = self else {
+                return nil
+            }
+            return verified_emailAddress
+        }
+        set {
+            guard case .verified = self, let newValue else {
+                return
+            }
+            self = .verified(emailAddress: newValue)
+        }
+    }
+}
+```
+
+The enum case requires a lot more boilerplate when including associated values. For a basic enum type, the easiest implementation is:
+
+```swift
+enum AccountType {
+    case anonymous
+    case verified
+    case admin
+    
+    func addReversions(into reverter: inout some Reverter<Self>) {
+        reverter.appendOverwriteReversion(at: \.self)
+    }
+}
+```
+
 ### Manual reversion handling
+
+Reversions can be created and managed manually. Suppose we have the `User` struct below:
+
+```swift
+struct User: Versionable {
+
+    var name: String
+    var imageData: Data
+
+    func addReversions(into reverter: inout some Reverter<User>) {
+        
+        reverter.appendReversion(at: \.name)
+        reverter.appendReversion(at: \.imageData)
+    }    
+}
+```
+
+A reversion can be made in a single line:
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion = user.reversion(to: original) // Reversion<User>
+```
+
+If no changes are made, then the `reversion(to:)` function returns nil.
+
+```swift
+let user = User(name: "", imageData: .init())
+let reversion = user.reversion(to: user) // nil
+```
+
+In order to apply a `Reversion`, use the `revert(_:)` function on the changed version of the object used to create the reversion:
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion = user.reversion(to: original) // Reversion<User>
+
+print(user.name) // "Johnny"
+try reversion.revert(&user)
+print(user.name) // ""
+```
+
+Attempting to revert a version of the object that wasn't used to create the reversion will throw an error:
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion = user.reversion(to: original) // Reversion<User>
+user.name = "Johnny Appleseed"
+
+try reversion.revert(&user) // throws error
+```
+
+Instead a new reversion needs to be made, either from the latest version, back to the original, or by using two reversions, and applying them from newest to oldest.
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion1 = user.reversion(to: original) // Reversion<User>
+user.name = "Johnny Appleseed"
+let reversion2 = user.reversion(to: original) // Reversion<User>
+
+print(user.name) // "Johnny Appleseed"
+try reversion2.revert(&user)
+print(user.name) // ""
+```
+
+```swift
+var user = User(name: "", imageData: .init())
+let original = user
+user.name = "Johnny"
+let reversion1 = user.reversion(to: original) // Reversion<User>
+user.name = "Johnny Appleseed"
+let reversion2 = user.reversion(to: original) // Reversion<User>
+
+print(user.name) // "Johnny Appleseed"
+try reversion2.revert(&user)
+print(user.name) // "Johnny"
+try reversion1.revert(&user)
+print(user.name) // ""
+```
+
+This way, reversions can be stored in a stack and applied as needed.
+
+# License
+This project is licensed under the terms of the MIT license.
