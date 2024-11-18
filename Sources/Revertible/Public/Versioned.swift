@@ -135,19 +135,3 @@ extension Versioned {
         }
     }
 }
-
-@Versionable
-struct MyState {
-    var string = ""
-    var int = 0
-}
-
-final class MyModel {
-    @Versioned var state = MyState()
-}
-
-let model = MyModel()
-model.state.string = "123"
-model.state.int = 42
-try model.$state.undo() // int == 0, string == "123"
-try model.$state.undo() // int == 0, string == ""
