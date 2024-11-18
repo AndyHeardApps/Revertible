@@ -115,9 +115,39 @@ extension Versioned {
             storage = newValue
         }
         
+        /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
+        /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
+        public func setWithTransaction<E: Error>(_ closure: (inout Value) throws(E) -> Void) throws(E) {
+            try closure(&storage)
+            controller.append(storage)
+        }
+
+        /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
+        /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
+        public func setWithTransaction<E: Error>(_ closure: (inout Value) async throws(E) -> Void) async throws(E) {
+            try await closure(&storage)
+            controller.append(storage)
+        }
+
         /// Clears all stored undo and redo actions. This may be needed when using ``setWithoutTracking(_:)``.
         public func reset() {
             controller.reset()
         }
     }
 }
+
+@Versionable
+struct MyState {
+    var string = ""
+    var int = 0
+}
+
+final class MyModel {
+    @Versioned var state = MyState()
+}
+
+let model = MyModel()
+model.state.string = "123"
+model.state.int = 42
+try model.$state.undo() // int == 0, string == "123"
+try model.$state.undo() // int == 0, string == ""
