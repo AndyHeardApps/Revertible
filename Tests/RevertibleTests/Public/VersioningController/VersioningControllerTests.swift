@@ -414,5 +414,27 @@ extension VersioningControllerTests {
         #expect(versioningController.hasUndo == false)
         #expect(versioningController.hasRedo == true)
         #expect(mockStruct.int == 0)
+
+        mockStruct.int = 2
+
+        versioningController.append(mockStruct)
+        versioningController.pushNewScope()
+        mockStruct.int = 3
+        versioningController.append(mockStruct)
+        mockStruct.string = "123"
+        versioningController.append(mockStruct)
+
+        try versioningController.popCurrentScope()
+
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == false)
+        #expect(mockStruct.int == 3)
+        #expect(mockStruct.string == "123")
+
+        try versioningController.undo(&mockStruct)
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 2)
+        #expect(mockStruct.string == "abcd")
     }
 }

@@ -45,7 +45,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
     @Atomic private var stacks: [VersioningStack<Value>]
     @Atomic private var referenceValue: Value
     private let keyPath: WritableKeyPath<Root, Value> & Sendable
-    private let updateRoot: @Sendable (Value) -> Void
+    private let updateRoot: (@Sendable (Value) -> Void)?
     @Atomic private var debounce: Debounce<Value>?
 
     // MARK: - Initialisers
@@ -66,7 +66,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         self.stacks = [.init()]
         self.referenceValue = value
         self.keyPath = \.self
-        self.updateRoot = { _ in }
+        self.updateRoot = nil
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
                 self?._append($0)
@@ -93,7 +93,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         self.stacks = [.init()]
         self.referenceValue = referenceValue
         self.keyPath = keyPath
-        self.updateRoot = { _ in }
+        self.updateRoot = nil
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
                 self?._append($0)
@@ -157,8 +157,24 @@ extension VersioningController {
     public func pushNewScope() {
         stacks.append(.init())
     }
+    
+    /// Pops the current scope, squashing all changes in the scope into a single change and appending it to the previous scope. If this is called from the root scope, nothing happens.
+    public func popCurrentScope() throws {
+        guard stacks.count > 1 else {
+            return
+        }
 
-    private func popCurrentScope() {
+        var previousValue = referenceValue
+        try currentStack.undoAll(&previousValue)
+
+        _ = stacks.popLast()
+        currentStack.append(
+            currentValue: referenceValue,
+            previousValue: previousValue
+        )
+    }
+
+    private func discardCurrentScope() {
         $stacks {
             if $0.count > 1 {
                 _ = $0.popLast()
@@ -275,7 +291,7 @@ extension VersioningController {
     /// - Returns: The initial value once all undos have been applied.
     public func undoAndPopCurrentScope() throws -> Value {
         let value = try undoCurrentScope()
-        popCurrentScope()
+        discardCurrentScope()
         return value
     }
 
@@ -283,14 +299,14 @@ extension VersioningController {
     /// - Parameter value: The value to apply the undos to.
     public func undoAndPopCurrentScope(_ value: inout Value) throws {
         try undoCurrentScope(&value)
-        popCurrentScope()
+        discardCurrentScope()
     }
 
     /// Undo all changes in the current scope and then discard it.
     /// - Parameter root: The parent object owning the value to apply the undos to.
     public func undoAndPopCurrentScope(root: inout Root) throws {
         try undoCurrentScope(root: &root)
-        popCurrentScope()
+        discardCurrentScope()
     }
 
 
@@ -346,31 +362,31 @@ extension VersioningController where Root: AnyObject {
     /// Undo the last change on the root object.
     public func undo() throws {
         try currentStack.undo(&referenceValue)
-        updateRoot(referenceValue)
+        updateRoot?(referenceValue)
     }
 
     /// Undo all changes in the current scope on the root object.
     public func undoCurrentScope() throws {
         try currentStack.undoAll(&referenceValue)
-        updateRoot(referenceValue)
+        updateRoot?(referenceValue)
     }
 
     /// Undo all changes in the current scope on the root object and then discard the current scope.
     public func undoAndPopCurrentScope() throws {
         try currentStack.undoAll(&referenceValue)
-        popCurrentScope()
-        updateRoot(referenceValue)
+        discardCurrentScope()
+        updateRoot?(referenceValue)
     }
 
     /// Redo the last undone change on the root object.
     public func redo() throws {
         try currentStack.redo(&referenceValue)
-        updateRoot(referenceValue)
+        updateRoot?(referenceValue)
     }
 
     /// Redo all changes in the current scope on the root object.
     public func redoCurrentScope() throws {
         try currentStack.redoAll(&referenceValue)
-        updateRoot(referenceValue)
+        updateRoot?(referenceValue)
     }
 }

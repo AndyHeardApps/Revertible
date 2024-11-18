@@ -1,6 +1,6 @@
 # Revertible
 
-This framework aims to add a low friction method to track changes in state, and allow for simple traversal through state history with `undo()` and `redo()` functions.
+This framework aims to add a low friction way to track changes in state, and allow for simple traversal through state history with `undo()` and `redo()` functions.
 
 ## Basic usage
 
@@ -56,14 +56,15 @@ try viewModel.$account.redo() // name -> "Johnny"
 In the above case, every individual change will be stored. This includes every individual change to a string as it is typed out by the user, which is a poor experience when performing an undo action one character at a time. To counter this, the `@Versioned` property wrapper has a `debounceInverval` parameter, which groups modifications made in quick succession together:
 
 ```swift
-@Versioned(debounceInterval: .milliseconds(300)) var account: Account = ...
+@Versioned(debounceInterval: .milliseconds(300))
+var account: Account = ...
 ```
 
-That's all you need to do. There are different interfaces available for more in depth use cases, such as using `VersioningController`, which drives the `@Versioned` property wrapper, directly. This offers a little more flexibility in cases where you can't directly wrap the property, or want to hold the version history separately.
+That's all you need to do. There are different interfaces available for more in depth use cases, such as directly using `VersioningController`, which drives the `@Versioned` property wrapper. This offers a little more flexibility in cases where you can't directly wrap the property, or want to hold the version history separately.
 
 ## Reasoning
 
-The `UndoManager` in Foundation is cumbersome to use, with a lot of boilerplate involved in adding undo and redo actions. With it being closure based, it can easy to let a retain cycle slip in, while also possibly retaining full copies of large state data, just in case the undo action is applied.
+The `UndoManager` in Foundation is cumbersome to use, with a lot of boilerplate involved in adding undo and redo actions. With it being closure based, it can be easy to let a retain cycle slip in, while also possibly retaining full copies of large state data, just in case the undo action is applied.
 
 Consider a situation where a large amount of text has a minor change made. A naive approach would be for the `UndoManager` to hold on to the entirity of the old value, in case it is needed in an undo action. A better approach would be to just track the changes, but this adds more complexity to an already bloated method of tracking changes.
 
@@ -85,19 +86,29 @@ There are a few different ways to use the `VersioningController`. They are mostl
 
 ### Direct tracking
 
-Direct tracking is the simplest implementation, and is used by creating an instance with the `init(_ value: _)` initializer. Use this method when you want to track an entire object at the top level. For instance if you have some state you don't own but still want to track from some other type. 
+Direct tracking is the simplest implementation, and is used by creating an instance with the `init(_ value: _)` initializer. Use this method when you want to track an entire object at the root level. For instance if you have some state you don't own but still want to track from some other type. 
 
-Once an instance has been made, versions can be pushed using the `append(_ newValue: _)` function, which will check for any changes and store them in the version stack. Versions are stored in a last in - first out basis. The status of the `VersioningController` can be inspected with the `hasUndo` and `hasRedo` properties, and there are a couple of `undo` and `redo` variations available. One implementation for each function provides the undone / redone in the return value, and the other accepts an `inout` parameter that is update in place.
+Once an instance has been made, versions can be pushed using the `append(_ newValue: _)` function, which will check for any changes and store them in the version stack. Versions are stored in a last in - first out basis. The status of the `VersioningController` can be inspected with the `hasUndo` and `hasRedo` properties, and there are a couple of `undo` and `redo` variations available. One implementation for each function returns the undone / redone value, and the other accepts an `inout` parameter that is updated in place.
 
-This allows you to add an get versions externally. For those enjoying TCA, this is the best way to manage your reducer's `State`.
+This allows you to add and get versions externally. For those enjoying TCA, this is the best way to manage your reducer's `State`.
 
 ### Key path tracking
 
-Key path tracking is functionally the same as the direct tracking method, but it accepts a `WritableKeyPath` in the `public init(on root: _, at keyPath: _)` initializer. This allows you to point to just a single property of a value to track, and also provides convenience methods that allow you to push versions by passing the `Root` type of the key path.
+Key path tracking is functionally the same as the direct tracking method, but it accepts a `WritableKeyPath` in the `public init(on root: _, at keyPath: _)` initializer. This allows you to point to just a single property of a value to track, and also provides convenience methods that allow you to push and revert versions using the `Root` value of the key path.
 
 ### Reference key path tracking
 
+Reference key path tracking is the same as key path tracking, but when the `Root` type of the key path is a reference type. This allows the `VersioningController` to hold on to a weak reference of the root, and perform `undo()` and `redo()` functions directly on that weak reference. This mode provides a more basic `undo()` and `redo()` functions that don't accept any parameters or return any values, but instead directly modifies the root.
+
+### Scopes
+
+The `VersioningController` also allows you to push and pop scopes, which act as collections of undo and redo actions. A root scope is created by default, and new scopes can be pushed using the `pushNewScope()` function and popped using the `popCurrentScope()` function. The current scope level can be inspected using the `scopeLevel` property, and are `0` indexed. Versions can only be pushed to and used on the current scope, acting as a barrier between different groups of modifications.
+
+For instance if some state is used across several screens, when a child screen is pushed, and a new scope is pushed at the same time, all the modifications made on the child screen are stored in that new scope, and can be abandonded using the `undoAndPopCurrentScope()` function, or squashed into a single change and appended to the previous scope using the `popCurrentScope()` function, depending on whether the user discards or saves changes on that screen.
+
 ## Type conformance
+
+The framework is driven by a few base types.
 
 ### `Revertible`
 
