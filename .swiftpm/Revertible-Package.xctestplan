@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "ECA83789-7B56-4057-80C1-C06CCFEA4958",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "RevertibleTests",
+        "name" : "RevertibleTests"
+      }
+    }
+  ],
+  "version" : 1
+}
