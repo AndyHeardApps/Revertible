@@ -1,13 +1,33 @@
 # Revertible
 
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FErrorCode%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/AndyHeardApps/ErrorCode)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FRevertible%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/AndyHeardApps/Revertible)
 ![GitHub License](https://img.shields.io/github/license/andyheardapps/Revertible)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/andyheardapps/revertible/build.yml)
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FErrorCode%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/AndyHeardApps/ErrorCode)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FRevertible%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/AndyHeardApps/Revertible)
 
 This framework aims to add a low friction way to track changes in state, and allow for simple traversal through state history with `undo()` and `redo()` functions.
 
-## Basic usage
+## Quick start
+
+```swift
+@Versionable
+struct MyState {
+    var string = ""
+    var int = 0
+}
+
+final class MyModel {
+    @Versioned var state = MyState()
+}
+
+let model = MyModel()
+model.state.string = "123"
+model.state.int = 42
+try model.$state.undo() // int == 0, string == "123"
+try model.$state.undo() // int == 0, string == ""
+```
+
+## Basic usage
 
 The easiest way to use this framework is with the `@Versionable` macro, which can be applied to a `struct` or `enum` declaration:
 
@@ -65,6 +85,8 @@ In the above case, every individual change will be stored. This includes every i
 var account: Account = ...
 ```
 
+There are also a couple of `setWithTransaction(_ closure: _)` functions that allow you to make modifications within the closure that are all applied at once and stored as a single change in the history.
+
 That's all you need to do. There are different interfaces available for more in depth use cases, such as directly using `VersioningController`, which drives the `@Versioned` property wrapper. This offers a little more flexibility in cases where you can't directly wrap the property, or want to hold the version history separately.
 
 ## Reasoning
@@ -89,9 +111,9 @@ Other than the `@Versioned` property wrapper, the other way to easily handle ver
 
 There are a few different ways to use the `VersioningController`. They are mostly the same, but there are some points to be aware of.
 
-### Direct tracking
+### Direct tracking
 
-Direct tracking is the simplest implementation, and is used by creating an instance with the `init(_ value: _)` initializer. Use this method when you want to track an entire object at the root level. For instance if you have some state you don't own but still want to track from some other type. 
+Direct tracking is the simplest implementation, and is used by creating an instance with the `init(_ value: _)` initializer. Use this method when you want to track an entire object at the root level. For instance if you have some state you don't own but still want to track from some other type, such as when state is provided by some third party library or `@Environment`.
 
 Once an instance has been made, versions can be pushed using the `append(_ newValue: _)` function, which will check for any changes and store them in the version stack. Versions are stored in a last in - first out basis. The status of the `VersioningController` can be inspected with the `hasUndo` and `hasRedo` properties, and there are a couple of `undo` and `redo` variations available. One implementation for each function returns the undone / redone value, and the other accepts an `inout` parameter that is updated in place.
 
@@ -162,7 +184,7 @@ For an `enum`, every associated value has a private getter and setter generated,
 
 For some models, you may wish to ignore individual properties, but not want to have to manually declare `func addReversions(into reverter: inout some Reverter<Self>)` to simply omit one property. The `@VersionableIgnored` macro instructs the `@Versionable` macro to ignore that property when generating the code. This macro can only be applied to `struct` properties, as in an `enum`, individual associated values are required to track `self` at all.
 
-### Manual conformance
+### Manual conformance
 
 To manually conform to the `Versionable` protocol, simply implement the `func addReversions(into reverter: inout some Reverter<Self>)` function yourself:
 
