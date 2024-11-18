@@ -1,5 +1,10 @@
 # Revertible
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FErrorCode%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/AndyHeardApps/ErrorCode)
+![GitHub License](https://img.shields.io/github/license/andyheardapps/Revertible)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/andyheardapps/revertible/build.yml?branch=develop)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FAndyHeardApps%2FErrorCode%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/AndyHeardApps/ErrorCode)
+
 This framework aims to add a low friction way to track changes in state, and allow for simple traversal through state history with `undo()` and `redo()` functions.
 
 ## Basic usage
