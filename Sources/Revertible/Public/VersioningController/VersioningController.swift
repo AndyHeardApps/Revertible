@@ -63,7 +63,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
             assertionFailure("VersioningController can only be used on value types.")
         }
 
-        self.stacks = [.init()]
+        self.stacks = [.init(tag: nil)]
         self.referenceValue = value
         self.keyPath = \.self
         self.updateRoot = nil
@@ -90,7 +90,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
             assertionFailure("VersioningController can only be used on value types.")
         }
 
-        self.stacks = [.init()]
+        self.stacks = [.init(tag: nil)]
         self.referenceValue = referenceValue
         self.keyPath = keyPath
         self.updateRoot = nil
@@ -117,7 +117,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
             assertionFailure("VersioningController can only be used on value types.")
         }
 
-        self.stacks = [.init()]
+        self.stacks = [.init(tag: nil)]
         self.referenceValue = referenceValue
         self.keyPath = keyPath
         self.updateRoot = { [weak root] newValue in
@@ -155,7 +155,7 @@ extension VersioningController {
                 if let stack = $0.last {
                     return stack
                 } else {
-                    let stack = VersioningStack<Value>()
+                    let stack = VersioningStack<Value>(tag: nil)
                     $0.append(stack)
                     return stack
                 }
@@ -170,7 +170,7 @@ extension VersioningController {
 
     /// Creates and pushes a new scope that all new actions are added to.
     public func pushNewScope() {
-        stacks.append(.init())
+        stacks.append(.init(tag: currentStack.undoStack.last?.tag ?? currentStack.tag))
     }
     
     /// Pops the current scope, squashing all changes in the scope into a single change and appending it to the previous scope. If this is called from the root scope, nothing happens.
@@ -205,7 +205,7 @@ extension VersioningController {
     }
 
     func reset() {
-        stacks = [.init()]
+        stacks = [.init(tag: nil)]
     }
 }
 
@@ -265,6 +265,12 @@ extension VersioningController {
         tag: AnyHashableSendable?
     ) {
 
+        if let tag {
+            for index in stacks.indices {
+                stacks[index].clear(tag: tag)
+            }
+        }
+        
         $referenceValue {
             currentStack.append(
                 currentValue: newValue,
@@ -300,8 +306,25 @@ extension VersioningController {
     /// Updates the tag of the current version.
     /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
     public func tagCurrentVersion(_ tag: some Hashable & Sendable) {
+        for index in stacks.indices {
+            stacks[index].clear(tag: .init(wrapped: tag))
+        }
         currentStack.tagCurrentVersion(.init(wrapped: tag))
     }
+    
+    /// Returns a the lists of tags in the current scope, one for the undo stack and one for the redo stack, including `nil` entries for untagged actions. If the scope level is not available, then `nil` is returned.
+    /// - Parameter scopeLevel: The scope level to return tags for.
+    /// - Returns: A tuple containing two arrays on `AnyHashable?`. One for the undo stack, one for the redo stack.
+    public func tags(inScopeLevel scopeLevel: Int) -> (undo: [AnyHashable?], redo: [AnyHashable?])? {
+        guard scopeLevel < stacks.count else {
+            return nil
+        }
+        let undoTags = CollectionOfOne(stacks[scopeLevel].tag?.wrapped) + stacks[scopeLevel].undoStack.map(\.tag?.wrapped)
+        let redoTags = stacks[scopeLevel].redoStack.map(\.tag?.wrapped)
+
+        return (undoTags, redoTags)
+    }
+
 
 
     // MARK: Undo
@@ -538,7 +561,7 @@ extension VersioningController where Root: AnyObject {
         updateRoot?(referenceValue)
     }
 
-    /// Redo all the changes in the current scope up to the provided tag on the root object. If the tag cannot be found, nothing happens.
+    /// Redo all the changes in the current scope up and including to the provided tag on the root object. If the tag cannot be found, nothing happens.
     ///
     /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
     /// - Parameter tag: The tag to revert to.

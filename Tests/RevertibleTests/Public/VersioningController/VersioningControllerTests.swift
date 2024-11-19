@@ -437,4 +437,142 @@ extension VersioningControllerTests {
         #expect(mockStruct.int == 2)
         #expect(mockStruct.string == "abcd")
     }
+
+    @Test("Tags")
+    func tags() throws {
+
+        enum Tag {
+            case initial
+            case modified
+            case final
+        }
+
+        var mockStruct = MockStruct()
+        let versioningController = VersioningController(mockStruct)
+        versioningController.tagCurrentVersion(Tag.initial)
+
+        mockStruct.int = 3
+        mockStruct.string = "123"
+        versioningController.append(mockStruct)
+
+        mockStruct.int = 5
+        mockStruct.string = "12345"
+        versioningController.append(mockStruct, tag: Tag.modified)
+
+        mockStruct.int = 9
+        mockStruct.string = "123456789"
+        versioningController.append(mockStruct)
+
+        mockStruct.int = 10
+        mockStruct.string = "1234567890"
+        versioningController.append(mockStruct)
+        versioningController.tagCurrentVersion(Tag.final)
+
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == false)
+        #expect(mockStruct.int == 10)
+        #expect(mockStruct.string == "1234567890")
+
+        try versioningController.undo(&mockStruct)
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 9)
+        #expect(mockStruct.string == "123456789")
+
+        mockStruct = try versioningController.undo(to: Tag.modified)
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 5)
+        #expect(mockStruct.string == "12345")
+
+        try versioningController.undo(&mockStruct, to: Tag.initial)
+        #expect(versioningController.hasUndo == false)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 0)
+        #expect(mockStruct.string == "abcd")
+
+        mockStruct = try versioningController.redo(to: Tag.modified)
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 5)
+        #expect(mockStruct.string == "12345")
+
+        try versioningController.redo(&mockStruct, to: 0)
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 5)
+        #expect(mockStruct.string == "12345")
+
+        try versioningController.undo(&mockStruct, to: 1)
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 5)
+        #expect(mockStruct.string == "12345")
+
+        versioningController.pushNewScope()
+        mockStruct.int = 9
+        mockStruct.string = "123456789"
+        versioningController.append(mockStruct)
+
+        mockStruct.int = 10
+        mockStruct.string = "1234567890"
+        versioningController.append(mockStruct)
+        versioningController.tagCurrentVersion(Tag.final)
+
+        mockStruct = try versioningController.undo(to: Tag.modified)
+        #expect(versioningController.hasUndo == false)
+        #expect(versioningController.hasRedo == true)
+        #expect(mockStruct.int == 5)
+        #expect(mockStruct.string == "12345")
+
+        mockStruct = try versioningController.redo(to: Tag.final)
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == false)
+        #expect(mockStruct.int == 10)
+        #expect(mockStruct.string == "1234567890")
+
+        try versioningController.popCurrentScope()
+
+        #expect(versioningController.hasUndo == true)
+        #expect(versioningController.hasRedo == false)
+    }
+
+    @Test("Inspect tags")
+    func inspectTags() throws {
+
+        enum Tag {
+            case initial
+            case modified
+            case final
+        }
+
+        var mockStruct = MockStruct()
+        let versioningController = VersioningController(mockStruct)
+        versioningController.tagCurrentVersion(Tag.initial)
+
+        #expect(try #require(versioningController.tags(inScopeLevel: versioningController.scopeLevel)) == ([Tag.initial], []))
+
+        mockStruct.int = 5
+        versioningController.append(mockStruct)
+
+        mockStruct.string = "12345"
+        versioningController.append(mockStruct, tag: Tag.modified)
+
+        #expect(try #require(versioningController.tags(inScopeLevel: versioningController.scopeLevel)) == ([Tag.initial, nil, Tag.modified], []))
+
+        mockStruct.int = 7
+        versioningController.append(mockStruct)
+
+        mockStruct.string = "1234567"
+        versioningController.append(mockStruct, tag: Tag.modified)
+
+        #expect(try #require(versioningController.tags(inScopeLevel: versioningController.scopeLevel)) == ([Tag.initial, nil, nil, nil, Tag.modified], []))
+
+        mockStruct.int = 9
+        versioningController.append(mockStruct)
+        versioningController.tagCurrentVersion(Tag.final)
+
+        mockStruct = try versioningController.undo(to: Tag.modified)
+        #expect(try #require(versioningController.tags(inScopeLevel: versioningController.scopeLevel)) == ([Tag.initial, nil, nil, nil, Tag.modified], [Tag.final]))
+    }
 }

@@ -74,6 +74,12 @@ extension Versioned {
             controller.scopeLevel
         }
 
+        /// Updates the tag of the current version.
+        /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
+        public func tag(_ tag: some Hashable & Sendable) {
+            controller.tagCurrentVersion(tag)
+        }
+
         /// Whether the current scope has an undo action available to perform.
         public var hasUndo: Bool {
             controller.hasUndo
@@ -89,6 +95,12 @@ extension Versioned {
             storage = try controller.undo()
         }
 
+        /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
+        /// - Parameter tag: The tag to revert to.
+        public func undo(to tag: some Hashable & Sendable) throws {
+            storage = try controller.undo(to: tag)
+        }
+
         /// Undo all changes in the current scope.
         public func undoCurrentScope() throws {
             storage = try controller.undoCurrentScope()
@@ -102,6 +114,12 @@ extension Versioned {
         /// Redo the last undone change, if possible.
         public func redo() throws {
             storage = try controller.redo()
+        }
+        
+        /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
+        /// - Parameter tag: The tag to revert to.
+        public func redo(to tag: some Hashable & Sendable) throws {
+            storage = try controller.redo(to: tag)
         }
 
         /// Redo all changes in the current scope.
