@@ -59,7 +59,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         debounceInterval: ContinuousClock.Duration? = nil
     ) where Root == Value {
 
-        if type(of: value) is AnyClass {
+        if Value.self is AnyClass.Type {
             assertionFailure("VersioningController can only be used on value types.")
         }
 
@@ -85,13 +85,12 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         debounceInterval: ContinuousClock.Duration? = nil
     ) {
 
-        let referenceValue = root[keyPath: keyPath]
-        if type(of: referenceValue) is AnyClass {
+        if Value.self is AnyClass.Type {
             assertionFailure("VersioningController can only be used on value types.")
         }
 
         self.stacks = [.init(tag: nil)]
-        self.referenceValue = referenceValue
+        self.referenceValue = root[keyPath: keyPath]
         self.keyPath = keyPath
         self.updateRoot = nil
         self.debounce = debounceInterval.map {
@@ -112,13 +111,12 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         debounceInterval: ContinuousClock.Duration? = nil
     ) where Root: AnyObject {
 
-        let referenceValue = root[keyPath: keyPath]
-        if type(of: referenceValue) is AnyClass {
+        if Value.self is AnyClass.Type {
             assertionFailure("VersioningController can only be used on value types.")
         }
 
         self.stacks = [.init(tag: nil)]
-        self.referenceValue = referenceValue
+        self.referenceValue = root[keyPath: keyPath]
         self.keyPath = keyPath
         self.updateRoot = { [weak root] newValue in
             root?[keyPath: keyPath] = newValue
