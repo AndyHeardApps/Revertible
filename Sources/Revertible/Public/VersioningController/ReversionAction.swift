@@ -4,19 +4,23 @@ struct ReversionAction<Value: Versionable> {
     // MARK: - Properties
     private let undoReversion: Reversion<Value>
     private let redoReversion: Reversion<Value>
+    let tag: AnyHashableSendable?
 
     // MARK: - Initialisers
     private init(
         undoReversion: Reversion<Value>,
-        redoReversion: Reversion<Value>
+        redoReversion: Reversion<Value>,
+        tag: AnyHashableSendable?
     ) {
         self.undoReversion = undoReversion
         self.redoReversion = redoReversion
+        self.tag = tag
     }
 
     init?(
         currentValue: Value,
-        previousValue: Value
+        previousValue: Value,
+        tag: AnyHashableSendable?
     ) {
 
         guard
@@ -28,6 +32,7 @@ struct ReversionAction<Value: Versionable> {
 
         self.undoReversion = undoReversion
         self.redoReversion = redoReversion
+        self.tag = tag
     }
 }
 
@@ -35,15 +40,22 @@ struct ReversionAction<Value: Versionable> {
 extension ReversionAction {
 
     func perform(on value: inout Value) throws {
-
         try undoReversion.revert(&value)
     }
 
     func inverted() -> Self {
-
         .init(
             undoReversion: redoReversion,
-            redoReversion: undoReversion
+            redoReversion: undoReversion,
+            tag: tag
+        )
+    }
+
+    func tagged(_ tag: AnyHashableSendable?) -> Self {
+        .init(
+            undoReversion: undoReversion,
+            redoReversion: redoReversion,
+            tag: tag
         )
     }
 }

@@ -46,7 +46,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
     @Atomic private var referenceValue: Value
     private let keyPath: WritableKeyPath<Root, Value> & Sendable
     private let updateRoot: (@Sendable (Value) -> Void)?
-    @Atomic private var debounce: Debounce<Value>?
+    @Atomic private var debounce: Debounce<DebouncedValue>?
 
     // MARK: - Initialisers
     
@@ -63,13 +63,13 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
             assertionFailure("VersioningController can only be used on value types.")
         }
 
-        self.stacks = [.init()]
+        self.stacks = [.init(tag: nil)]
         self.referenceValue = value
         self.keyPath = \.self
         self.updateRoot = nil
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
-                self?._append($0)
+                self?._append($0.value, tag: $0.tag)
             }
         }
     }
@@ -90,13 +90,13 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
             assertionFailure("VersioningController can only be used on value types.")
         }
 
-        self.stacks = [.init()]
+        self.stacks = [.init(tag: nil)]
         self.referenceValue = referenceValue
         self.keyPath = keyPath
         self.updateRoot = nil
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
-                self?._append($0)
+                self?._append($0.value, tag: $0.tag)
             }
         }
     }
@@ -117,7 +117,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
             assertionFailure("VersioningController can only be used on value types.")
         }
 
-        self.stacks = [.init()]
+        self.stacks = [.init(tag: nil)]
         self.referenceValue = referenceValue
         self.keyPath = keyPath
         self.updateRoot = { [weak root] newValue in
@@ -125,8 +125,23 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         }
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
-                self?._append($0)
+                self?._append($0.value, tag: $0.tag)
             }
+        }
+    }
+
+    private struct DebouncedValue: Sendable {
+        let value: Value
+        let tag: AnyHashableSendable?
+
+        init(_ value: Value, tag: some Hashable & Sendable) {
+            self.value = value
+            self.tag = AnyHashableSendable(wrapped: tag)
+        }
+
+        init(_ value: Value) {
+            self.value = value
+            self.tag = nil
         }
     }
 }
@@ -140,7 +155,7 @@ extension VersioningController {
                 if let stack = $0.last {
                     return stack
                 } else {
-                    let stack = VersioningStack<Value>()
+                    let stack = VersioningStack<Value>(tag: nil)
                     $0.append(stack)
                     return stack
                 }
@@ -155,7 +170,7 @@ extension VersioningController {
 
     /// Creates and pushes a new scope that all new actions are added to.
     public func pushNewScope() {
-        stacks.append(.init())
+        stacks.append(.init(tag: currentStack.undoStack.last?.tag ?? currentStack.tag))
     }
     
     /// Pops the current scope, squashing all changes in the scope into a single change and appending it to the previous scope. If this is called from the root scope, nothing happens.
@@ -164,13 +179,15 @@ extension VersioningController {
             return
         }
 
+        let firstItemTag = currentStack.undoStack.first?.tag
         var previousValue = referenceValue
         try currentStack.undoAll(&previousValue)
 
         _ = stacks.popLast()
         currentStack.append(
             currentValue: referenceValue,
-            previousValue: previousValue
+            previousValue: previousValue,
+            tag: firstItemTag
         )
     }
 
@@ -188,7 +205,7 @@ extension VersioningController {
     }
 
     func reset() {
-        stacks = [.init()]
+        stacks = [.init(tag: nil)]
     }
 }
 
@@ -212,34 +229,102 @@ extension VersioningController {
     // MARK: Append
 
     /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
-    /// - Parameter newValue: The updated value to register changes on.
+    /// - Parameters:
+    ///   - newValue: The updated value to register changes on.
     public func append(_ newValue: Value) {
 
         $debounce {
             if $0 != nil {
-                $0?.emit(value: newValue)
+                $0?.emit(value: .init(newValue))
             } else {
-                _append(newValue)
+                _append(newValue, tag: nil)
             }
         }
     }
 
-    private func _append(_ newValue: Value) {
+    /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
+    /// - Parameters:
+    ///   - newValue: The updated value to register changes on.
+    ///   - tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
+    public func append(
+        _ newValue: Value,
+        tag: some Hashable & Sendable
+    ) {
 
+        $debounce {
+            if $0 != nil {
+                $0?.emit(value: .init(newValue, tag: tag))
+            } else {
+                _append(newValue, tag: .init(wrapped: tag))
+            }
+        }
+    }
+
+    private func _append(
+        _ newValue: Value,
+        tag: AnyHashableSendable?
+    ) {
+
+        if let tag {
+            for index in stacks.indices {
+                stacks[index].clear(tag: tag)
+            }
+        }
+        
         $referenceValue {
             currentStack.append(
                 currentValue: newValue,
-                previousValue: $0
+                previousValue: $0,
+                tag: tag
+
             )
             $0 = newValue
         }
     }
 
     /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
-    /// - Parameter updatedRoot: The object owning the value to register changes for.
+    /// - Parameters:
+    ///    - updatedRoot: The object owning the value to register changes for.
     public func append(root updatedRoot: Root) {
         append(updatedRoot[keyPath: keyPath])
     }
+
+    /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
+    /// - Parameters:
+    ///    - updatedRoot: The object owning the value to register changes for.
+    ///    - tag: An optional tag to reference this version. This can be used later to apply reversions up to this tag.
+    public func append(
+        root updatedRoot: Root,
+        tag: some Hashable & Sendable
+    ) {
+        append(
+            updatedRoot[keyPath: keyPath],
+            tag: tag
+        )
+    }
+    
+    /// Updates the tag of the current version.
+    /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
+    public func tagCurrentVersion(_ tag: some Hashable & Sendable) {
+        for index in stacks.indices {
+            stacks[index].clear(tag: .init(wrapped: tag))
+        }
+        currentStack.tagCurrentVersion(.init(wrapped: tag))
+    }
+    
+    /// Returns a the lists of tags in the current scope, one for the undo stack and one for the redo stack, including `nil` entries for untagged actions. If the scope level is not available, then `nil` is returned.
+    /// - Parameter scopeLevel: The scope level to return tags for.
+    /// - Returns: A tuple containing two arrays on `AnyHashable?`. One for the undo stack, one for the redo stack.
+    public func tags(inScopeLevel scopeLevel: Int) -> (undo: [AnyHashable?], redo: [AnyHashable?])? {
+        guard scopeLevel < stacks.count else {
+            return nil
+        }
+        let undoTags = CollectionOfOne(stacks[scopeLevel].tag?.wrapped) + stacks[scopeLevel].undoStack.map(\.tag?.wrapped)
+        let redoTags = stacks[scopeLevel].redoStack.map(\.tag?.wrapped)
+
+        return (undoTags, redoTags)
+    }
+
 
 
     // MARK: Undo
@@ -265,7 +350,48 @@ extension VersioningController {
         root[keyPath: keyPath] = referenceValue
     }
 
+
     
+    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is returned.
+    /// - Parameter tag: The tag to revert to.
+    /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
+    public func undo(to tag: some Hashable & Sendable) throws -> Value {
+        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+        return referenceValue
+    }
+
+    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - value: The value to apply the undos to.
+    ///   - tag: The tag to revert to.
+    public func undo(
+        _ value: inout Value,
+        to tag: some Hashable & Sendable
+    ) throws {
+        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+        value = referenceValue
+    }
+    
+    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - root: The parent object owning the value to apply the undos to.
+    ///   - tag: The tag to revert to.
+    public func undo(
+        root: inout Root,
+        to tag: some Hashable & Sendable
+    ) throws {
+        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+        return root[keyPath: keyPath] = referenceValue
+    }
+
+
+
     /// Undo all changes in the current scope.
     /// - Returns: The initial value once all undos have been applied.
     public func undoCurrentScope() throws -> Value {
@@ -286,6 +412,8 @@ extension VersioningController {
         try currentStack.undoAll(&referenceValue)
         root[keyPath: keyPath] = referenceValue
     }
+
+
 
     /// Undo all changes in the current scope and then discard it.
     /// - Returns: The initial value once all undos have been applied.
@@ -334,6 +462,46 @@ extension VersioningController {
     }
 
 
+    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is returned.
+    /// - Parameter tag: The tag to revert to.
+    /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
+    public func redo(to tag: some Hashable & Sendable) throws -> Value {
+        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+        return referenceValue
+    }
+
+    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - value: The value to apply the redos to.
+    ///   - tag: The tag to revert to.
+    public func redo(
+        _ value: inout Value,
+        to tag: some Hashable & Sendable
+    ) throws {
+        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+        value = referenceValue
+    }
+
+    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - root: The parent object owning the value to apply the redos to.
+    ///   - tag: The tag to revert to.
+    public func redo(
+        root: inout Root,
+        to tag: some Hashable & Sendable
+    ) throws {
+        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+        return root[keyPath: keyPath] = referenceValue
+    }
+
+
+
     /// Redo all changes in the current scope.
     /// - Returns: The latest value once all redos have been applied.
     public func redoCurrentScope() throws -> Value {
@@ -365,6 +533,15 @@ extension VersioningController where Root: AnyObject {
         updateRoot?(referenceValue)
     }
 
+    /// Undo all the changes in the current scope up to the provided tag on the root object. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameter tag: The tag to revert to.
+    public func undo(to tag: some Hashable & Sendable) throws {
+        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+        updateRoot?(referenceValue)
+    }
+
     /// Undo all changes in the current scope on the root object.
     public func undoCurrentScope() throws {
         try currentStack.undoAll(&referenceValue)
@@ -381,6 +558,15 @@ extension VersioningController where Root: AnyObject {
     /// Redo the last undone change on the root object.
     public func redo() throws {
         try currentStack.redo(&referenceValue)
+        updateRoot?(referenceValue)
+    }
+
+    /// Redo all the changes in the current scope up and including to the provided tag on the root object. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameter tag: The tag to revert to.
+    public func redo(to tag: some Hashable & Sendable) throws {
+        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
         updateRoot?(referenceValue)
     }
 

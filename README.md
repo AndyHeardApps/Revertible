@@ -133,6 +133,10 @@ The `VersioningController` also allows you to push and pop scopes, which act as 
 
 For instance if some state is used across several screens, when a child screen is pushed, and a new scope is pushed at the same time, all the modifications made on the child screen are stored in that new scope, and can be abandonded using the `undoAndPopCurrentScope()` function, or squashed into a single change and appended to the previous scope using the `popCurrentScope()` function, depending on whether the user discards or saves changes on that screen.
 
+### Tags
+
+You can also tag a version with some `Hashable` value for future reference using the `func append(_ value: _, tag: _)` function or `func tagCurrentVersion(_ tag: _)` functions. You can then undo or redo to that version by passing the tag to the `func undo(to tag: _)` or `func redo(to tag: _)` functions. You cannot pop a scope this way, and can only revert to a tag within the current scope. To see all tags within a scope, use the `func tags(inScopeLevel scopeLevel: _)` function that returns a tuple of `AnyHashable?` arrays, containing all actions and their tags, even if it's `nil`.
+
 ## Type conformance
 
 The framework is driven by a few base types that buld upon eachother. This section outlines how they work and how they can be used manually.
