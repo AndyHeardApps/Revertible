@@ -97,4 +97,25 @@ struct VersionedTests {
         try mock.$value.redo()
         #expect(originalValue == mock.value)
     }
+
+    @Test("Transaction")
+    func transaction() throws {
+
+        let mock = Mock()
+        let originalValue = mock.value
+        mock.$value.setWithTransaction {
+            $0.string = "12345"
+            $0.int = 99
+        }
+
+        #expect(mock.$value.hasUndo == true)
+        #expect(mock.$value.hasRedo == false)
+        #expect(originalValue != mock.value)
+
+        try mock.$value.undo()
+
+        #expect(mock.$value.hasUndo == false)
+        #expect(mock.$value.hasRedo == true)
+        #expect(originalValue == mock.value)
+    }
 }
