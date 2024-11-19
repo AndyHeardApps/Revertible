@@ -6,13 +6,13 @@
 /// This type is driven by the ``VersioningController``, so for further information refer to it's documentation.
 ///
 /// ```
-/// @Versioned var value = myStruct()   // id = 0
+/// @VersionTracked var value = myStruct()   // id = 0
 /// value.id = 5                        // id = 5
 /// try $value.undo()                   // id = 0
 /// try $value.redo()                   // id = 5
 /// ```
 @propertyWrapper
-public struct Versioned<Value: Versionable & Sendable>: Sendable {
+public struct VersionTracked<Value: Versionable & Sendable>: Sendable {
 
     // MARK: - Properties
 
@@ -37,7 +37,7 @@ public struct Versioned<Value: Versionable & Sendable>: Sendable {
 
     // MARK: - Initializer
 
-    /// Creates a new ``Versioned`` property wrapper.
+    /// Creates a new ``VersionTracked`` property wrapper.
     /// - Parameters:
     ///   - wrappedValue: The initial tracked value.
     ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
@@ -51,7 +51,7 @@ public struct Versioned<Value: Versionable & Sendable>: Sendable {
 }
 
 // MARK: - Functions
-extension Versioned {
+extension VersionTracked {
     
     /// Provides access to undo and redo functionality for the wrapped type.
     public struct Controller: Sendable {
@@ -59,9 +59,9 @@ extension Versioned {
         private let controller: VersioningController<Value, Value>
         @Atomic private var storage: Value
 
-        fileprivate init(_ versioned: Versioned) {
-            self.controller = versioned.controller
-            self._storage = versioned._storage
+        fileprivate init(_ versionTracked: VersionTracked) {
+            self.controller = versionTracked.controller
+            self._storage = versionTracked._storage
         }
 
         /// Creates and pushes a new scope that all new actions are added to.

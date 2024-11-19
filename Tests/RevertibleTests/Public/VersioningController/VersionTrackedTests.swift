@@ -2,11 +2,11 @@ import Foundation
 import Testing
 import Revertible
 
-@Suite("Versioned")
-struct VersionedTests {
+@Suite("VersionTracked")
+struct VersionTrackedTests {
 
     private struct Mock {
-        @Versioned
+        @VersionTracked
         var value = MockStruct()
     }
 

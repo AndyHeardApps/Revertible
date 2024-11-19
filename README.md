@@ -17,7 +17,7 @@ struct MyState {
 }
 
 final class MyModel {
-    @Versioned var state = MyState()
+    @VersionTracked var state = MyState()
 }
 
 let model = MyModel()
@@ -49,12 +49,12 @@ enum AccountType {
 }
 ```
 
-The macro generates a conformance to the `Versionable` protocol, as well as some convenience methods in the case of the type being an `enum`. This can then be used with the `@Versioned` property wrapped:
+The macro generates a conformance to the `Versionable` protocol, as well as some convenience methods in the case of the type being an `enum`. This can then be used with the `@VersionTracked` property wrapped:
 
 ```swift
 final class ViewModel {
 
-    @Versioned var account: Account
+    @VersionTracked var account: Account
 }
 ```
 
@@ -78,16 +78,16 @@ try viewModel.$account.undo() // name -> ""
 try viewModel.$account.redo() // name -> "Johnny"
 ```
 
-In the above case, every individual change will be stored. This includes every individual change to a string as it is typed out by the user, which is a poor experience when performing an undo action one character at a time. To counter this, the `@Versioned` property wrapper has a `debounceInverval` parameter, which groups modifications made in quick succession together:
+In the above case, every individual change will be stored. This includes every individual change to a string as it is typed out by the user, which is a poor experience when performing an undo action one character at a time. To counter this, the `@VersionTracked` property wrapper has a `debounceInverval` parameter, which groups modifications made in quick succession together:
 
 ```swift
-@Versioned(debounceInterval: .milliseconds(300))
+@VersionTracked(debounceInterval: .milliseconds(300))
 var account: Account = ...
 ```
 
 There are also a couple of `setWithTransaction(_ closure: _)` functions that allow you to make modifications within the closure that are all applied at once and stored as a single change in the history.
 
-That's all you need to do. There are different interfaces available for more in depth use cases, such as directly using `VersioningController`, which drives the `@Versioned` property wrapper. This offers a little more flexibility in cases where you can't directly wrap the property, or want to hold the version history separately.
+That's all you need to do. There are different interfaces available for more in depth use cases, such as directly using `VersioningController`, which drives the `@VersionTracked` property wrapper. This offers a little more flexibility in cases where you can't directly wrap the property, or want to hold the version history separately.
 
 ## Reasoning
 
@@ -107,7 +107,7 @@ For more information on how the framework operates, check the [Type conformance]
 
 ## `VersioningController`
 
-Other than the `@Versioned` property wrapper, the other way to easily handle version of a value is with the `VersioningController`. Each instance of a `VersioningController` can only manage a single value, so the best practice is to consolidate all of your state into a single type.
+Other than the `@VersionTracked` property wrapper, the other way to easily handle version of a value is with the `VersioningController`. Each instance of a `VersioningController` can only manage a single value, so the best practice is to consolidate all of your state into a single type.
 
 There are a few different ways to use the `VersioningController`. They are mostly the same, but there are some points to be aware of.
 
