@@ -51,8 +51,8 @@ final class StructMacroTests: XCTestCase {
         extension MyStruct: Versionable {
 
             func addReversions(into reverter: inout some Reverter<Self>) {
-                reverter.appendReversion(at: \\.mutable )
-                reverter.appendReversion(at: \\.observed )
+                reverter.appendReversion(at: \\.mutable)
+                reverter.appendReversion(at: \\.observed)
             }
         }
         """,
@@ -81,7 +81,7 @@ final class StructMacroTests: XCTestCase {
         extension MyStruct {
 
             fileprivate func addReversions(into reverter: inout some Reverter<Self>) {
-                reverter.appendReversion(at: \\.value )
+                reverter.appendReversion(at: \\.value)
             }
         }
         """,

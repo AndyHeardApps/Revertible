@@ -100,7 +100,7 @@ extension VersionableMacro {
                                 period: .periodToken(),
                                 component: .property(
                                     .init(
-                                        declName: .init(baseName: property)
+                                        declName: .init(baseName: property).trimmed
                                     )
                                 )
                             )
@@ -154,7 +154,7 @@ extension VersionableMacro.DiagnosticMessage: SwiftDiagnostics.DiagnosticMessage
 
         switch self {
         case .notAValueType:
-            "Macro \"@ErrorCode\" can only be applied to an enum."
+            "Macro \"@Versionable\" can only be applied to a value type."
 
         }
     }
@@ -183,42 +183,5 @@ extension VersionableMacro.DiagnosticMessage: SwiftDiagnostics.DiagnosticMessage
             .error
 
         }
-    }
-}
-
-// MARK: - Fix it message
-extension VersionableMacro {
-    fileprivate enum FixItMessage {
-
-        case addErrorCodeConformance
-    }
-}
-
-extension VersionableMacro.FixItMessage: SwiftDiagnostics.FixItMessage {
-
-    var message: String {
-
-        switch self {
-        case .addErrorCodeConformance:
-            "Add \"ErrorCode\" conformance"
-
-        }
-    }
-
-    private var messageID: String {
-
-        switch self {
-        case .addErrorCodeConformance:
-            "addErrorCodeConformance"
-
-        }
-    }
-
-    var fixItID: SwiftDiagnostics.MessageID {
-
-        .init(
-            domain: "ErrorCodeMacro",
-            id: messageID
-        )
     }
 }

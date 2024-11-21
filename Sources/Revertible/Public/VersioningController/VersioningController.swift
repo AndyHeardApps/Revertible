@@ -59,7 +59,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         debounceInterval: ContinuousClock.Duration? = nil
     ) where Root == Value {
 
-        if type(of: value) is AnyClass {
+        if Value.self is AnyClass.Type {
             assertionFailure("VersioningController can only be used on value types.")
         }
 
@@ -85,13 +85,12 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         debounceInterval: ContinuousClock.Duration? = nil
     ) {
 
-        let referenceValue = root[keyPath: keyPath]
-        if type(of: referenceValue) is AnyClass {
+        if Value.self is AnyClass.Type {
             assertionFailure("VersioningController can only be used on value types.")
         }
 
         self.stacks = [.init(tag: nil)]
-        self.referenceValue = referenceValue
+        self.referenceValue = root[keyPath: keyPath]
         self.keyPath = keyPath
         self.updateRoot = nil
         self.debounce = debounceInterval.map {
@@ -112,13 +111,12 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         debounceInterval: ContinuousClock.Duration? = nil
     ) where Root: AnyObject {
 
-        let referenceValue = root[keyPath: keyPath]
-        if type(of: referenceValue) is AnyClass {
+        if Value.self is AnyClass.Type {
             assertionFailure("VersioningController can only be used on value types.")
         }
 
         self.stacks = [.init(tag: nil)]
-        self.referenceValue = referenceValue
+        self.referenceValue = root[keyPath: keyPath]
         self.keyPath = keyPath
         self.updateRoot = { [weak root] newValue in
             root?[keyPath: keyPath] = newValue
@@ -574,5 +572,22 @@ extension VersioningController where Root: AnyObject {
     public func redoCurrentScope() throws {
         try currentStack.redoAll(&referenceValue)
         updateRoot?(referenceValue)
+    }
+
+    /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
+    /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
+    public func setWithTransaction<E: Error>(_ closure: (inout Value) throws(E) -> Void) throws(E) {
+        try closure(&referenceValue)
+        updateRoot?(referenceValue)
+        append(referenceValue)
+
+    }
+
+    /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
+    /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
+    public func setWithTransaction<E: Error>(_ closure: (inout Value) async throws(E) -> Void) async throws(E) {
+        try await closure(&referenceValue)
+        updateRoot?(referenceValue)
+        append(referenceValue)
     }
 }

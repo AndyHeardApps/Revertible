@@ -110,6 +110,18 @@ extension DefaultReverter: Reverter {
     }
 }
 
+// MARK: - Boolean
+extension DefaultReverter {
+
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, Bool>) {
+        appendEquatableReversion(at: keyPath)
+    }
+
+    mutating func appendReversion(at keyPath: WritableKeyPath<Root, Bool?>) {
+        appendEquatableReversion(at: keyPath)
+    }
+}
+
 // MARK: - Integers
 extension DefaultReverter {
     
