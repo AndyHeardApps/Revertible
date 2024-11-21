@@ -9,6 +9,8 @@ This framework aims to add a low friction way to track changes in state, and all
 
 ## Quick start
 
+### Standard usage
+
 ```swift
 @Versionable
 struct MyState {
@@ -26,6 +28,38 @@ model.state.int = 42
 try model.$state.undo() // int == 0, string == "123"
 try model.$state.undo() // int == 0, string == ""
 ```
+### In `@Observable` types
+
+```swift
+@Observable
+final class MyModel {
+
+    @ObservationIgnored
+    private(set) lazy var controller = VersioningController(
+        on: self,
+        at: \.state,
+        using: _$observationRegistrar
+    )
+
+    var state: MyState = .init()
+}
+```
+
+### In `ObservableObject` types
+
+```swift
+final class MyModel: ObservableObject {
+
+    private(set) lazy var controller = VersioningController(
+        on: self,
+        at: \.state
+    )
+
+    @Published var state: Person = .init()
+}
+```
+
+In this case, the tracked property does not have to be `@Published`, but the controller will only register changes when the `objectWillChange` publisher is triggered.
 
 ## Basic usage
 
@@ -34,7 +68,6 @@ The easiest way to use this framework is with the `@Versionable` macro, which ca
 ```swift
 @Versionable
 struct Account {
-
     let id: Int
     var name: String
     var imageData: Data
@@ -53,7 +86,6 @@ The macro generates a conformance to the `Versionable` protocol, as well as some
 
 ```swift
 final class ViewModel {
-
     @VersionTracked var account: Account
 }
 ```
@@ -88,6 +120,10 @@ var account: Account = ...
 There are also a couple of `setWithTransaction(_ closure: _)` functions that allow you to make modifications within the closure that are all applied at once and stored as a single change in the history.
 
 That's all you need to do. There are different interfaces available for more in depth use cases, such as directly using `VersioningController`, which drives the `@VersionTracked` property wrapper. This offers a little more flexibility in cases where you can't directly wrap the property, or want to hold the version history separately.
+
+### `@Observable` and `ObservableObject`
+
+This framework provides convenience initializers for use in `@Observable` and `ObservableObject` types. Unfortunately, the `@Observable` macro doesn't play well with property wrappers, as it synthesizes an underscore prefixed `_propertyName`, which collides with the direct accessor name for property wrappers. Also, as `@Published` is also a property wrapper, it leads to typing issues when attempting to wrap a property with both `@Published` and `@VersionTracked`. This means we need to manually declare a `VersioningController` on the type, and use it directly.
 
 ## Reasoning
 
@@ -263,6 +299,7 @@ The enum case requires a lot more boilerplate when including associated values. 
 
 ```swift
 enum AccountType {
+
     case anonymous
     case verified
     case admin

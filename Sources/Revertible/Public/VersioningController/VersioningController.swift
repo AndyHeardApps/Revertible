@@ -39,6 +39,28 @@ import Foundation
 /// References to model in this case are stored weakly to avoid retain cycles.
 ///
 /// Each initilizer has an optional debounce interval parameter, limiting the rate at which changes can be appended, so as to avoid each typed character being registered as a new change, making undo / redo very cumbersome.
+///
+/// There are also two initializers specifically for `@Observable` and `ObservableObject` instances that allow you to track a single property automatically, and post updates when the controller changes (``hasUndo``, ``scopeLevel`` etc.).
+///
+/// For observable types, declare a lazy instance of a controller in the `Observable` object:
+///
+/// ```swift
+/// @ObservationIgnored
+/// private(set) lazy var controller = VersioningController(
+///     on: self,
+///     at: \.state,
+///      using: _$observationRegistrar
+/// )
+/// ```
+///
+/// For `ObservableObject` types, there is an overload of the standard root - key path initializer that uses the `objectWillChange` publisher to listen for and publish updates. This should also be declared lazily:
+///
+/// ```swift
+/// private(set) lazy var controller = VersioningController(
+///     on: self,
+///     at: \.state
+/// )
+/// ```
 public final class VersioningController<Root: Sendable, Value: Versionable & Sendable>: @unchecked Sendable {
 
     // MARK: - Properties
@@ -46,10 +68,39 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
     @Atomic private var referenceValue: Value
     private let keyPath: WritableKeyPath<Root, Value> & Sendable
     private let updateRoot: (@Sendable (Value) -> Void)?
+    private let didUpdate: (@Sendable () -> Void)?
     @Atomic private var debounce: Debounce<DebouncedValue>?
 
+    #if canImport(Combine)
+    private var cancellables: Set<AnyCancellable> = []
+    #endif
+
     // MARK: - Initialisers
-    
+
+    fileprivate init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        debounceInterval: ContinuousClock.Duration?,
+        updateRoot: (@Sendable (Value) -> Void)?,
+        didUpdate: (@Sendable () -> Void)?
+    ) {
+
+        if Value.self is AnyClass.Type {
+            assertionFailure("VersioningController can only be used on value types.")
+        }
+
+        self.stacks = [.init(tag: nil)]
+        self.referenceValue = root[keyPath: keyPath]
+        self.keyPath = keyPath
+        self.updateRoot = updateRoot
+        self.didUpdate = didUpdate
+        self.debounce = debounceInterval.map {
+            .init(duration: $0) { [weak self] in
+                self?._append($0.value, tag: $0.tag)
+            }
+        }
+    }
+
     /// Creates a controller for direct registration of changes and application of reversions.
     /// - Parameters:
     ///   - value: The initial value to be tracked.
@@ -57,7 +108,9 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
     public init(
         _ value: Value,
         debounceInterval: ContinuousClock.Duration? = nil
-    ) where Root == Value {
+    ) where
+    Root == Value
+    {
 
         if Value.self is AnyClass.Type {
             assertionFailure("VersioningController can only be used on value types.")
@@ -67,6 +120,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         self.referenceValue = value
         self.keyPath = \.self
         self.updateRoot = nil
+        self.didUpdate = nil
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
                 self?._append($0.value, tag: $0.tag)
@@ -93,6 +147,7 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         self.referenceValue = root[keyPath: keyPath]
         self.keyPath = keyPath
         self.updateRoot = nil
+        self.didUpdate = nil
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
                 self?._append($0.value, tag: $0.tag)
@@ -121,11 +176,19 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         self.updateRoot = { [weak root] newValue in
             root?[keyPath: keyPath] = newValue
         }
+        self.didUpdate = nil
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
                 self?._append($0.value, tag: $0.tag)
             }
         }
+    }
+
+    deinit {
+        print("DEINIT")
+        #if canImport(Combine)
+        cancellables.forEach { $0.cancel() }
+        #endif
     }
 
     private struct DebouncedValue: Sendable {
@@ -169,6 +232,7 @@ extension VersioningController {
     /// Creates and pushes a new scope that all new actions are added to.
     public func pushNewScope() {
         stacks.append(.init(tag: currentStack.undoStack.last?.tag ?? currentStack.tag))
+        didUpdate?()
     }
     
     /// Pops the current scope, squashing all changes in the scope into a single change and appending it to the previous scope. If this is called from the root scope, nothing happens.
@@ -187,6 +251,7 @@ extension VersioningController {
             previousValue: previousValue,
             tag: firstItemTag
         )
+        didUpdate?()
     }
 
     private func discardCurrentScope() {
@@ -195,6 +260,7 @@ extension VersioningController {
                 _ = $0.popLast()
             }
         }
+        didUpdate?()
     }
 
     /// The current scope level, with the root being `0`.
@@ -278,6 +344,7 @@ extension VersioningController {
             )
             $0 = newValue
         }
+        didUpdate?()
     }
 
     /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
@@ -308,6 +375,7 @@ extension VersioningController {
             stacks[index].clear(tag: .init(wrapped: tag))
         }
         currentStack.tagCurrentVersion(.init(wrapped: tag))
+        didUpdate?()
     }
     
     /// Returns a the lists of tags in the current scope, one for the undo stack and one for the redo stack, including `nil` entries for untagged actions. If the scope level is not available, then `nil` is returned.
@@ -330,7 +398,9 @@ extension VersioningController {
     /// Undo the last change, if possible.
     /// - Returns: The previously registered value.
     public func undo() throws -> Value {
+        
         try currentStack.undo(&referenceValue)
+        defer { didUpdate?() }
         return referenceValue
     }
     
@@ -339,6 +409,7 @@ extension VersioningController {
     public func undo(_ value: inout Value) throws {
         try currentStack.undo(&referenceValue)
         value = referenceValue
+        didUpdate?()
     }
     
     /// Undo the last change, if possible.
@@ -346,6 +417,7 @@ extension VersioningController {
     public func undo(root: inout Root) throws {
         try currentStack.undo(&referenceValue)
         root[keyPath: keyPath] = referenceValue
+        didUpdate?()
     }
 
 
@@ -357,6 +429,7 @@ extension VersioningController {
     /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
     public func undo(to tag: some Hashable & Sendable) throws -> Value {
         try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+        defer { didUpdate?() }
         return referenceValue
     }
 
@@ -372,6 +445,7 @@ extension VersioningController {
     ) throws {
         try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
         value = referenceValue
+        didUpdate?()
     }
     
     /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
@@ -385,7 +459,8 @@ extension VersioningController {
         to tag: some Hashable & Sendable
     ) throws {
         try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
-        return root[keyPath: keyPath] = referenceValue
+        root[keyPath: keyPath] = referenceValue
+        didUpdate?()
     }
 
 
@@ -394,6 +469,7 @@ extension VersioningController {
     /// - Returns: The initial value once all undos have been applied.
     public func undoCurrentScope() throws -> Value {
         try currentStack.undoAll(&referenceValue)
+        defer { didUpdate?() }
         return referenceValue
     }
     
@@ -402,6 +478,7 @@ extension VersioningController {
     public func undoCurrentScope(_ value: inout Value) throws {
         try currentStack.undoAll(&referenceValue)
         value = referenceValue
+        didUpdate?()
     }
     
     /// Undo all changes in the current scope.
@@ -409,6 +486,7 @@ extension VersioningController {
     public func undoCurrentScope(root: inout Root) throws {
         try currentStack.undoAll(&referenceValue)
         root[keyPath: keyPath] = referenceValue
+        didUpdate?()
     }
 
 
@@ -418,6 +496,7 @@ extension VersioningController {
     public func undoAndPopCurrentScope() throws -> Value {
         let value = try undoCurrentScope()
         discardCurrentScope()
+        defer { didUpdate?() }
         return value
     }
 
@@ -426,6 +505,7 @@ extension VersioningController {
     public func undoAndPopCurrentScope(_ value: inout Value) throws {
         try undoCurrentScope(&value)
         discardCurrentScope()
+        didUpdate?()
     }
 
     /// Undo all changes in the current scope and then discard it.
@@ -433,6 +513,7 @@ extension VersioningController {
     public func undoAndPopCurrentScope(root: inout Root) throws {
         try undoCurrentScope(root: &root)
         discardCurrentScope()
+        didUpdate?()
     }
 
 
@@ -442,6 +523,7 @@ extension VersioningController {
     /// - Returns: The value before the previous undo was applied.
     public func redo() throws -> Value {
         try currentStack.redo(&referenceValue)
+        defer { didUpdate?() }
         return referenceValue
     }
 
@@ -450,6 +532,7 @@ extension VersioningController {
     public func redo(_ value: inout Value) throws {
         try currentStack.redo(&referenceValue)
         value = referenceValue
+        didUpdate?()
     }
 
     /// Redo the last change, if possible.
@@ -457,6 +540,7 @@ extension VersioningController {
     public func redo(root: inout Root) throws {
         try currentStack.redo(&referenceValue)
         root[keyPath: keyPath] = referenceValue
+        didUpdate?()
     }
 
 
@@ -467,6 +551,7 @@ extension VersioningController {
     /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
     public func redo(to tag: some Hashable & Sendable) throws -> Value {
         try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+        defer { didUpdate?() }
         return referenceValue
     }
 
@@ -482,6 +567,7 @@ extension VersioningController {
     ) throws {
         try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
         value = referenceValue
+        didUpdate?()
     }
 
     /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
@@ -495,7 +581,8 @@ extension VersioningController {
         to tag: some Hashable & Sendable
     ) throws {
         try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
-        return root[keyPath: keyPath] = referenceValue
+        root[keyPath: keyPath] = referenceValue
+        didUpdate?()
     }
 
 
@@ -504,6 +591,7 @@ extension VersioningController {
     /// - Returns: The latest value once all redos have been applied.
     public func redoCurrentScope() throws -> Value {
         try currentStack.redoAll(&referenceValue)
+        defer { didUpdate?() }
         return referenceValue
     }
 
@@ -512,6 +600,7 @@ extension VersioningController {
     public func redoCurrentScope(_ value: inout Value) throws {
         try currentStack.redoAll(&referenceValue)
         value = referenceValue
+        didUpdate?()
     }
 
     /// Redo all changes in the current scope.
@@ -519,6 +608,7 @@ extension VersioningController {
     public func redoCurrentScope(root: inout Root) throws {
         try currentStack.redoAll(&referenceValue)
         root[keyPath: keyPath] = referenceValue
+        didUpdate?()
     }
 }
 
@@ -529,6 +619,7 @@ extension VersioningController where Root: AnyObject {
     public func undo() throws {
         try currentStack.undo(&referenceValue)
         updateRoot?(referenceValue)
+        didUpdate?()
     }
 
     /// Undo all the changes in the current scope up to the provided tag on the root object. If the tag cannot be found, nothing happens.
@@ -538,12 +629,14 @@ extension VersioningController where Root: AnyObject {
     public func undo(to tag: some Hashable & Sendable) throws {
         try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
         updateRoot?(referenceValue)
+        didUpdate?()
     }
 
     /// Undo all changes in the current scope on the root object.
     public func undoCurrentScope() throws {
         try currentStack.undoAll(&referenceValue)
         updateRoot?(referenceValue)
+        didUpdate?()
     }
 
     /// Undo all changes in the current scope on the root object and then discard the current scope.
@@ -551,12 +644,14 @@ extension VersioningController where Root: AnyObject {
         try currentStack.undoAll(&referenceValue)
         discardCurrentScope()
         updateRoot?(referenceValue)
+        didUpdate?()
     }
 
     /// Redo the last undone change on the root object.
     public func redo() throws {
         try currentStack.redo(&referenceValue)
         updateRoot?(referenceValue)
+        didUpdate?()
     }
 
     /// Redo all the changes in the current scope up and including to the provided tag on the root object. If the tag cannot be found, nothing happens.
@@ -566,6 +661,7 @@ extension VersioningController where Root: AnyObject {
     public func redo(to tag: some Hashable & Sendable) throws {
         try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
         updateRoot?(referenceValue)
+        didUpdate?()
     }
 
     /// Redo all changes in the current scope on the root object.
@@ -580,7 +676,7 @@ extension VersioningController where Root: AnyObject {
         try closure(&referenceValue)
         updateRoot?(referenceValue)
         append(referenceValue)
-
+        didUpdate?()
     }
 
     /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
@@ -589,5 +685,120 @@ extension VersioningController where Root: AnyObject {
         try await closure(&referenceValue)
         updateRoot?(referenceValue)
         append(referenceValue)
+        didUpdate?()
     }
 }
+
+// MARK: - Combine
+#if canImport(Combine)
+@preconcurrency import Combine
+
+extension VersioningController {
+    
+    /// Creates a controller that registers changes at a specific key path on an `ObservableObject` type, and observes the provided property, tracking all changes.
+    ///
+    /// This initializer subscribes to changes from the root object, and registers any changes. Whenever an undo, redo or scope action is made, the root object is notified so that any UI that depends on the controller can be updated.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where
+    Root: ObservableObject,
+    Root.ObjectWillChangePublisher == ObservableObjectPublisher
+    {
+        let milliseconds = debounceInterval.map {
+            Int(Double($0.components.seconds) * 1000 + Double($0.components.attoseconds) * 1e-15)
+        }
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceInterval: debounceInterval,
+            updateRoot: { [weak root] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: { [weak publisher = root.objectWillChange] in
+                publisher?.send()
+            }
+        )
+
+        root.objectWillChange
+            .debounce(
+                for: .milliseconds(milliseconds ?? 1),
+                scheduler: DispatchQueue.main
+            )
+            .compactMap { [weak root, keyPath] () -> Value? in
+                root?[keyPath: keyPath]
+            }
+            .removeDuplicates()
+            .sink { [weak self] newValue in
+                guard let self, newValue != self.referenceValue else {
+                    return
+                }
+                self._append(newValue, tag: nil)
+            }
+            .store(in: &cancellables)
+    }
+}
+#endif
+
+// MARK: - Observation
+#if canImport(Observation)
+import Observation
+
+extension VersioningController {
+
+    /// Creates a controller that registers changes at a specific key path on an `Observable` type, and observes the provided property, tracking all changes.
+    ///
+    /// This initializer observes changes made to the specified key path, and registers any modifications. Whenever an undo, redo or scope action is made, the root object is notified so that any UI that depends on the controller can update.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - observationRegistrar: The observation registrar of the `Observable` object, used to notify of any changes to this controller.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        using observationRegistrar: ObservationRegistrar,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where
+    Root: AnyObject,
+    Root: Observable
+    {
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceInterval: debounceInterval,
+            updateRoot: { [weak root, keyPath] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: { [weak root, observationRegistrar, keyPath] in
+                guard let root else {
+                    return
+                }
+                observationRegistrar.willSet(root, keyPath: keyPath)
+                observationRegistrar.didSet(root, keyPath: keyPath)
+            }
+        )
+
+        observe(root: root, at: keyPath)
+    }
+
+    private func observe(root: Root?, at keyPath: WritableKeyPath<Root, Value> & Sendable)
+    where Root: AnyObject,
+          Root: Observable
+    {
+        withObservationTracking { [weak root, keyPath] in
+            _ = root?[keyPath: keyPath]
+        } onChange: { [weak self, weak root, keyPath] in
+            Task { @MainActor in
+                self?.append(root![keyPath: keyPath])
+                defer { self?.observe(root: root, at: keyPath) }
+            }
+        }
+    }
+}
+#endif
