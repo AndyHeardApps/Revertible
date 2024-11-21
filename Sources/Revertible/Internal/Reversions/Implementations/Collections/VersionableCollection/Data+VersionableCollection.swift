@@ -10,6 +10,11 @@ extension Data: VersionableCollection {
             return reversions
         }
         
+        if self.count > 1024 || previousValue.count > 1024 {
+            reversions.append(.init(overwrite: previousValue))
+            return reversions
+        }
+        
         let difference = self.difference(from: previousValue)
         
         var elementsToInsert: [(Int, Element)] = []

@@ -49,7 +49,7 @@ import Foundation
 /// private(set) lazy var controller = VersioningController(
 ///     on: self,
 ///     at: \.state,
-///      using: _$observationRegistrar
+///     using: _$observationRegistrar
 /// )
 /// ```
 ///
