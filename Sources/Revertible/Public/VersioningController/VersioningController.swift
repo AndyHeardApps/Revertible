@@ -573,4 +573,21 @@ extension VersioningController where Root: AnyObject {
         try currentStack.redoAll(&referenceValue)
         updateRoot?(referenceValue)
     }
+
+    /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
+    /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
+    public func setWithTransaction<E: Error>(_ closure: (inout Value) throws(E) -> Void) throws(E) {
+        try closure(&referenceValue)
+        updateRoot?(referenceValue)
+        append(referenceValue)
+
+    }
+
+    /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
+    /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
+    public func setWithTransaction<E: Error>(_ closure: (inout Value) async throws(E) -> Void) async throws(E) {
+        try await closure(&referenceValue)
+        updateRoot?(referenceValue)
+        append(referenceValue)
+    }
 }
