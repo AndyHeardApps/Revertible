@@ -575,4 +575,51 @@ extension VersioningControllerTests {
         mockStruct = try versioningController.undo(to: Tag.modified)
         #expect(try #require(versioningController.tags(inScopeLevel: versioningController.scopeLevel)) == ([Tag.initial, nil, nil, nil, Tag.modified], [Tag.final]))
     }
+
+    @Test("Observable deallocates")
+    func observableDeallocates() {
+
+        var model: ObservableModel? = ObservableModel()
+        weak var controller = model?.controller
+        model?.mockStruct.int = 5
+
+        #expect(controller != nil)
+        model = nil
+        #expect(controller == nil)
+    }
+
+    @Observable
+    fileprivate final class ObservableModel: @unchecked Sendable {
+
+        @ObservationIgnored
+        private(set) lazy var controller: VersioningController<ObservableModel, MockStruct>? = .init(
+            on: self,
+            at: \.mockStruct,
+            using: _$observationRegistrar
+        )
+
+        var mockStruct = MockStruct()
+    }
+
+    @Test("Observable object deallocates")
+    func observableObjectDeallocates() {
+
+        var model: ObservableObjectModel? = ObservableObjectModel()
+        weak var controller = model?.controller
+        model?.mockStruct.int = 5
+
+        #expect(controller != nil)
+        model = nil
+        #expect(controller == nil)
+    }
+
+    fileprivate final class ObservableObjectModel: ObservableObject, @unchecked Sendable {
+
+        private(set) lazy var controller: VersioningController<ObservableObjectModel, MockStruct>? = .init(
+            on: self,
+            at: \.mockStruct
+        )
+
+        @Published var mockStruct = MockStruct()
+    }
 }

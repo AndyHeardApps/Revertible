@@ -796,7 +796,7 @@ extension VersioningController {
         } onChange: { [weak self, weak root, keyPath] in
             Task { @MainActor in
                 self?.append(root![keyPath: keyPath])
-                defer { self?.observe(root: root, at: keyPath) }
+                self?.observe(root: root, at: keyPath)
             }
         }
     }
