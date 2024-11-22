@@ -592,7 +592,7 @@ extension VersioningControllerTests {
     fileprivate final class ObservableModel: @unchecked Sendable {
 
         @ObservationIgnored
-        private(set) lazy var controller: VersioningController<ObservableModel, MockStruct>? = .init(
+        private(set) lazy var controller: VersioningController<ObservableModel, MockStruct, ReversionError>? = .init(
             on: self,
             at: \.mockStruct,
             using: _$observationRegistrar
@@ -615,7 +615,7 @@ extension VersioningControllerTests {
 
     fileprivate final class ObservableObjectModel: ObservableObject, @unchecked Sendable {
 
-        private(set) lazy var controller: VersioningController<ObservableObjectModel, MockStruct>? = .init(
+        private(set) lazy var controller: VersioningController<ObservableObjectModel, MockStruct, ReversionError>? = .init(
             on: self,
             at: \.mockStruct
         )

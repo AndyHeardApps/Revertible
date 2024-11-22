@@ -39,7 +39,7 @@ struct ReversionAction<Value: Versionable> {
 // MARK: - Undo
 extension ReversionAction {
 
-    func perform(on value: inout Value) throws {
+    func perform(on value: inout Value) throws(ReversionError) {
         try undoReversion.revert(&value)
     }
 

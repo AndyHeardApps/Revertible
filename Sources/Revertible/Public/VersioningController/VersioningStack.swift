@@ -68,7 +68,7 @@ extension VersioningStack {
 // MARK: - Undo / redo
 extension VersioningStack {
     
-    mutating func undo(_ value: inout Value) throws {
+    mutating func undo(_ value: inout Value) throws(ReversionError) {
 
         guard let action = undoStack.popLast() else {
             return
@@ -81,7 +81,7 @@ extension VersioningStack {
     mutating func undo(
         _ value: inout Value,
         to tag: AnyHashableSendable
-    ) throws {
+    ) throws(ReversionError) {
 
         guard undoStack.compactMap(\.tag).contains(tag) || self.tag == tag else {
             return
@@ -92,14 +92,14 @@ extension VersioningStack {
         }
     }
 
-    mutating func undoAll(_ value: inout Value) throws {
+    mutating func undoAll(_ value: inout Value) throws(ReversionError) {
 
         while !undoStack.isEmpty {
             try undo(&value)
         }
     }
 
-    mutating func redo(_ value: inout Value) throws {
+    mutating func redo(_ value: inout Value) throws(ReversionError) {
 
         guard let action = redoStack.popLast() else {
             return
@@ -109,7 +109,7 @@ extension VersioningStack {
         undoStack.append(action.inverted())
     }
 
-    mutating func redoAll(_ value: inout Value) throws {
+    mutating func redoAll(_ value: inout Value) throws(ReversionError) {
 
         while !redoStack.isEmpty {
             try redo(&value)
@@ -119,7 +119,7 @@ extension VersioningStack {
     mutating func redo(
         _ value: inout Value,
         to tag: AnyHashableSendable
-    ) throws {
+    ) throws(ReversionError) {
 
         guard redoStack.compactMap(\.tag).contains(tag) || self.tag == tag else {
             return

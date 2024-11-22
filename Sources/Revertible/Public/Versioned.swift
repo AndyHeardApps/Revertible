@@ -32,7 +32,7 @@ public struct Versioned<Value: Versionable & Sendable>: Sendable {
         Controller(self)
     }
 
-    private let controller: VersioningController<Value, Value>
+    private let controller: VersioningController<Value, Value, ReversionError>
     @Atomic private var storage: Value
 
     // MARK: - Initializer
@@ -56,7 +56,7 @@ extension Versioned {
     /// Provides access to undo and redo functionality for the wrapped type.
     public struct Controller: Sendable {
 
-        private let controller: VersioningController<Value, Value>
+        private let controller: VersioningController<Value, Value, ReversionError>
         @Atomic private var storage: Value
 
         fileprivate init(_ Versioned: Versioned) {
