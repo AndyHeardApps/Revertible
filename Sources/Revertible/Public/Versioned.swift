@@ -12,7 +12,7 @@
 /// try $value.redo()                   // id = 5
 /// ```
 @propertyWrapper
-public struct Versioned<Value: Versionable & Sendable>: Sendable {
+public struct _Versioned<Value: Versionable & Sendable, Failure: Error>: Sendable {
 
     // MARK: - Properties
 
@@ -33,19 +33,43 @@ public struct Versioned<Value: Versionable & Sendable>: Sendable {
     }
 
     private let controller: VersioningController<Value, Value, ReversionError>
+    private let handleError: @Sendable (ReversionError) throws(Failure) -> Void
     @Atomic private var storage: Value
+    @Atomic private var _error: ReversionError?
 
     // MARK: - Initializer
 
-    /// Creates a new ``Versioned`` property wrapper.
+    /// Creates a new ``Versioned`` property wrapper that exposes errors through throwing functions.
     /// - Parameters:
     ///   - wrappedValue: The initial tracked value.
     ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
     public init(
         wrappedValue: Value,
         debounceInterval: ContinuousClock.Duration? = nil
-    ) {
-        self.controller = .init(wrappedValue, debounceInterval: debounceInterval)
+    ) where Failure == ReversionError {
+        self.controller = .init(
+            wrappedValue,
+            debounceInterval: debounceInterval
+        )
+        self.handleError = { error throws(ReversionError) in throw error }
+        self.storage = wrappedValue
+    }
+
+    /// Creates a new ``Versioned`` property wrapper that exposes errors through the `projectedValue.error` property.
+    /// - Parameters:
+    ///   - wrappedValue: The initial tracked value.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public init(
+        wrappedValue: Value,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where Failure == Never {
+        self.controller = .init(
+            wrappedValue,
+            debounceInterval: debounceInterval
+        )
+        self.handleError = { [__error] error in
+            __error.wrappedValue = error
+        }
         self.storage = wrappedValue
     }
 }
@@ -57,11 +81,15 @@ extension Versioned {
     public struct Controller: Sendable {
 
         private let controller: VersioningController<Value, Value, ReversionError>
+        private let handleError: @Sendable (ReversionError) throws(Failure) -> Void
         @Atomic private var storage: Value
+        @Atomic private var _error: ReversionError?
 
-        fileprivate init(_ Versioned: Versioned) {
-            self.controller = Versioned.controller
-            self._storage = Versioned._storage
+        fileprivate init(_ versioned: _Versioned) {
+            self.controller = versioned.controller
+            self.handleError = versioned.handleError
+            self._storage = versioned._storage
+            self._error = versioned._error
         }
 
         /// Creates and pushes a new scope that all new actions are added to.
@@ -91,40 +119,68 @@ extension Versioned {
         }
 
         /// Undo the last change, if possible.
-        public func undo() throws {
-            storage = try controller.undo()
+        public func undo() throws(Failure) {
+            do {
+                storage = try controller.undo()
+            } catch {
+                try handleError(error)
+            }
         }
 
         /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
         /// - Parameter tag: The tag to revert to.
-        public func undo(to tag: some Hashable & Sendable) throws {
-            storage = try controller.undo(to: tag)
+        public func undo(to tag: some Hashable & Sendable) throws(Failure) {
+            do {
+                storage = try controller.undo(to: tag)
+            } catch {
+                try handleError(error)
+            }
         }
 
         /// Undo all changes in the current scope.
-        public func undoCurrentScope() throws {
-            storage = try controller.undoCurrentScope()
+        public func undoCurrentScope() throws(Failure) {
+            do {
+                storage = try controller.undoCurrentScope()
+            } catch {
+                try handleError(error)
+            }
         }
 
         /// Undo all changes in the current scope and then discard it.
-        public func undoAndPopCurrentScope() throws {
-            storage = try controller.undoAndPopCurrentScope()
+        public func undoAndPopCurrentScope() throws(Failure) {
+            do {
+                storage = try controller.undoAndPopCurrentScope()
+            } catch {
+                try handleError(error)
+            }
         }
 
         /// Redo the last undone change, if possible.
-        public func redo() throws {
-            storage = try controller.redo()
+        public func redo() throws(Failure) {
+            do {
+                storage = try controller.redo()
+            } catch {
+                try handleError(error)
+            }
         }
         
         /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
         /// - Parameter tag: The tag to revert to.
-        public func redo(to tag: some Hashable & Sendable) throws {
-            storage = try controller.redo(to: tag)
+        public func redo(to tag: some Hashable & Sendable) throws(Failure) {
+            do {
+                storage = try controller.redo(to: tag)
+            } catch {
+                try handleError(error)
+            }
         }
 
         /// Redo all changes in the current scope.
-        public func redoCurrentScope() throws {
-            storage = try controller.redoCurrentScope()
+        public func redoCurrentScope() throws(Failure) {
+            do {
+                storage = try controller.redoCurrentScope()
+            } catch {
+                try handleError(error)
+            }
         }
         
         /// Set the underlying wrapped value without triggering any change tracking. This may cause the currently stored undo and redo changes to break, meaning they are no longer usable and causing inconsistent state. You may need to call ``reset()`` to clear any invalidated stored undo and redo actions.
@@ -153,3 +209,45 @@ extension Versioned {
         }
     }
 }
+
+extension _Versioned.Controller where Failure == Never {
+
+    var error: ReversionError? {
+        get {
+            _error
+        }
+        nonmutating set {
+            _error = newValue
+        }
+    }
+}
+
+/// A property wrapper that tracks changes over time, allowing it to be reverted to a previous state with the ``Controller/undo()`` function or have changes restored using the ``Controller/redo()`` function. These are accessed through the projected value using dollar syntax (`$value.undo()`). Changes are automatically registered whenever the wrapped value is set, but may be debounced using the parameter on the initializer.
+///
+/// This type only supports value types, as reference semantics makes it difficult to track separate instances of a value.
+///
+/// Any errors that occur during version control are assigned to the `$value.error` property, leaving all functions free to be used without explicit error handling.
+///
+/// This type is driven by the ``VersioningController``, so for further information refer to it's documentation.
+///
+/// ```
+/// @Versioned var value = myStruct()   // id = 0
+/// value.id = 5                        // id = 5
+/// try $value.undo()                   // id = 0
+/// try $value.redo()                   // id = 5
+/// ```
+public typealias Versioned<Value: Versionable & Sendable> = _Versioned<Value, Never>
+
+/// A property wrapper that tracks changes over time, allowing it to be reverted to a previous state with the ``Controller/undo()`` function or have changes restored using the ``Controller/redo()`` function. These are accessed through the projected value using dollar syntax (`try $value.undo()`). Changes are automatically registered whenever the wrapped value is set, but may be debounced using the parameter on the initializer.
+///
+/// This type only supports value types, as reference semantics makes it difficult to track separate instances of a value.
+///
+/// This type is driven by the ``VersioningController``, so for further information refer to it's documentation.
+///
+/// ```
+/// @Versioned var value = myStruct()   // id = 0
+/// value.id = 5                        // id = 5
+/// try $value.undo()                   // id = 0
+/// try $value.redo()                   // id = 5
+/// ```
+public typealias ThrowingVersioned<Value: Versionable & Sendable> = _Versioned<Value, ReversionError>
