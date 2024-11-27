@@ -173,6 +173,12 @@ For instance if some state is used across several screens, when a child screen i
 
 You can also tag a version with some `Hashable` value for future reference using the `func append(_ value: _, tag: _)` function or `func tagCurrentVersion(_ tag: _)` functions. You can then undo or redo to that version by passing the tag to the `func undo(to tag: _)` or `func redo(to tag: _)` functions. You cannot pop a scope this way, and can only revert to a tag within the current scope. To see all tags within a scope, use the `func tags(inScopeLevel scopeLevel: _)` function that returns a tuple of `AnyHashable?` arrays, containing all actions and their tags, even if it's `nil`.
 
+### Error handling
+
+Many of the functions on `VersioningController` can throw errors, which can be cumbersome to handle, especially in a SwiftUI view. Most of the time, we would just wrap the call in a `do - catch` block and assign the error to some observed property. This is boilerplate heavy, and to help reduce the need for such code, the `VersioningController` has a couple of convenience initializers available when the `Root` of the type is a reference type. 
+
+These initializers accept a `WritableKeyPath` to an optional `Error?` property on the root instance. Whenever an error is thrown internally, it is caught and assigned to this property. If the `Root` is an `@Observable` or `ObservableObject` type, then it is notified of the update. When using one of these initializers, the other functions on this type such as `undo()` etc. no longer throw, removing the need to manually handle errors.
+
 ## Type conformance
 
 The framework is driven by a few base types that buld upon eachother. This section outlines how they work and how they can be used manually.

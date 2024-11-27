@@ -61,7 +61,13 @@ import Foundation
 ///     at: \.state
 /// )
 /// ```
-public final class VersioningController<Root: Sendable, Value: Versionable & Sendable>: @unchecked Sendable {
+///
+/// Many of the functions on this type are throwing. This can be cumbersome to handle by manually wrapping each call in a `do - catch` block. To help with this, when the `root` of the type is a reference type, you may pass a key path in the initializer pointing to a writable error property that the `VersioningController` will automatically assign any errors to, before triggering a view update where appropriate. If one of these initializers are used, then the functions on this type will no longer throw errors.
+public final class VersioningController<Root, Value, Failure>: @unchecked Sendable
+where Root: Sendable,
+      Value: Versionable & Sendable,
+      Failure: Error
+{
 
     // MARK: - Properties
     @Atomic private var stacks: [VersioningStack<Value>]
@@ -69,20 +75,21 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
     private let keyPath: WritableKeyPath<Root, Value> & Sendable
     private let updateRoot: (@Sendable (Value) -> Void)?
     private let didUpdate: (@Sendable () -> Void)?
+    private let handleError: @Sendable (ReversionError) throws(Failure) -> Void
     @Atomic private var debounce: Debounce<DebouncedValue>?
 
     #if canImport(Combine)
     private var cancellables: Set<AnyCancellable> = []
     #endif
 
-    // MARK: - Initialisers
-
+    // MARK: - Initialiser
     fileprivate init(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
         debounceInterval: ContinuousClock.Duration?,
         updateRoot: (@Sendable (Value) -> Void)?,
-        didUpdate: (@Sendable () -> Void)?
+        didUpdate: (@Sendable () -> Void)?,
+        handleError: @escaping @Sendable (ReversionError) throws(Failure) -> Void
     ) {
 
         if Value.self is AnyClass.Type {
@@ -94,101 +101,12 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
         self.keyPath = keyPath
         self.updateRoot = updateRoot
         self.didUpdate = didUpdate
+        self.handleError = handleError
         self.debounce = debounceInterval.map {
             .init(duration: $0) { [weak self] in
                 self?._append($0.value, tag: $0.tag)
             }
         }
-    }
-
-    /// Creates a controller for direct registration of changes and application of reversions.
-    /// - Parameters:
-    ///   - value: The initial value to be tracked.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
-    public init(
-        _ value: Value,
-        debounceInterval: ContinuousClock.Duration? = nil
-    ) where
-    Root == Value
-    {
-
-        if Value.self is AnyClass.Type {
-            assertionFailure("VersioningController can only be used on value types.")
-        }
-
-        self.stacks = [.init(tag: nil)]
-        self.referenceValue = value
-        self.keyPath = \.self
-        self.updateRoot = nil
-        self.didUpdate = nil
-        self.debounce = debounceInterval.map {
-            .init(duration: $0) { [weak self] in
-                self?._append($0.value, tag: $0.tag)
-            }
-        }
-    }
-    
-    /// Creates  a controller that registers changes at a specific key path on a value type.
-    /// - Parameters:
-    ///   - root: The owning instance of the value to be tracked, such as some parent model.
-    ///   - keyPath: The key path to the value to be tracked.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
-    public init(
-        on root: Root,
-        at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        debounceInterval: ContinuousClock.Duration? = nil
-    ) {
-
-        if Value.self is AnyClass.Type {
-            assertionFailure("VersioningController can only be used on value types.")
-        }
-
-        self.stacks = [.init(tag: nil)]
-        self.referenceValue = root[keyPath: keyPath]
-        self.keyPath = keyPath
-        self.updateRoot = nil
-        self.didUpdate = nil
-        self.debounce = debounceInterval.map {
-            .init(duration: $0) { [weak self] in
-                self?._append($0.value, tag: $0.tag)
-            }
-        }
-    }
-
-    /// Creates  a controller that registers changes at a specific key path on a reference type.
-    /// - Parameters:
-    ///   - root: The owning instance of the value to be tracked, such as some view model.
-    ///   - keyPath: The key path to the value to be tracked.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
-    public init(
-        on root: Root,
-        at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        debounceInterval: ContinuousClock.Duration? = nil
-    ) where Root: AnyObject {
-
-        if Value.self is AnyClass.Type {
-            assertionFailure("VersioningController can only be used on value types.")
-        }
-
-        self.stacks = [.init(tag: nil)]
-        self.referenceValue = root[keyPath: keyPath]
-        self.keyPath = keyPath
-        self.updateRoot = { [weak root] newValue in
-            root?[keyPath: keyPath] = newValue
-        }
-        self.didUpdate = nil
-        self.debounce = debounceInterval.map {
-            .init(duration: $0) { [weak self] in
-                self?._append($0.value, tag: $0.tag)
-            }
-        }
-    }
-
-    deinit {
-        print("DEINIT")
-        #if canImport(Combine)
-        cancellables.forEach { $0.cancel() }
-        #endif
     }
 
     private struct DebouncedValue: Sendable {
@@ -205,9 +123,15 @@ public final class VersioningController<Root: Sendable, Value: Versionable & Sen
             self.tag = nil
         }
     }
+
+    deinit {
+        #if canImport(Combine)
+        cancellables.forEach { $0.cancel() }
+        #endif
+    }
 }
 
-// MARK: - Stack management
+// MARK: - Standard scope / status interface
 extension VersioningController {
 
     private var currentStack: VersioningStack<Value> {
@@ -234,25 +158,6 @@ extension VersioningController {
         stacks.append(.init(tag: currentStack.undoStack.last?.tag ?? currentStack.tag))
         didUpdate?()
     }
-    
-    /// Pops the current scope, squashing all changes in the scope into a single change and appending it to the previous scope. If this is called from the root scope, nothing happens.
-    public func popCurrentScope() throws {
-        guard stacks.count > 1 else {
-            return
-        }
-
-        let firstItemTag = currentStack.undoStack.first?.tag
-        var previousValue = referenceValue
-        try currentStack.undoAll(&previousValue)
-
-        _ = stacks.popLast()
-        currentStack.append(
-            currentValue: referenceValue,
-            previousValue: previousValue,
-            tag: firstItemTag
-        )
-        didUpdate?()
-    }
 
     private func discardCurrentScope() {
         $stacks {
@@ -268,14 +173,6 @@ extension VersioningController {
         stacks.count-1
     }
 
-    func reset() {
-        stacks = [.init(tag: nil)]
-    }
-}
-
-// MARK: - Undo / redo
-extension VersioningController {
-
     /// Whether the current scope has an undo action available to perform.
     public var hasUndo: Bool {
         currentStack.hasUndo
@@ -285,12 +182,14 @@ extension VersioningController {
     public var hasRedo: Bool {
         currentStack.hasRedo
     }
+
+    func reset() {
+        stacks = [.init(tag: nil)]
+    }
 }
 
-// MARK: - Value type reversion
+// MARK: - Appending
 extension VersioningController {
-
-    // MARK: Append
 
     /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
     /// - Parameters:
@@ -324,29 +223,6 @@ extension VersioningController {
         }
     }
 
-    private func _append(
-        _ newValue: Value,
-        tag: AnyHashableSendable?
-    ) {
-
-        if let tag {
-            for index in stacks.indices {
-                stacks[index].clear(tag: tag)
-            }
-        }
-        
-        $referenceValue {
-            currentStack.append(
-                currentValue: newValue,
-                previousValue: $0,
-                tag: tag
-
-            )
-            $0 = newValue
-        }
-        didUpdate?()
-    }
-
     /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
     /// - Parameters:
     ///    - updatedRoot: The object owning the value to register changes for.
@@ -367,308 +243,32 @@ extension VersioningController {
             tag: tag
         )
     }
-    
-    /// Updates the tag of the current version.
-    /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
-    public func tagCurrentVersion(_ tag: some Hashable & Sendable) {
-        for index in stacks.indices {
-            stacks[index].clear(tag: .init(wrapped: tag))
+
+    private func _append(
+        _ newValue: Value,
+        tag: AnyHashableSendable?
+    ) {
+
+        if let tag {
+            for index in stacks.indices {
+                stacks[index].clear(tag: tag)
+            }
         }
-        currentStack.tagCurrentVersion(.init(wrapped: tag))
-        didUpdate?()
-    }
-    
-    /// Returns a the lists of tags in the current scope, one for the undo stack and one for the redo stack, including `nil` entries for untagged actions. If the scope level is not available, then `nil` is returned.
-    /// - Parameter scopeLevel: The scope level to return tags for.
-    /// - Returns: A tuple containing two arrays on `AnyHashable?`. One for the undo stack, one for the redo stack.
-    public func tags(inScopeLevel scopeLevel: Int) -> (undo: [AnyHashable?], redo: [AnyHashable?])? {
-        guard scopeLevel < stacks.count else {
-            return nil
+
+        $referenceValue {
+            currentStack.append(
+                currentValue: newValue,
+                previousValue: $0,
+                tag: tag
+
+            )
+            $0 = newValue
         }
-        let undoTags = CollectionOfOne(stacks[scopeLevel].tag?.wrapped) + stacks[scopeLevel].undoStack.map(\.tag?.wrapped)
-        let redoTags = stacks[scopeLevel].redoStack.map(\.tag?.wrapped)
-
-        return (undoTags, redoTags)
-    }
-
-
-
-    // MARK: Undo
-
-    /// Undo the last change, if possible.
-    /// - Returns: The previously registered value.
-    public func undo() throws -> Value {
-        
-        try currentStack.undo(&referenceValue)
-        defer { didUpdate?() }
-        return referenceValue
-    }
-    
-    /// Undo the last change, if possible.
-    /// - Parameter value: The value to apply the undo to.
-    public func undo(_ value: inout Value) throws {
-        try currentStack.undo(&referenceValue)
-        value = referenceValue
-        didUpdate?()
-    }
-    
-    /// Undo the last change, if possible.
-    /// - Parameter root: The parent object owning the value to apply the undo to.
-    public func undo(root: inout Root) throws {
-        try currentStack.undo(&referenceValue)
-        root[keyPath: keyPath] = referenceValue
-        didUpdate?()
-    }
-
-
-    
-    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is returned.
-    /// - Parameter tag: The tag to revert to.
-    /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
-    public func undo(to tag: some Hashable & Sendable) throws -> Value {
-        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
-        defer { didUpdate?() }
-        return referenceValue
-    }
-
-    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
-    /// - Parameters:
-    ///   - value: The value to apply the undos to.
-    ///   - tag: The tag to revert to.
-    public func undo(
-        _ value: inout Value,
-        to tag: some Hashable & Sendable
-    ) throws {
-        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
-        value = referenceValue
-        didUpdate?()
-    }
-    
-    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
-    /// - Parameters:
-    ///   - root: The parent object owning the value to apply the undos to.
-    ///   - tag: The tag to revert to.
-    public func undo(
-        root: inout Root,
-        to tag: some Hashable & Sendable
-    ) throws {
-        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
-        root[keyPath: keyPath] = referenceValue
-        didUpdate?()
-    }
-
-
-
-    /// Undo all changes in the current scope.
-    /// - Returns: The initial value once all undos have been applied.
-    public func undoCurrentScope() throws -> Value {
-        try currentStack.undoAll(&referenceValue)
-        defer { didUpdate?() }
-        return referenceValue
-    }
-    
-    /// Undo all changes in the current scope.
-    /// - Parameter value: The value to apply the undos to.
-    public func undoCurrentScope(_ value: inout Value) throws {
-        try currentStack.undoAll(&referenceValue)
-        value = referenceValue
-        didUpdate?()
-    }
-    
-    /// Undo all changes in the current scope.
-    /// - Parameter root: The parent object owning the value to apply the undos to.
-    public func undoCurrentScope(root: inout Root) throws {
-        try currentStack.undoAll(&referenceValue)
-        root[keyPath: keyPath] = referenceValue
-        didUpdate?()
-    }
-
-
-
-    /// Undo all changes in the current scope and then discard it.
-    /// - Returns: The initial value once all undos have been applied.
-    public func undoAndPopCurrentScope() throws -> Value {
-        let value = try undoCurrentScope()
-        discardCurrentScope()
-        defer { didUpdate?() }
-        return value
-    }
-
-    /// Undo all changes in the current scope and then discard it.
-    /// - Parameter value: The value to apply the undos to.
-    public func undoAndPopCurrentScope(_ value: inout Value) throws {
-        try undoCurrentScope(&value)
-        discardCurrentScope()
-        didUpdate?()
-    }
-
-    /// Undo all changes in the current scope and then discard it.
-    /// - Parameter root: The parent object owning the value to apply the undos to.
-    public func undoAndPopCurrentScope(root: inout Root) throws {
-        try undoCurrentScope(root: &root)
-        discardCurrentScope()
-        didUpdate?()
-    }
-
-
-    // MARK: Redo
-
-    /// Redo the last undone change, if possible.
-    /// - Returns: The value before the previous undo was applied.
-    public func redo() throws -> Value {
-        try currentStack.redo(&referenceValue)
-        defer { didUpdate?() }
-        return referenceValue
-    }
-
-    /// Redo the last undone change, if possible.
-    /// - Parameter value: The value to apply the redo to.
-    public func redo(_ value: inout Value) throws {
-        try currentStack.redo(&referenceValue)
-        value = referenceValue
-        didUpdate?()
-    }
-
-    /// Redo the last change, if possible.
-    /// - Parameter root: The parent object owning the value to apply the redo to.
-    public func redo(root: inout Root) throws {
-        try currentStack.redo(&referenceValue)
-        root[keyPath: keyPath] = referenceValue
-        didUpdate?()
-    }
-
-
-    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is returned.
-    /// - Parameter tag: The tag to revert to.
-    /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
-    public func redo(to tag: some Hashable & Sendable) throws -> Value {
-        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
-        defer { didUpdate?() }
-        return referenceValue
-    }
-
-    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
-    /// - Parameters:
-    ///   - value: The value to apply the redos to.
-    ///   - tag: The tag to revert to.
-    public func redo(
-        _ value: inout Value,
-        to tag: some Hashable & Sendable
-    ) throws {
-        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
-        value = referenceValue
-        didUpdate?()
-    }
-
-    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
-    /// - Parameters:
-    ///   - root: The parent object owning the value to apply the redos to.
-    ///   - tag: The tag to revert to.
-    public func redo(
-        root: inout Root,
-        to tag: some Hashable & Sendable
-    ) throws {
-        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
-        root[keyPath: keyPath] = referenceValue
-        didUpdate?()
-    }
-
-
-
-    /// Redo all changes in the current scope.
-    /// - Returns: The latest value once all redos have been applied.
-    public func redoCurrentScope() throws -> Value {
-        try currentStack.redoAll(&referenceValue)
-        defer { didUpdate?() }
-        return referenceValue
-    }
-
-    /// Redo all changes in the current scope.
-    /// - Parameter value: The value to apply the redos to.
-    public func redoCurrentScope(_ value: inout Value) throws {
-        try currentStack.redoAll(&referenceValue)
-        value = referenceValue
-        didUpdate?()
-    }
-
-    /// Redo all changes in the current scope.
-    /// - Parameter root: The parent object owning the value to apply the redos to.
-    public func redoCurrentScope(root: inout Root) throws {
-        try currentStack.redoAll(&referenceValue)
-        root[keyPath: keyPath] = referenceValue
         didUpdate?()
     }
 }
 
-// MARK: - Reference type reversion
 extension VersioningController where Root: AnyObject {
-    
-    /// Undo the last change on the root object.
-    public func undo() throws {
-        try currentStack.undo(&referenceValue)
-        updateRoot?(referenceValue)
-        didUpdate?()
-    }
-
-    /// Undo all the changes in the current scope up to the provided tag on the root object. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
-    /// - Parameter tag: The tag to revert to.
-    public func undo(to tag: some Hashable & Sendable) throws {
-        try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
-        updateRoot?(referenceValue)
-        didUpdate?()
-    }
-
-    /// Undo all changes in the current scope on the root object.
-    public func undoCurrentScope() throws {
-        try currentStack.undoAll(&referenceValue)
-        updateRoot?(referenceValue)
-        didUpdate?()
-    }
-
-    /// Undo all changes in the current scope on the root object and then discard the current scope.
-    public func undoAndPopCurrentScope() throws {
-        try currentStack.undoAll(&referenceValue)
-        discardCurrentScope()
-        updateRoot?(referenceValue)
-        didUpdate?()
-    }
-
-    /// Redo the last undone change on the root object.
-    public func redo() throws {
-        try currentStack.redo(&referenceValue)
-        updateRoot?(referenceValue)
-        didUpdate?()
-    }
-
-    /// Redo all the changes in the current scope up and including to the provided tag on the root object. If the tag cannot be found, nothing happens.
-    ///
-    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
-    /// - Parameter tag: The tag to revert to.
-    public func redo(to tag: some Hashable & Sendable) throws {
-        try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
-        updateRoot?(referenceValue)
-        didUpdate?()
-    }
-
-    /// Redo all changes in the current scope on the root object.
-    public func redoCurrentScope() throws {
-        try currentStack.redoAll(&referenceValue)
-        updateRoot?(referenceValue)
-    }
 
     /// Applies all of the changes made in the transaction as a single modification and stores it in the history.
     /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
@@ -689,12 +289,503 @@ extension VersioningController where Root: AnyObject {
     }
 }
 
-// MARK: - Combine
+// MARK: - Tags
+extension VersioningController {
+
+    /// Updates the tag of the current version.
+    /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
+    public func tagCurrentVersion(_ tag: some Hashable & Sendable) {
+        for index in stacks.indices {
+            stacks[index].clear(tag: .init(wrapped: tag))
+        }
+        currentStack.tagCurrentVersion(.init(wrapped: tag))
+        didUpdate?()
+    }
+
+    /// Returns a the lists of tags in the current scope, one for the undo stack and one for the redo stack, including `nil` entries for untagged actions. If the scope level is not available, then `nil` is returned.
+    /// - Parameter scopeLevel: The scope level to return tags for.
+    /// - Returns: A tuple containing two arrays on `AnyHashable?`. One for the undo stack, one for the redo stack.
+    public func tags(inScopeLevel scopeLevel: Int) -> (undo: [AnyHashable?], redo: [AnyHashable?])? {
+        guard scopeLevel < stacks.count else {
+            return nil
+        }
+        let undoTags = CollectionOfOne(stacks[scopeLevel].tag?.wrapped) + stacks[scopeLevel].undoStack.map(\.tag?.wrapped)
+        let redoTags = stacks[scopeLevel].redoStack.map(\.tag?.wrapped)
+
+        return (undoTags, redoTags)
+    }
+}
+
+// MARK: - Value type reversion
+extension VersioningController {
+
+    /// Undo the last change, if possible.
+    /// - Returns: The previously registered value.
+    public func undo() throws(Failure) -> Value {
+        do {
+            try currentStack.undo(&referenceValue)
+            defer { didUpdate?() }
+            return referenceValue
+        } catch {
+            try handleError(error)
+            return referenceValue
+        }
+    }
+
+    /// Undo the last change, if possible.
+    /// - Parameter value: The value to apply the undo to.
+    public func undo(_ value: inout Value) throws(Failure) {
+        do {
+            try currentStack.undo(&referenceValue)
+            value = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo the last change, if possible.
+    /// - Parameter root: The parent object owning the value to apply the undo to.
+    public func undo(root: inout Root) throws(Failure) {
+        do {
+            try currentStack.undo(&referenceValue)
+            root[keyPath: keyPath] = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is returned.
+    /// - Parameter tag: The tag to revert to.
+    /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
+    public func undo(to tag: some Hashable & Sendable) throws(Failure) -> Value {
+        do {
+            try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+            defer { didUpdate?() }
+            return referenceValue
+        } catch {
+            try handleError(error)
+            return referenceValue
+        }
+    }
+
+    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - value: The value to apply the undos to.
+    ///   - tag: The tag to revert to.
+    public func undo(
+        _ value: inout Value,
+        to tag: some Hashable & Sendable
+    ) throws(Failure) {
+        do {
+            try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+            value = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all the changes in the current scope up to the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - root: The parent object owning the value to apply the undos to.
+    ///   - tag: The tag to revert to.
+    public func undo(
+        root: inout Root,
+        to tag: some Hashable & Sendable
+    ) throws(Failure) {
+        do {
+            try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+            root[keyPath: keyPath] = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Pops the current scope, squashing all changes in the scope into a single change and appending it to the previous scope. If this is called from the root scope, nothing happens.
+    public func popCurrentScope() throws(Failure) {
+
+        guard stacks.count > 1 else {
+            return
+        }
+
+        let firstItemTag = currentStack.undoStack.first?.tag
+        var previousValue = referenceValue
+        do {
+            try currentStack.undoAll(&previousValue)
+            
+            _ = stacks.popLast()
+            currentStack.append(
+                currentValue: referenceValue,
+                previousValue: previousValue,
+                tag: firstItemTag
+            )
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all changes in the current scope.
+    /// - Returns: The initial value once all undos have been applied.
+    public func undoCurrentScope() throws(Failure) -> Value {
+        do {
+            try currentStack.undoAll(&referenceValue)
+            defer { didUpdate?() }
+            return referenceValue
+        } catch {
+            try handleError(error)
+            return referenceValue
+        }
+    }
+
+    /// Undo all changes in the current scope.
+    /// - Parameter value: The value to apply the undos to.
+    public func undoCurrentScope(_ value: inout Value) throws(Failure) {
+        do {
+            try currentStack.undoAll(&referenceValue)
+            value = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all changes in the current scope.
+    /// - Parameter root: The parent object owning the value to apply the undos to.
+    public func undoCurrentScope(root: inout Root) throws(Failure) {
+        do {
+            try currentStack.undoAll(&referenceValue)
+            root[keyPath: keyPath] = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all changes in the current scope and then discard it.
+    /// - Returns: The initial value once all undos have been applied.
+    public func undoAndPopCurrentScope() throws(Failure) -> Value {
+        let value = try undoCurrentScope()
+        discardCurrentScope()
+        defer { didUpdate?() }
+        return value
+    }
+
+    /// Undo all changes in the current scope and then discard it.
+    /// - Parameter value: The value to apply the undos to.
+    public func undoAndPopCurrentScope(_ value: inout Value) throws(Failure) {
+        try undoCurrentScope(&value)
+        discardCurrentScope()
+        didUpdate?()
+    }
+
+    /// Undo all changes in the current scope and then discard it.
+    /// - Parameter root: The parent object owning the value to apply the undos to.
+    public func undoAndPopCurrentScope(root: inout Root) throws(Failure) {
+        try undoCurrentScope(root: &root)
+        discardCurrentScope()
+        didUpdate?()
+    }
+
+    /// Redo the last undone change, if possible.
+    /// - Returns: The value before the previous undo was applied.
+    public func redo() throws(Failure) -> Value {
+        do {
+            try currentStack.redo(&referenceValue)
+            defer { didUpdate?() }
+            return referenceValue
+        } catch {
+            try handleError(error)
+            return referenceValue
+        }
+    }
+
+    /// Redo the last undone change, if possible.
+    /// - Parameter value: The value to apply the redo to.
+    public func redo(_ value: inout Value) throws(Failure) {
+        do {
+            try currentStack.redo(&referenceValue)
+            value = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo the last change, if possible.
+    /// - Parameter root: The parent object owning the value to apply the redo to.
+    public func redo(root: inout Root) throws(Failure) {
+        do {
+            try currentStack.redo(&referenceValue)
+            root[keyPath: keyPath] = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is returned.
+    /// - Parameter tag: The tag to revert to.
+    /// - Returns: The value once reversions have been applied. If the tag is not found, the unmodified value is returned.
+    public func redo(to tag: some Hashable & Sendable) throws(Failure) -> Value {
+        do {
+            try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+            defer { didUpdate?() }
+            return referenceValue
+        } catch {
+            try handleError(error)
+            return referenceValue
+        }
+    }
+
+    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - value: The value to apply the redos to.
+    ///   - tag: The tag to revert to.
+    public func redo(
+        _ value: inout Value,
+        to tag: some Hashable & Sendable
+    ) throws(Failure) {
+        do {
+            try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+            value = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo all the changes in the current scope up to and including the provided tag. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameters:
+    ///   - root: The parent object owning the value to apply the redos to.
+    ///   - tag: The tag to revert to.
+    public func redo(
+        root: inout Root,
+        to tag: some Hashable & Sendable
+    ) throws(Failure) {
+        do {
+            try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+            root[keyPath: keyPath] = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo all changes in the current scope.
+    /// - Returns: The latest value once all redos have been applied.
+    public func redoCurrentScope() throws(Failure) -> Value {
+        do {
+            try currentStack.redoAll(&referenceValue)
+            defer { didUpdate?() }
+            return referenceValue
+        } catch {
+            try handleError(error)
+            return referenceValue
+        }
+    }
+
+    /// Redo all changes in the current scope.
+    /// - Parameter value: The value to apply the redos to.
+    public func redoCurrentScope(_ value: inout Value) throws(Failure) {
+        do {
+            try currentStack.redoAll(&referenceValue)
+            value = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo all changes in the current scope.
+    /// - Parameter root: The parent object owning the value to apply the redos to.
+    public func redoCurrentScope(root: inout Root) throws(Failure) {
+        do {
+            try currentStack.redoAll(&referenceValue)
+            root[keyPath: keyPath] = referenceValue
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+}
+
+// MARK: Reference type reversion
+extension VersioningController where Root: AnyObject {
+
+    /// Undo the last change and set it on the root object.
+    public func undo() throws(Failure) {
+        do {
+            try currentStack.undo(&referenceValue)
+            updateRoot?(referenceValue)
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all the changes in the current scope up to the provided tag on the root object. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the undo action up to, but not including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameter tag: The tag to revert to.
+    public func undo(to tag: some Hashable & Sendable) throws(Failure) {
+        do {
+            try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
+            updateRoot?(referenceValue)
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all changes in the current scope on the root object.
+    public func undoCurrentScope() throws(Failure) {
+        do {
+            try currentStack.undoAll(&referenceValue)
+            updateRoot?(referenceValue)
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Undo all changes in the current scope on the root object and then discard the current scope.
+    public func undoAndPopCurrentScope() throws(Failure) {
+        do {
+            try currentStack.undoAll(&referenceValue)
+            discardCurrentScope()
+            updateRoot?(referenceValue)
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo the last undone change on the root object.
+    public func redo() throws(Failure) {
+        do {
+            try currentStack.redo(&referenceValue)
+            updateRoot?(referenceValue)
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo all the changes in the current scope up and including to the provided tag on the root object. If the tag cannot be found, nothing happens.
+    ///
+    /// Tags are applied to versions, so calling this function performs all of the redo action up to and including the tagged version, so that the version provided alongside the tag is set.
+    /// - Parameter tag: The tag to revert to.
+    public func redo(to tag: some Hashable & Sendable) throws(Failure) {
+        do {
+            try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
+            updateRoot?(referenceValue)
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+
+    /// Redo all changes in the current scope on the root object.
+    public func redoCurrentScope() throws(Failure) {
+        do {
+            try currentStack.redoAll(&referenceValue)
+            updateRoot?(referenceValue)
+            didUpdate?()
+        } catch {
+            try handleError(error)
+        }
+    }
+}
+
+// MARK: - Initializers for throwing interface
+extension VersioningController where Failure == ReversionError {
+
+    /// Creates a controller for direct registration of changes and application of reversions.
+    /// - Parameters:
+    ///   - value: The initial value to be tracked.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        _ value: Value,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where Root == Value {
+
+        self.init(
+            on: value,
+            at: \.self,
+            debounceInterval: debounceInterval,
+            updateRoot: nil,
+            didUpdate: nil,
+            handleError: { error throws(ReversionError) in throw error }
+        )
+    }
+
+    /// Creates  a controller that registers changes at a specific key path on a value type.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some parent model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) {
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceInterval: debounceInterval,
+            updateRoot: nil,
+            didUpdate: nil,
+            handleError: { error throws(ReversionError) in throw error }
+        )
+    }
+
+    /// Creates  a controller that registers changes at a specific key path on a reference type.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where Root: AnyObject {
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceInterval: debounceInterval,
+            updateRoot: { [weak root] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: nil,
+            handleError: { error throws(ReversionError) in throw error }
+        )
+    }
+}
+
+// MARK: Combine
 #if canImport(Combine)
 @preconcurrency import Combine
 
-extension VersioningController {
-    
+extension VersioningController where Failure == ReversionError {
+
     /// Creates a controller that registers changes at a specific key path on an `ObservableObject` type, and observes the provided property, tracking all changes.
     ///
     /// This initializer subscribes to changes from the root object, and registers any changes. Whenever an undo, redo or scope action is made, the root object is notified so that any UI that depends on the controller can be updated.
@@ -722,7 +813,8 @@ extension VersioningController {
             },
             didUpdate: { [weak publisher = root.objectWillChange] in
                 publisher?.send()
-            }
+            },
+            handleError: { error throws(ReversionError) in throw error }
         )
 
         root.objectWillChange
@@ -745,11 +837,11 @@ extension VersioningController {
 }
 #endif
 
-// MARK: - Observation
+// MARK: Observation
 #if canImport(Observation)
 import Observation
 
-extension VersioningController {
+extension VersioningController where Failure == ReversionError {
 
     /// Creates a controller that registers changes at a specific key path on an `Observable` type, and observes the provided property, tracking all changes.
     ///
@@ -781,6 +873,169 @@ extension VersioningController {
                 }
                 observationRegistrar.willSet(root, keyPath: keyPath)
                 observationRegistrar.didSet(root, keyPath: keyPath)
+            },
+            handleError: { error throws(ReversionError) in throw error }
+        )
+
+        observe(root: root, at: keyPath)
+    }
+
+    private func observe(root: Root?, at keyPath: WritableKeyPath<Root, Value> & Sendable)
+    where Root: AnyObject,
+          Root: Observable
+    {
+        withObservationTracking { [weak root, keyPath] in
+            _ = root?[keyPath: keyPath]
+        } onChange: { [weak self, weak root, keyPath] in
+            Task { @MainActor in
+                self?.append(root![keyPath: keyPath])
+                self?.observe(root: root, at: keyPath)
+            }
+        }
+    }
+}
+#endif
+
+// MARK: - Initializers for non-throwing interface
+extension VersioningController where Failure == Never {
+
+    /// Creates  a controller that registers changes at a specific key path on a reference type. The interface of `VersioningController` no longer throws errors when using this initializer, and instead errors are assigned to the `errorKeyPath` on `root`.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where Root: AnyObject {
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceInterval: debounceInterval,
+            updateRoot: { [weak root] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: nil,
+            handleError: { [weak root] error in
+                root?[keyPath: errorKeyPath] = error
+            }
+        )
+    }
+}
+
+// MARK: Combine
+#if canImport(Combine)
+@preconcurrency import Combine
+
+extension VersioningController where Failure == Never {
+
+    /// Creates a controller that registers changes at a specific key path on an `ObservableObject` type, and observes the provided property, tracking all changes. The interface of `VersioningController` no longer throws errors when using this initializer, and instead errors are assigned to the `errorKeyPath` on `root`.
+    ///
+    /// This initializer subscribes to changes from the root object, and registers any changes. Whenever an undo, redo or scope action is made, the root object is notified so that any UI that depends on the controller can be updated.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where
+    Root: ObservableObject,
+    Root.ObjectWillChangePublisher == ObservableObjectPublisher
+    {
+        let milliseconds = debounceInterval.map {
+            Int(Double($0.components.seconds) * 1000 + Double($0.components.attoseconds) * 1e-15)
+        }
+
+        let didUpdate: @Sendable () -> Void = { [weak publisher = root.objectWillChange] in
+            publisher?.send()
+        }
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceInterval: debounceInterval,
+            updateRoot: { [weak root] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: didUpdate,
+            handleError: { [weak root] error in
+                root?[keyPath: errorKeyPath] = error
+                didUpdate()
+            }
+        )
+
+        root.objectWillChange
+            .debounce(
+                for: .milliseconds(milliseconds ?? 1),
+                scheduler: DispatchQueue.main
+            )
+            .compactMap { [weak root, keyPath] () -> Value? in
+                root?[keyPath: keyPath]
+            }
+            .removeDuplicates()
+            .sink { [weak self] newValue in
+                guard let self, newValue != self.referenceValue else {
+                    return
+                }
+                self._append(newValue, tag: nil)
+            }
+            .store(in: &cancellables)
+    }
+}
+#endif
+
+// MARK: Observation
+#if canImport(Observation)
+import Observation
+
+extension VersioningController where Failure == Never {
+
+    /// Creates a controller that registers changes at a specific key path on an `Observable` type, and observes the provided property, tracking all changes. The interface of `VersioningController` no longer throws errors when using this initializer, and instead errors are assigned to the `errorKeyPath` on `root`.
+    ///
+    /// This initializer observes changes made to the specified key path, and registers any modifications. Whenever an undo, redo or scope action is made, the root object is notified so that any UI that depends on the controller can update.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
+    ///   - observationRegistrar: The observation registrar of the `Observable` object, used to notify of any changes to this controller.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
+        using observationRegistrar: ObservationRegistrar,
+        debounceInterval: ContinuousClock.Duration? = nil
+    ) where
+    Root: AnyObject,
+    Root: Observable
+    {
+        let didUpdate: @Sendable () -> Void = { [weak root, observationRegistrar, keyPath] in
+            guard let root else {
+                return
+            }
+            observationRegistrar.willSet(root, keyPath: keyPath)
+            observationRegistrar.didSet(root, keyPath: keyPath)
+        }
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceInterval: debounceInterval,
+            updateRoot: { [weak root, keyPath] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: didUpdate,
+            handleError: { [weak root] error in
+                root?[keyPath: errorKeyPath] = error
+                didUpdate()
             }
         )
 
