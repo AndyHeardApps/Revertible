@@ -1,10 +1,15 @@
 import Foundation
 
+public enum VersioningErrorHandlingMode {
+    case throwErrors
+    case assignErrors(StaticString)
+}
+
 @attached(member, names: arbitrary) @attached(memberAttribute)
 public macro Versioning(
     _ properties: StaticString...,
     internalizesErrors: BooleanLiteralType = true,
-    debounceMilliseconds: UInt? = nil
+    debounceMilliseconds: StaticBigInt? = nil
 ) = #externalMacro(module: "RevertibleMacros", type: "VersioningMacro")
 
 /// Adds a default implementation of the ``Versionable`` protocol to a `struct` or `enum` declaration.
