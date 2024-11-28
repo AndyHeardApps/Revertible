@@ -1,3 +1,11 @@
+import Foundation
+
+@attached(member, names: arbitrary) @attached(memberAttribute)
+public macro Versioning(
+    _ properties: StaticString...,
+    internalizesErrors: BooleanLiteralType = true,
+    debounceMilliseconds: UInt? = nil
+) = #externalMacro(module: "RevertibleMacros", type: "VersioningMacro")
 
 /// Adds a default implementation of the ``Versionable`` protocol to a `struct` or `enum` declaration.
 ///

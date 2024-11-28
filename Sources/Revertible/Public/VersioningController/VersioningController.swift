@@ -64,8 +64,7 @@ import Foundation
 ///
 /// Many of the functions on this type are throwing. This can be cumbersome to handle by manually wrapping each call in a `do - catch` block. To help with this, when the `root` of the type is a reference type, you may pass a key path in the initializer pointing to a writable error property that the `VersioningController` will automatically assign any errors to, before triggering a view update where appropriate. If one of these initializers are used, then the functions on this type will no longer throw errors.
 public final class VersioningController<Root, Value, Failure>: @unchecked Sendable
-where Root: Sendable,
-      Value: Versionable & Sendable,
+where Value: Versionable & Sendable,
       Failure: Error
 {
 
@@ -73,9 +72,9 @@ where Root: Sendable,
     @Atomic private var stacks: [VersioningStack<Value>]
     @Atomic private var referenceValue: Value
     private let keyPath: WritableKeyPath<Root, Value> & Sendable
-    private let updateRoot: (@Sendable (Value) -> Void)?
-    private let didUpdate: (@Sendable () -> Void)?
-    private let handleError: @Sendable (ReversionError) throws(Failure) -> Void
+    private let updateRoot: ((Value) -> Void)?
+    private let didUpdate: (() -> Void)?
+    private let handleError: (ReversionError) throws(Failure) -> Void
     @Atomic private var debounce: Debounce<DebouncedValue>?
 
     #if canImport(Combine)
@@ -87,9 +86,9 @@ where Root: Sendable,
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
         debounceInterval: ContinuousClock.Duration?,
-        updateRoot: (@Sendable (Value) -> Void)?,
-        didUpdate: (@Sendable () -> Void)?,
-        handleError: @escaping @Sendable (ReversionError) throws(Failure) -> Void
+        updateRoot: ((Value) -> Void)?,
+        didUpdate: (() -> Void)?,
+        handleError: @escaping (ReversionError) throws(Failure) -> Void
     ) {
 
         if Value.self is AnyClass.Type {
@@ -877,18 +876,22 @@ extension VersioningController where Failure == ReversionError {
             handleError: { error throws(ReversionError) in throw error }
         )
 
-        observe(root: root, at: keyPath)
+        let box = WeakSendableBox(root)
+        observe(root: box, at: keyPath)
     }
 
-    private func observe(root: Root?, at keyPath: WritableKeyPath<Root, Value> & Sendable)
+    private func observe(root: WeakSendableBox<Root>?, at keyPath: WritableKeyPath<Root, Value> & Sendable)
     where Root: AnyObject,
           Root: Observable
     {
-        withObservationTracking { [weak root, keyPath] in
-            _ = root?[keyPath: keyPath]
-        } onChange: { [weak self, weak root, keyPath] in
+
+        withObservationTracking { [keyPath] in
+            _ = root?.wrapped?[keyPath: keyPath]
+        } onChange: { [weak self, keyPath, weak root] in
             Task { @MainActor in
-                self?.append(root![keyPath: keyPath])
+                if let value = root?.wrapped?[keyPath: keyPath] {
+                    self?.append(value)
+                }
                 self?.observe(root: root, at: keyPath)
             }
         }
@@ -954,7 +957,7 @@ extension VersioningController where Failure == Never {
             Int(Double($0.components.seconds) * 1000 + Double($0.components.attoseconds) * 1e-15)
         }
 
-        let didUpdate: @Sendable () -> Void = { [weak publisher = root.objectWillChange] in
+        let didUpdate: () -> Void = { [weak publisher = root.objectWillChange] in
             publisher?.send()
         }
 
@@ -1017,7 +1020,7 @@ extension VersioningController where Failure == Never {
     Root: AnyObject,
     Root: Observable
     {
-        let didUpdate: @Sendable () -> Void = { [weak root, observationRegistrar, keyPath] in
+        let didUpdate: () -> Void = { [weak root, observationRegistrar, keyPath] in
             guard let root else {
                 return
             }
@@ -1039,18 +1042,22 @@ extension VersioningController where Failure == Never {
             }
         )
 
-        observe(root: root, at: keyPath)
+        let box = WeakSendableBox(root)
+        observe(root: box, at: keyPath)
     }
 
-    private func observe(root: Root?, at keyPath: WritableKeyPath<Root, Value> & Sendable)
+    private func observe(root: WeakSendableBox<Root>?, at keyPath: WritableKeyPath<Root, Value> & Sendable)
     where Root: AnyObject,
           Root: Observable
     {
-        withObservationTracking { [weak root, keyPath] in
-            _ = root?[keyPath: keyPath]
-        } onChange: { [weak self, weak root, keyPath] in
+
+        withObservationTracking { [keyPath] in
+            _ = root?.wrapped?[keyPath: keyPath]
+        } onChange: { [weak self, keyPath, weak root] in
             Task { @MainActor in
-                self?.append(root![keyPath: keyPath])
+                if let value = root?.wrapped?[keyPath: keyPath] {
+                    self?.append(value)
+                }
                 self?.observe(root: root, at: keyPath)
             }
         }
