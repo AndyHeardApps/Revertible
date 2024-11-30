@@ -18,16 +18,25 @@ struct DumbModel {
 @Observable
 @Versioning(
     "person",
-    internalizesErrors: false,
-    debounceMilliseconds: 1
+    errorMode: .assignErrors("Dave"),
+    debounceMilliseconds: 100
 )
 final class ObservableModel {
 
+//    @ObservationIgnored
+//    private(set) lazy var _$person = VersioningController(
+//        on: self,
+//        at: \.person,
+//        storingErrorsAt: \.error,
+//        debounceInterval: .seconds(1),
+//        using: _$observationRegistrar
+//    )
+    
     var person = Person()
     static let person = Person()
 }
 
-@Versioning
+@Versioning(debounceMilliseconds: 100)
 final class ObservableObjectModel: ObservableObject {
 
     @Published var person: Person = .init()

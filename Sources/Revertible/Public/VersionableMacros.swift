@@ -1,6 +1,9 @@
 import Foundation
 
-public enum VersioningErrorHandlingMode {
+public enum VersioningErrorHandlingMode: Sendable {
+    
+    public static let assignErrors = assignErrors("versioningError")
+    
     case throwErrors
     case assignErrors(StaticString)
 }
@@ -8,7 +11,7 @@ public enum VersioningErrorHandlingMode {
 @attached(member, names: arbitrary) @attached(memberAttribute)
 public macro Versioning(
     _ properties: StaticString...,
-    internalizesErrors: BooleanLiteralType = true,
+    errorMode: VersioningErrorHandlingMode = .assignErrors,
     debounceMilliseconds: StaticBigInt? = nil
 ) = #externalMacro(module: "RevertibleMacros", type: "VersioningMacro")
 
