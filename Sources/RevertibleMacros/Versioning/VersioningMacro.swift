@@ -63,7 +63,7 @@ extension VersioningMacro: MemberMacro {
             modifiers: .init(
                 itemsBuilder: {
                     if let accessScopeModifier = property.accessScopeModifier {
-                        accessScopeModifier
+                        accessScopeModifier.trimmed
                     }
                     if property.accessScopeModifier?.name.tokenKind != .keyword(.private) {
                         .init(
@@ -226,7 +226,7 @@ extension VersioningMacro: MemberMacro {
 
             guard
                 let optionalBinding = binding.typeAnnotation?.type.as(OptionalTypeSyntax.self),
-                optionalBinding.wrappedType.description.contains("Error")
+                ["Error", "(any Error)"].contains(optionalBinding.wrappedType.description)
             else {
                 throw DiagnosticsError(diagnostics: [
                     .init(

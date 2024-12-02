@@ -19,21 +19,22 @@ extension VersioningMacro {
                 }
             return .init(properties: defaultProperties)
         }
-        
-        let properties = properties(
-            from: node,
-            on: declaration,
-            with: arguments,
-            in: context
-        )
-                
+
         let errorMode = try errorMode(
             for: macroMode,
             from: node,
             with: arguments,
             in: context
         )
-        
+
+        let properties = properties(
+            from: node,
+            on: declaration,
+            with: arguments,
+            errorPropertyName: errorMode.propertyName,
+            in: context
+        )
+
         let debounceInterval = try debounceInterval(
             from: node,
             with: arguments,
@@ -65,10 +66,12 @@ extension VersioningMacro {
         from node: AttributeSyntax,
         on declaration: some DeclGroupSyntax,
         with arguments: LabeledExprListSyntax,
+        errorPropertyName: String?,
         in context: (any MacroExpansionContext)?
     ) -> [Property] {
-        
+
         let declaredProperties = declaredProperties(in: declaration)
+            .filter { $0.name != errorPropertyName }
         
         let targetProperties = arguments
             .filter { $0.label == nil }
@@ -114,6 +117,7 @@ extension VersioningMacro {
         }
 
         return properties
+            .sorted { $0.name < $1.name }
     }
 }
 
@@ -256,6 +260,15 @@ extension VersioningMacro {
             
             case throwErrors
             case assignErrors(String)
+
+            fileprivate var propertyName: String? {
+                switch self {
+                case .throwErrors:
+                    nil
+                case let .assignErrors(propertyName):
+                    propertyName
+                }
+            }
         }
     }
 }

@@ -17,10 +17,6 @@ let package = Package(
         .library(
             name: "Revertible",
             targets: ["Revertible"]
-        ),
-        .executable(
-            name: "Client",
-            targets: ["Client"]
         )
     ],
     dependencies: [
@@ -39,10 +35,6 @@ let package = Package(
             name: "Revertible",
             dependencies: ["RevertibleMacros"],
             swiftSettings: swiftSettings
-        ),
-        .executableTarget(
-            name: "Client",
-            dependencies: ["Revertible"]
         ),
         .testTarget(
             name: "RevertibleTests",
