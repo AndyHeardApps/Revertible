@@ -8,7 +8,7 @@ extension VersioningMacro {
         for macroMode: Mode,
         from node: AttributeSyntax,
         on declaration: some DeclGroupSyntax,
-        in context: some MacroExpansionContext
+        in context: (any MacroExpansionContext)?
     ) throws -> Arguments {
         
         let declaredProperties = declaredProperties(in: declaration)
@@ -65,7 +65,7 @@ extension VersioningMacro {
         from node: AttributeSyntax,
         on declaration: some DeclGroupSyntax,
         with arguments: LabeledExprListSyntax,
-        in context: some MacroExpansionContext
+        in context: (any MacroExpansionContext)?
     ) -> [Property] {
         
         let declaredProperties = declaredProperties(in: declaration)
@@ -80,7 +80,7 @@ extension VersioningMacro {
         var properties: [Property] = []
         for generatedProperty in Set(generatedProperties) {
             guard let property = declaredProperties.first(where: { $0.name == generatedProperty }) else {
-                context.diagnose(
+                context?.diagnose(
                     .init(
                         node: node,
                         message: DiagnosticMessage.propertyNotFound(generatedProperty)
@@ -91,22 +91,23 @@ extension VersioningMacro {
             
             let diagnosticMessage: DiagnosticMessage? = switch property.declarationType {
             case .static:
-                    .propertyIsStatic(generatedProperty)
+                .propertyIsStatic(generatedProperty)
             case .let:
-                    .propertyIsLetDeclaration(generatedProperty)
+                .propertyIsLetDeclaration(generatedProperty)
             case .computedGetter:
-                    .propertyIsAComputedGetter(generatedProperty)
+                .propertyIsAComputedGetter(generatedProperty)
             default:
                 nil
             }
             
             if let diagnosticMessage {
-                context.diagnose(
+                context?.diagnose(
                     .init(
                         node: node,
                         message: diagnosticMessage
                     )
                 )
+                continue
             }
             
             properties.append(property)
@@ -123,7 +124,7 @@ extension VersioningMacro {
         for macroMode: Mode,
         from node: AttributeSyntax,
         with arguments: LabeledExprListSyntax,
-        in context: some MacroExpansionContext
+        in context: (any MacroExpansionContext)?
     ) throws -> Arguments.ErrorMode {
         
         guard let argument = arguments.first(where: { $0.label?.text == "errorMode" }) else {
@@ -170,7 +171,7 @@ extension VersioningMacro {
                 }
                 
                 if macroMode == .default {
-                    context.diagnose(
+                    context?.diagnose(
                         .init(
                             node: node,
                             message: DiagnosticMessage.unusedErrorPropertyName
@@ -205,9 +206,9 @@ extension VersioningMacro {
     private static func debounceInterval(
         from node: AttributeSyntax,
         with arguments: LabeledExprListSyntax,
-        in context: some MacroExpansionContext
+        in context: (any MacroExpansionContext)?
     ) throws -> UInt? {
-        
+
         guard let argument = arguments.first(where: { $0.label?.text == "debounceMilliseconds" }) else {
             return nil
         }

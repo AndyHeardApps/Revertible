@@ -1,7 +1,7 @@
 import XCTest
 import SwiftSyntaxMacrosTestSupport
 
-final class VersionableEnumMacroTests: XCTestCase {
+final class VersoinableMacroEnumTests: XCTestCase {
 
     func test_enumExpansion() throws {
 

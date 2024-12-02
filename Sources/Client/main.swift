@@ -4,7 +4,7 @@ import SwiftUI
 import Combine
 
 @Versionable
-struct Person: Sendable {
+struct Person {
 
     var age = 1
 }
@@ -16,27 +16,13 @@ struct DumbModel {
 }
 
 @Observable
-@Versioning(
-    "person",
-    errorMode: .assignErrors("Dave"),
-    debounceMilliseconds: 100
-)
+@Versioning
 final class ObservableModel {
 
-//    @ObservationIgnored
-//    private(set) lazy var _$person = VersioningController(
-//        on: self,
-//        at: \.person,
-//        storingErrorsAt: \.error,
-//        debounceInterval: .seconds(1),
-//        using: _$observationRegistrar
-//    )
-    
     var person = Person()
-    static let person = Person()
 }
 
-@Versioning(debounceMilliseconds: 100)
+@Versioning
 final class ObservableObjectModel: ObservableObject {
 
     @Published var person: Person = .init()
@@ -58,12 +44,12 @@ func test() async throws {
 
     let observableModel = ObservableModel()
     observableModel.person.age = 5
-    try observableModel._$person.undo()
+    observableModel._$person.undo()
     print(observableModel.person.age)
 
     let observableObjectModel = ObservableObjectModel()
     observableObjectModel.person.age = 5
-    try observableObjectModel._$person.undo()
+    observableObjectModel._$person.undo()
     print(observableObjectModel.person.age)
 
     let actorModel = ActorModel()
@@ -75,3 +61,25 @@ func test() async throws {
 }
 
 try await test()
+
+@Versionable
+struct MyState {}
+
+@Versioning(
+    "state3", "state4",
+    errorMode: .throwErrors
+//    debounceMilliseconds: 100
+)
+@MainActor
+struct Model {
+
+//    @ThrowingVersioned(debounceInterval: .milliseconds(100))
+    var state1 = MyState()
+    var state2: MyState = .init()
+    static var state3 = MyState()
+    var state4: MyState {
+        get {
+            .init()
+        }
+    }
+}

@@ -14,20 +14,21 @@ extension VersioningMacro: MemberMacro {
 
         let mode = mode(from: declaration)
 
-        guard [.observable, .observedObject].contains(mode) else {
-            return []
-        }
-
         let arguments = try parseArguments(
             for: mode,
             from: node,
             on: declaration,
             in: context
         )
-        
-        let errorProperty = errorProperty(
+
+        guard [.observable, .observedObject].contains(mode) else {
+            return []
+        }
+
+        let errorProperty = try errorProperty(
             arguments: arguments,
-            from: declaration
+            from: declaration,
+            in: context
         )
         
         let properties = arguments.properties.map {
@@ -137,19 +138,19 @@ extension VersioningMacro: MemberMacro {
                                             trailingComma: macroMode == .observable ? .commaToken() : nil
                                         )
                                     }
-                                    if let debounceInterval = arguments.debounceInterval {
-                                        debounceExpression(
-                                            duration: debounceInterval,
-                                            leadingNewLine: true,
-                                            trailingComma: macroMode == .observable
-                                        )
-                                    }
                                     if macroMode == .observable {
                                         LabeledExprSyntax(
                                             leadingTrivia: .newline,
                                             label: "using",
                                             colon: .colonToken(),
-                                            expression: DeclReferenceExprSyntax(baseName: "_$observationRegistrar")
+                                            expression: DeclReferenceExprSyntax(baseName: "_$observationRegistrar"),
+                                            trailingComma: arguments.debounceInterval == nil ? nil : .commaToken()
+                                        )
+                                    }
+                                    if let debounceInterval = arguments.debounceInterval {
+                                        debounceExpression(
+                                            duration: debounceInterval,
+                                            leadingNewLine: true
                                         )
                                     }
                                 }
@@ -164,20 +165,117 @@ extension VersioningMacro: MemberMacro {
     
     private static func errorProperty(
         arguments: Arguments,
-        from declaration: some DeclGroupSyntax
-    ) -> DeclSyntax? {
-        
+        from declaration: some DeclGroupSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> DeclSyntax? {
+
         guard case let .assignErrors(errorPropertyName) = arguments.errorMode else {
             return nil
         }
-        
-        // Check for existing
-        
-        // Validate existing is correct type, not static, correct access modifier, has getter and setter
-        
-        // Create property if nil
-        
-        return nil
+
+        let errorPropertyDeclaration = VariableDeclSyntax(
+            bindingSpecifier: .keyword(.var),
+            bindings: [
+                .init(
+                    pattern: IdentifierPatternSyntax(identifier: .identifier(errorPropertyName)),
+                    typeAnnotation: .init(
+                        type: OptionalTypeSyntax(
+                            wrappedType: TupleTypeSyntax(
+                                elements: [
+                                    .init(
+                                        type: SomeOrAnyTypeSyntax(
+                                            someOrAnySpecifier: .keyword(.any),
+                                            constraint: IdentifierTypeSyntax(
+                                                name: .identifier("Error")
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                )
+            ]
+        )
+
+        let properties = declaration.memberBlock.members
+            .compactMap { $0.decl.as(VariableDeclSyntax.self) }
+            .flatMap { variable in
+                variable.bindings.compactMap { binding in
+                    (variable, binding)
+                }
+            }
+
+        if
+            let (variable, binding) = properties.first(where: {
+                $0.1.pattern
+                    .as(IdentifierPatternSyntax.self)?
+                    .identifier.text == errorPropertyName
+            })
+        {
+
+            guard !variable.modifiers.map(\.name.tokenKind).contains(.keyword(.static)) else {
+                context.diagnose(
+                    .init(
+                        node: variable,
+                        message: DiagnosticMessage.errorPropertyIsStatic
+                    )
+                )
+                return .init(errorPropertyDeclaration)
+            }
+
+            guard
+                let optionalBinding = binding.typeAnnotation?.type.as(OptionalTypeSyntax.self),
+                optionalBinding.wrappedType.description.contains("Error")
+            else {
+                throw DiagnosticsError(diagnostics: [
+                    .init(
+                        node: variable,
+                        message: DiagnosticMessage.errorPropertyIsWrongType
+                    )
+                ])
+            }
+
+            guard variable.bindingSpecifier.tokenKind == .keyword(.var) else {
+                throw DiagnosticsError(diagnostics: [
+                    .init(
+                        node: variable,
+                        message: DiagnosticMessage.errorPropertyIsNotVariable
+                    )
+                ])
+            }
+
+            if
+                let accessors = binding.accessorBlock?.accessors
+                    .as(AccessorDeclListSyntax.self)?
+                    .compactMap(\.accessorSpecifier.tokenKind),
+                accessors.contains(.keyword(.get)),
+                !accessors.contains(.keyword(.set))
+            {
+                throw DiagnosticsError(diagnostics: [
+                    .init(
+                        node: variable,
+                        message: DiagnosticMessage.errorPropertyHasNoSetter
+                    )
+                ])
+
+            } else if
+                let accessors = binding.accessorBlock?.accessors,
+                accessors.is(CodeBlockItemListSyntax.self)
+            {
+                throw DiagnosticsError(diagnostics: [
+                    .init(
+                        node: variable,
+                        message: DiagnosticMessage.errorPropertyHasNoSetter
+                    )
+                ])
+
+            }
+
+            return nil
+        }
+
+        return .init(errorPropertyDeclaration)
     }
 }
 
@@ -190,46 +288,49 @@ extension VersioningMacro: MemberAttributeMacro {
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
 
-        let mode = mode(from: declaration)
-        let arguments = try parseArguments(
-            for: mode,
-            from: node,
-            on: declaration,
-            in: context
-        )
+        do {
+            let mode = mode(from: declaration)
+            let arguments = try parseArguments(
+                for: mode,
+                from: node,
+                on: declaration,
+                in: nil
+            )
 
-        guard
-            let propertyDeclaration = member.as(VariableDeclSyntax.self),
-            propertyDeclaration.bindings.count == 1,
-            mode == .default,
-            let binding = propertyDeclaration.bindings.first?.pattern.as(IdentifierPatternSyntax.self),
-            let property = arguments.properties.first(where: { $0.name == binding.identifier.text }),
-            !property.containsVersionedAttribute
-        else {
+            guard
+                let propertyDeclaration = member.as(VariableDeclSyntax.self),
+                propertyDeclaration.bindings.count == 1,
+                mode == .default,
+                let binding = propertyDeclaration.bindings.first?.pattern.as(IdentifierPatternSyntax.self),
+                let property = arguments.properties.first(where: { $0.name == binding.identifier.text }),
+                !property.containsVersionedAttribute
+            else {
+                return []
+            }
+
+            let hasParameters = arguments.debounceInterval != nil
+            let versionedPropertyWrapper = AttributeSyntax(
+                attributeName: IdentifierTypeSyntax(name: arguments.errorMode == .throwErrors ? "ThrowingVersioned" : "Versioned"),
+                leftParen: hasParameters ? .leftParenToken() : nil,
+                arguments: .argumentList(
+                    .init(
+                        itemsBuilder: {
+                            if let debounceInterval = arguments.debounceInterval {
+                                debounceExpression(
+                                    duration: debounceInterval,
+                                    leadingNewLine: false
+                                )
+                            }
+                        }
+                    )
+                ),
+                rightParen: hasParameters ? .rightParenToken() : nil
+            )
+
+            return [versionedPropertyWrapper]
+        } catch {
             return []
         }
-
-        let hasParameters = arguments.debounceInterval != nil
-        let versionedPropertyWrapper = AttributeSyntax(
-            attributeName: IdentifierTypeSyntax(name: arguments.errorMode == .throwErrors ? "ThrowingVersioned" : "Versioned"),
-            leftParen: hasParameters ? .leftParenToken() : nil,
-            arguments: .argumentList(
-                .init(
-                    itemsBuilder: {
-                        if let debounceInterval = arguments.debounceInterval {
-                            debounceExpression(
-                                duration: debounceInterval,
-                                leadingNewLine: false,
-                                trailingComma: false
-                            )
-                        }
-                    }
-                )
-            ),
-            rightParen: hasParameters ? .rightParenToken() : nil
-        )
-
-        return [versionedPropertyWrapper]
     }
 }
 
@@ -280,8 +381,7 @@ extension VersioningMacro {
     
     private static func debounceExpression(
         duration: UInt,
-        leadingNewLine: Bool,
-        trailingComma: Bool
+        leadingNewLine: Bool
     ) -> LabeledExprSyntax {
         LabeledExprSyntax(
             leadingTrivia: leadingNewLine ? .newline : nil,
@@ -301,8 +401,7 @@ extension VersioningMacro {
                     )
                 ],
                 rightParen: .rightParenToken()
-            ),
-            trailingComma: trailingComma ? .commaToken() : nil
+            )
         )
     }
 }
