@@ -6,13 +6,13 @@ import Foundation
 ///
 /// This class is used to register modifications to a single value, and perform undo and redo actions on that value. Changes are stored in a stack on a last in - first out bases, and any undo actions are automatically converted into redo actions when applied.
 ///
-/// There a several functions that allow for pushing and popping of additional scopes, which provides a way to group together sets of changes. This can be used in cases such as when a new screen is pushed, and content is modified, but not saved. A new scope can be pushed for the new screen, and when the changes are abandonded the scope can be undone and popped. A new scope is created using the ``pushNewScope()`` function and the ``undoAndPopCurrentScope()-8nyo4`` function and it's variants can be used to pop the scope.
+/// There a several functions that allow for pushing and popping of additional scopes, which provides a way to group together sets of changes. This can be used in cases such as when a new screen is pushed, and content is modified, but not saved. A new scope can be pushed for the new screen, and when the changes are abandonded the scope can be undone and popped. A new scope is created using the ``pushNewScope()`` function and the ``undoAndPopCurrentScope()-2pxmq`` function and it's variants can be used to pop the scope.
 ///
 /// There are a couple of different ways to use this class, each having it's own initializer.
 ///
 /// 1. Direct
 ///
-/// This involves a single value being provided to the ``init(_:debounceInterval:)`` initializer and tracked in place. Changes can be tracked by calling the ``append(_:)`` function, which will register those changes, and store them. The ``undo()-2yfov`` and ``redo()-3hmai`` functions can then be used to navigate through those changes.
+/// This involves a single value being provided to the ``init(_:debounceInterval:)`` initializer and tracked in place. Changes can be tracked by calling the ``append(_:)`` function, which will register those changes, and store them. The ``undo()-6v9ak`` and ``redo()-o0va`` functions can then be used to navigate through those changes.
 ///
 /// ```
 /// var value = MyStruct()
@@ -24,9 +24,9 @@ import Foundation
 ///
 /// 2. Key path
 ///
-/// This involves a parent object and a key path to the ``Versionable`` value to be tracked. This allows you to push updated values using either the ``append(_:)`` or ``append(root:)`` functions, and navigate the changes using the ``undo()-2yfov``, ``undo(root:)``, ``redo()-3hmai`` and ``redo(root:)`` functions.
+/// This involves a parent object and a key path to the ``Versionable`` value to be tracked. This allows you to push updated values using either the ``append(_:)`` or ``append(root:)`` functions, and navigate the changes using the ``undo()-6v9ak``, ``undo(root:)``, ``redo()-o0va`` and ``redo(root:)`` functions.
 ///
-/// If the parent object is a reference type, then the changes can be applied using the ``undo()-62e7m`` and ``redo()-1gfib`` functions, which applies the changes to the parent object directly without having to manually assign it.
+/// If the parent object is a reference type, then the changes can be applied using the ``undo()-6v9ak`` and ``redo()-o0va`` functions, which applies the changes to the parent object directly without having to manually assign it.
 ///
 /// ```
 /// let model = MyReferenceModel()

@@ -75,8 +75,8 @@ public struct _Versioned<Value: Versionable & Sendable, Failure: Error>: Sendabl
 }
 
 // MARK: - Functions
-extension Versioned {
-    
+extension _Versioned {
+
     /// Provides access to undo and redo functionality for the wrapped type.
     public struct Controller: Sendable {
 
@@ -222,7 +222,7 @@ extension _Versioned.Controller where Failure == Never {
     }
 }
 
-/// A property wrapper that tracks changes over time, allowing it to be reverted to a previous state with the ``Controller/undo()`` function or have changes restored using the ``Controller/redo()`` function. These are accessed through the projected value using dollar syntax (`$value.undo()`). Changes are automatically registered whenever the wrapped value is set, but may be debounced using the parameter on the initializer.
+/// A property wrapper that tracks changes over time, allowing it to be reverted to a previous state with the `undo()` function or have changes restored using the `redo()` function. These are accessed through the projected value using dollar syntax (`$value.undo()`). Changes are automatically registered whenever the wrapped value is set, but may be debounced using the parameter on the initializer.
 ///
 /// This type only supports value types, as reference semantics makes it difficult to track separate instances of a value.
 ///
@@ -233,12 +233,12 @@ extension _Versioned.Controller where Failure == Never {
 /// ```
 /// @Versioned var value = myStruct()   // id = 0
 /// value.id = 5                        // id = 5
-/// try $value.undo()                   // id = 0
-/// try $value.redo()                   // id = 5
+/// $value.undo()                       // id = 0
+/// $value.redo()                       // id = 5
 /// ```
 public typealias Versioned<Value: Versionable & Sendable> = _Versioned<Value, Never>
 
-/// A property wrapper that tracks changes over time, allowing it to be reverted to a previous state with the ``Controller/undo()`` function or have changes restored using the ``Controller/redo()`` function. These are accessed through the projected value using dollar syntax (`try $value.undo()`). Changes are automatically registered whenever the wrapped value is set, but may be debounced using the parameter on the initializer.
+/// A property wrapper that tracks changes over time, allowing it to be reverted to a previous state with the `undo()` function or have changes restored using the `redo()` function. These are accessed through the projected value using dollar syntax (`try $value.undo()`). Changes are automatically registered whenever the wrapped value is set, but may be debounced using the parameter on the initializer.
 ///
 /// This type only supports value types, as reference semantics makes it difficult to track separate instances of a value.
 ///
