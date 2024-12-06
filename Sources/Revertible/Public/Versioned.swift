@@ -97,6 +97,15 @@ extension _Versioned {
             controller.pushNewScope()
         }
 
+        /// Pops the current scope, squashing all changes in the scope into a single change and appending it to the previous scope. If this is called from the root scope, nothing happens.
+        public func popCurrentScope() throws(Failure) {
+            do {
+                try controller.popCurrentScope()
+            } catch {
+                try handleError(error)
+            }
+        }
+
         /// The current scope level, with the root being `0`.
         public var scopeLevel: Int {
             controller.scopeLevel
@@ -106,6 +115,13 @@ extension _Versioned {
         /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
         public func tag(_ tag: some Hashable & Sendable) {
             controller.tagCurrentVersion(tag)
+        }
+
+        /// Returns a the lists of tags in the current scope, one for the undo stack and one for the redo stack, including `nil` entries for untagged actions. If the scope level is not available, then `nil` is returned.
+        /// - Parameter scopeLevel: The scope level to return tags for. If `nil`, then the current scope is used.
+        /// - Returns: A tuple containing two arrays on `AnyHashable?`. One for the undo stack, one for the redo stack.
+        public func tags(inScopeLevel scopeLevel: Int? = nil) -> (undo: [AnyHashable?], redo: [AnyHashable?])? {
+            controller.tags(inScopeLevel: scopeLevel)
         }
 
         /// Whether the current scope has an undo action available to perform.
@@ -212,7 +228,7 @@ extension _Versioned {
 
 extension _Versioned.Controller where Failure == Never {
 
-    var error: ReversionError? {
+    public var error: ReversionError? {
         get {
             _error
         }

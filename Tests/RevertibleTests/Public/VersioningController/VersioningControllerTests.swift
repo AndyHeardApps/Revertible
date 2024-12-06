@@ -581,11 +581,14 @@ extension VersioningControllerTests {
 
         var model: ObservableModel? = ObservableModel()
         weak var controller = model?.controller
+        weak var weakModel = model
         model?.mockStruct.int = 5
 
         #expect(controller != nil)
+        #expect(weakModel != nil)
         model = nil
         #expect(controller == nil)
+        #expect(weakModel == nil)
     }
 
     @Observable
@@ -606,11 +609,14 @@ extension VersioningControllerTests {
 
         var model: ObservableObjectModel? = ObservableObjectModel()
         weak var controller = model?.controller
+        weak var weakModel = model
         model?.mockStruct.int = 5
 
         #expect(controller != nil)
+        #expect(weakModel != nil)
         model = nil
         #expect(controller == nil)
+        #expect(weakModel == nil)
     }
 
     fileprivate final class ObservableObjectModel: ObservableObject {

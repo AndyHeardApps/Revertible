@@ -302,9 +302,10 @@ extension VersioningController {
     }
 
     /// Returns a the lists of tags in the current scope, one for the undo stack and one for the redo stack, including `nil` entries for untagged actions. If the scope level is not available, then `nil` is returned.
-    /// - Parameter scopeLevel: The scope level to return tags for.
+    /// - Parameter scopeLevel: The scope level to return tags for. If `nil`, then the current scope is used.
     /// - Returns: A tuple containing two arrays on `AnyHashable?`. One for the undo stack, one for the redo stack.
-    public func tags(inScopeLevel scopeLevel: Int) -> (undo: [AnyHashable?], redo: [AnyHashable?])? {
+    public func tags(inScopeLevel scopeLevel: Int? = nil) -> (undo: [AnyHashable?], redo: [AnyHashable?])? {
+        let scopeLevel = scopeLevel ?? self.scopeLevel
         guard scopeLevel < stacks.count else {
             return nil
         }
@@ -1046,16 +1047,15 @@ extension VersioningController where Failure == Never {
         observe(root: box, at: keyPath)
     }
 
-    private func observe(root: WeakSendableBox<Root>?, at keyPath: WritableKeyPath<Root, Value> & Sendable)
+    private func observe(root: WeakSendableBox<Root>, at keyPath: WritableKeyPath<Root, Value> & Sendable)
     where Root: AnyObject,
           Root: Observable
     {
-
         withObservationTracking { [keyPath] in
-            _ = root?.wrapped?[keyPath: keyPath]
-        } onChange: { [weak self, keyPath, weak root] in
+            _ = root.wrapped?[keyPath: keyPath]
+        } onChange: { [weak self, keyPath, root] in
             Task { @MainActor in
-                if let value = root?.wrapped?[keyPath: keyPath] {
+                if let value = root.wrapped?[keyPath: keyPath] {
                     self?.append(value)
                 }
                 self?.observe(root: root, at: keyPath)
