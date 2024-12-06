@@ -72,7 +72,8 @@ where Value: Versionable & Sendable,
     @Atomic private var stacks: [VersioningStack<Value>]
     @Atomic private var referenceValue: Value
     private let keyPath: WritableKeyPath<Root, Value> & Sendable
-    private let updateRoot: ((Value) -> Void)?
+    private let getRoot: (() -> Value?)?
+    private let setRoot: ((Value) -> Void)?
     private let didUpdate: (() -> Void)?
     private let handleError: (ReversionError) throws(Failure) -> Void
     @Atomic private var debounce: Debounce<DebouncedValue>?
@@ -86,7 +87,8 @@ where Value: Versionable & Sendable,
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
         debounceInterval: ContinuousClock.Duration?,
-        updateRoot: ((Value) -> Void)?,
+        getroot: (() -> Value?)?,
+        setRoot: ((Value) -> Void)?,
         didUpdate: (() -> Void)?,
         handleError: @escaping (ReversionError) throws(Failure) -> Void
     ) {
@@ -98,7 +100,8 @@ where Value: Versionable & Sendable,
         self.stacks = [.init(tag: nil)]
         self.referenceValue = root[keyPath: keyPath]
         self.keyPath = keyPath
-        self.updateRoot = updateRoot
+        self.getRoot = getroot
+        self.setRoot = setRoot
         self.didUpdate = didUpdate
         self.handleError = handleError
         self.debounce = debounceInterval.map {
@@ -273,7 +276,7 @@ extension VersioningController where Root: AnyObject {
     /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
     public func setWithTransaction<E: Error>(_ closure: (inout Value) throws(E) -> Void) throws(E) {
         try closure(&referenceValue)
-        updateRoot?(referenceValue)
+        setRoot?(referenceValue)
         append(referenceValue)
         didUpdate?()
     }
@@ -282,7 +285,7 @@ extension VersioningController where Root: AnyObject {
     /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
     public func setWithTransaction<E: Error>(_ closure: (inout Value) async throws(E) -> Void) async throws(E) {
         try await closure(&referenceValue)
-        updateRoot?(referenceValue)
+        setRoot?(referenceValue)
         append(referenceValue)
         didUpdate?()
     }
@@ -628,11 +631,30 @@ extension VersioningController {
 // MARK: Reference type reversion
 extension VersioningController where Root: AnyObject {
 
+    /// Attempts to append the current value from the root object to the current scope. If no changes have been made then nothing is appended to the scope.
+    public func appendCurrentVersion() {
+        guard let newValue = getRoot?() else {
+            return
+        }
+
+        append(newValue)
+    }
+
+    /// Attempts to append the current value from the root object to the current scope. If no changes have been made then nothing is appended to the scope.
+    /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
+    public func appendCurrentVersion(tag: some Hashable & Sendable) {
+        guard let newValue = getRoot?() else {
+            return
+        }
+
+        append(newValue, tag: tag)
+    }
+
     /// Undo the last change and set it on the root object.
     public func undo() throws(Failure) {
         do {
             try currentStack.undo(&referenceValue)
-            updateRoot?(referenceValue)
+            setRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -646,7 +668,7 @@ extension VersioningController where Root: AnyObject {
     public func undo(to tag: some Hashable & Sendable) throws(Failure) {
         do {
             try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
-            updateRoot?(referenceValue)
+            setRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -657,7 +679,7 @@ extension VersioningController where Root: AnyObject {
     public func undoCurrentScope() throws(Failure) {
         do {
             try currentStack.undoAll(&referenceValue)
-            updateRoot?(referenceValue)
+            setRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -669,7 +691,7 @@ extension VersioningController where Root: AnyObject {
         do {
             try currentStack.undoAll(&referenceValue)
             discardCurrentScope()
-            updateRoot?(referenceValue)
+            setRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -680,7 +702,7 @@ extension VersioningController where Root: AnyObject {
     public func redo() throws(Failure) {
         do {
             try currentStack.redo(&referenceValue)
-            updateRoot?(referenceValue)
+            setRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -694,7 +716,7 @@ extension VersioningController where Root: AnyObject {
     public func redo(to tag: some Hashable & Sendable) throws(Failure) {
         do {
             try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
-            updateRoot?(referenceValue)
+            setRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -705,7 +727,7 @@ extension VersioningController where Root: AnyObject {
     public func redoCurrentScope() throws(Failure) {
         do {
             try currentStack.redoAll(&referenceValue)
-            updateRoot?(referenceValue)
+            setRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -729,7 +751,8 @@ extension VersioningController where Failure == ReversionError {
             on: value,
             at: \.self,
             debounceInterval: debounceInterval,
-            updateRoot: nil,
+            getroot: nil,
+            setRoot: nil,
             didUpdate: nil,
             handleError: { error throws(ReversionError) in throw error }
         )
@@ -750,7 +773,8 @@ extension VersioningController where Failure == ReversionError {
             on: root,
             at: keyPath,
             debounceInterval: debounceInterval,
-            updateRoot: nil,
+            getroot: nil,
+            setRoot: nil,
             didUpdate: nil,
             handleError: { error throws(ReversionError) in throw error }
         )
@@ -771,7 +795,10 @@ extension VersioningController where Failure == ReversionError {
             on: root,
             at: keyPath,
             debounceInterval: debounceInterval,
-            updateRoot: { [weak root] newValue in
+            getroot: { [weak root] in
+                root?[keyPath: keyPath]
+            },
+            setRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: nil,
@@ -808,7 +835,10 @@ extension VersioningController where Failure == ReversionError {
             on: root,
             at: keyPath,
             debounceInterval: debounceInterval,
-            updateRoot: { [weak root] newValue in
+            getroot: { [weak root] in
+                root?[keyPath: keyPath]
+            },
+            setRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: { [weak publisher = root.objectWillChange] in
@@ -864,7 +894,10 @@ extension VersioningController where Failure == ReversionError {
             on: root,
             at: keyPath,
             debounceInterval: debounceInterval,
-            updateRoot: { [weak root, keyPath] newValue in
+            getroot: { [weak root, keyPath] in
+                root?[keyPath: keyPath]
+            },
+            setRoot: { [weak root, keyPath] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: { [weak root, observationRegistrar, keyPath] in
@@ -920,7 +953,10 @@ extension VersioningController where Failure == Never {
             on: root,
             at: keyPath,
             debounceInterval: debounceInterval,
-            updateRoot: { [weak root] newValue in
+            getroot: { [weak root] in
+                root?[keyPath: keyPath]
+            },
+            setRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: nil,
@@ -966,7 +1002,10 @@ extension VersioningController where Failure == Never {
             on: root,
             at: keyPath,
             debounceInterval: debounceInterval,
-            updateRoot: { [weak root] newValue in
+            getroot: { [weak root] in
+                root?[keyPath: keyPath]
+            },
+            setRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: didUpdate,
@@ -1033,7 +1072,10 @@ extension VersioningController where Failure == Never {
             on: root,
             at: keyPath,
             debounceInterval: debounceInterval,
-            updateRoot: { [weak root, keyPath] newValue in
+            getroot: { [weak root, keyPath] in
+                root?[keyPath: keyPath]
+            },
+            setRoot: { [weak root, keyPath] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: didUpdate,

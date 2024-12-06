@@ -19,9 +19,14 @@ struct Activity: Identifiable {
     }
 }
 
+@Observable
 @Versioning(debounceMilliseconds: 200)
-struct Model {
+final class Model {
     var activity: Activity = .mock
+
+    init(activity: Activity) {
+        self.activity = activity
+    }
 }
 
 let model = Model(
@@ -33,12 +38,14 @@ let model = Model(
     )
 )
 
-var activity = Activity(
-    id: .init(),
-    title: "Title",
-    priority: .low,
-    childActivities: []
-
+let controller = VersioningController(
+    on: model,
+    at: \.activity,
 )
-let controller = VersioningController(activity)
-controller.
+
+model.activity.title = "New title"
+controller.appendCurrentVersion()
+try controller.undo()
+
+model.activity = try controller.undo()
+try controller.undo(root: &model)

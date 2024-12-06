@@ -25,8 +25,11 @@ This library aims to add a low friction way to track changes in state, and allow
             * [Direct tracking](#direct-tracking)
             * [Key path tracking](#key-path-tracking)
             * [Reference key path tracking](#reference-key-path-tracking)
-                * [`@Observable` types](#@observable-types)
-                * [`ObservableObject` types](#observableobject-types)
+                * [`@Observable` and `ObservableObject` types](#@observable-and-observableobject-types)
+            * [Scope details](#scope-details)
+            * [Tag details](#tag-details)
+            * [Error handling details](#error-handling-details)
+            * [Modification debouncing details](#modification-debouncing-details)
         * [`@Versioned ` property wrapper](#@versioned-property-wrapper)
         * [`@Versioning` macro](#@versioning-macro)
 * [License](#license)
@@ -149,7 +152,7 @@ Alternatively you may download the source and include it directly in your projec
 
 There are other features wrapped into the version tracking interface available through the projected value. In addition to the standard `undo()` and `redo()` functions, there are the `hasUndo` and `hasRedo` properties that indicate whether or not versioning actions are available.
 
-The `setWithTransaction(_:)` functions allow multiple changes to be applied in a single transaction, which is tracked as a single modification, and is undone in it's entirity by a single `undo()` call.
+The `setWithTransaction(_:)` functions allow multiple changes to be applied in a single transaction, which is tracked as a single modification, and is undone in it's entirety by a single `undo()` call.
 
 ```swift
 model.$activity.setWithTransaction { activity in
@@ -163,7 +166,7 @@ model.$activity.undo() // model.activity.title -> "Title" && model.activity.prio
 
 Scopes act as barriers separating collections of undo and redo actions. A root scope is always created by default, and new scopes can be pushed using the `pushNewScope()` function and popped using the `popCurrentScope()` function. The current scope level can be inspected using the `scopeLevel` property, which is `0` indexed. Versions can only be pushed to and used on the current scope, enforcing the separation of different groups of modifications.
 
-For instance, say some state is used across several screens. When a child screen is pushed, and a new scope is pushed at the same time, all the modifications made on the child screen are stored in that new scope, and can be abandonded using the `undoAndPopCurrentScope()` function, or squashed into a single change and appended to the previous scope using the `popCurrentScope()` function. This means that when the user returns to the previous screen, all of those changes can be undone atomically with a single `undo()` call. 
+For instance, say some state is used across several screens. When a child screen is pushed, and a new scope is pushed at the same time, all the modifications made on the child screen are stored in that new scope, and can be abandoned using the `undoAndPopCurrentScope()` function, or squashed into a single change and appended to the previous scope using the `popCurrentScope()` function. This means that when the user returns to the previous screen, all of those changes can be undone atomically with a single `undo()` call. 
 
 ```swift
 model.activity.title = "New title"
@@ -178,7 +181,7 @@ There are similarities between scopes and transactions, with the exception being
 
 ### Tags
 
-A version can be tagged with some `Hashable` value for future reference using the `func tag(_:)` function. You can then undo or redo to that version by passing the tag to the `undo(to:)` or `redo(to:)` functions. You cannot pop a scope this way, and can only revert to a tag within the current scope. To see all tags within a scope, use the `tags(inScopeLevel:)` function that returns a tuple of `AnyHashable?` arrays, containing all action tags, even if they are nil `nil`.
+A version can be tagged with some `Hashable` value for future reference using the `tag(_:)` function. You can then undo or redo to that version by passing the tag to the `undo(to:)` or `redo(to:)` functions. You cannot pop a scope this way, and can only revert to a tag within the current scope. To see all tags within a scope, use the `tags(inScopeLevel:)` function that returns a tuple of `AnyHashable?` arrays, containing all action tags, even if they are nil `nil`.
 
 ```swift
 model.$activity.tag("original")
@@ -202,7 +205,7 @@ To remove this boilerplate error handling, many of the versioning interfaces use
 
 - `throwErrors` causes any potentially throwing function on the versioning interface to be marked as `throws`, meaning the caller will handle any thrown errors.
 
-- `assignErrors` causes the potentially throwing functions to instead automatically handle their errors and assign them to a property avaiable to the `@Versioning` type. 
+- `assignErrors` causes the potentially throwing functions to instead automatically handle their errors and assign them to a property available to the `@Versioning` type. 
     - In most cases, this is available at `model.$activity.error`, however for `@Observable` and `@ObservableObject` types, the error is assigned to property on that type. The name of the property is provided as a `String` in the associated value. If no name is provided then `versioningError` is used. This property can be declared manually, but must be of type `Error?` or `(any Error)?` if it is. If it is not declared manually, then the macro will synthesize the property for you.
 
 Standard model
@@ -243,9 +246,9 @@ try model.$activity.undo() // 👍
 
 By default, every change to a tracked object is stored as a separate version. This makes sense in most instances, such as adding or removing a value from a collection, but consider the case of a user typing in a text field. Each individual character added or removed from the string will be stored as a new version. This essentially means that every key press they do is a new version, and when attempting to undo changes, it will only undo one character at a time. This is more cumbersome than manually using the backspace key, and is not what users expect from an undo function.
 
-To overcome this, most versioning interfaces accept a debounce interval parameter. This prevents moddifications made in quick succession each being stored as a separate version, and instead groups them together in one bulk change. In the typing example above, pressing the undo button on debounced typing will undo the previous burst of typing, instead of each character.
+To overcome this, most versioning interfaces accept a debounce interval parameter. This prevents modifications made in quick succession each being stored as a separate version, and instead groups them together in one bulk change. In the typing example above, pressing the undo button on debounced typing will undo the previous burst of typing, instead of each character.
 
-Most versioning interfaces accept a `Duration` instance, with the exception of `@Versioning` which currently doesn't work with `Duration` due to a Swift compiler bug causing a crash when attempting to use the provided duration instance in the synthesized code. Therefore, for now, the `@Versioning` macro accepts a positive integer number of milliseconds for the deboucne interval.
+Most versioning interfaces accept a `Duration` instance, with the exception of `@Versioning` which currently doesn't work with `Duration` due to a Swift compiler bug causing a crash when attempting to use the provided duration instance in the synthesized code. Therefore, for now, the `@Versioning` macro accepts a positive integer number of milliseconds for the debounce interval.
 
 Consider the following code, that aims to replicate rapid user typing:
 
@@ -284,7 +287,7 @@ The above covers the majority of the features and use cases that will get you st
 
 ### Making a type revertible
 
-The first thing you'll need to do to make use of the library is make a type able to produce a diff between two versions of itself. This diff can then be applied to the current version to revert it to it's previous state. At the base level, this is what drives thes library. Whenever a value is changed, the previous value is stored alongside it's `KeyPath` in a single `Reversion` object. Multiple changes are stored as collections of these `Reverion` objects, and the composability of `KeyPath` is used to allow reversions to be mapped on to parent objects.
+The first thing you'll need to do to make use of the library is make a type able to produce a diff between two versions of itself. This diff can then be applied to the current version to revert it to it's previous state. At the base level, this is what drives the library. Whenever a value is changed, the previous value is stored alongside it's `KeyPath` in a single `Reversion` object. Multiple changes are stored as collections of these `Reversion` objects, and the composability of `KeyPath` is used to allow reversions to be mapped on to parent objects.
 
 The way the library constructs these `Reversion` objects is through the `Revertible` protocol. The `Versionable` protocol builds on top of that to provide a cleaner interface for creating a `Reversion` and the `Versionable` macro provides a default conformance for the protocol.
 
@@ -441,21 +444,91 @@ These `Reversion` objects are created for each version of an object. They can be
 
 The `VersioningController` tracks changes to a type and organises the `Reversion` objects for you, ensuring they are always applied in the correct order. It can track changes in a single value, so it is best to consolidate your state into a single type. It is the type that is used in all of the versioning interfaces to do all of the work.
 
-It is the `VersioningController` that manages scopes, `undo()` and `redo()` functions as well as the error handling
+It is the `VersioningController` that manages scopes, `undo()` and `redo()` functions, version tagging as well as error handling. In fact, the dollar syntax projected values in the macros are `VersioningController` instances. Each version is manually appended to the controller, which is then checked for changes and added to the version stack of the current scope.
+
+There are a few different ways to use the `VersioningController`. They are mostly the same, but there are some finer points to be aware of.
 
 ##### Direct tracking
 
+Direct tracking is the simplest implementation, and is used by creating an instance with the `init(_:)` initializer. Use this method when you want to track an entire object at the root level. For instance if you have some state you don't own but still want to track from some other type, such as when state is provided by some third party library or `@Environment`.
+
+Once an instance has been made, versions can be pushed using the `append(_ newValue: _)` function, which will check for any changes and store them in the version stack. Versions are stored in a last in - first out basis. The status of the `VersioningController` can be inspected with the `hasUndo` and `hasRedo` properties, and there are a couple of `undo` and `redo` variations available. One implementation for each function returns the undone / redone value, and the other accepts an `inout` parameter that is updated in place.
+
+This allows you to version external state. For those enjoying TCA, this is the best way to manage your reducer's `State`.
+
+```swift
+let controller = VersioningController(activity)
+activity.title = "New title"
+controller.append(activity)
+try controller.undo(&activity)
+```
+
+**Note** `activity = try controller.undo()` and `try controller.undo(&activity)` are functionally identical.
+
 ##### Key path tracking
+
+Key path tracking is functionally the same as the direct tracking method, but it accepts a `WritableKeyPath` in the `public init(on root: _, at keyPath: _)` initializer. This allows you to point to just a single property of a value to track, and also provides convenience methods that allow you to push and revert versions using the `Root` value of the key path.
+
+```swift
+let controller = VersioningController(
+    on: activity,
+    at: \.priority
+)
+
+activity.title = "New title"
+controller.append(root: activity) // Append the whole root object, but only priority is checked for changes, so no new version is stored on the stack
+
+// Priority has changed, so a new version is appended.
+activity.priority = .medium(dueDate: nil)
+controller.append(activity.priority)
+
+try controller.undo(root: &activity)
+```
+
+**Note** `activity.priority = try controller.undo()`, `try controller.undo(root: &activity)` and `try controller.undo(&activity.priority)` are functionally identical.
+
+Key path tracking still has the direct tracking interface available for use, should it be preferred.
 
 ##### Reference key path tracking
 
-###### `@Observable` types
+Reference key path tracking is the same as key path tracking, but when the `Root` type of the key path is a reference type. This allows the `VersioningController` to hold on to a weak reference of the root, and read and write properties directly on that weak reference. This mode provides more basic `appendCurrentVersion()`, `undo()` and `redo()` functions that don't accept any parameters or return any values, but instead directly read and write to the root object.
 
-###### `ObservableObject` types
+```swift
+// model is a class
+let controller = VersioningController(
+    on: model,
+    at: \.activity
+)
 
-#### `!Versioned` property wrapper
+model.activity.title = "New title"
+controller.appendCurrentVersion()
+try controller.undo() // model.activity.title -> "Title"
+```
+
+Reference key path tracking still has the interface for the other two modes available for use, meaning that `model.activity = try controller.undo()` and `try controller.undo(root: &model)` are still valid.
+
+###### `@Observable` and `ObservableObject` types
+
+Having to manually append versions to the controller can be an annoyance, especially if it's a user facing state that needs to be manually tracked after every change. Calling `append()` all over your model in a `didSet` is messy and easy to forget. `VersioningController` has support `@Observable` and `ObservableObject` conforming root objects, to automatically be notified of changes and append them for you.
+
+For an `@ObservableObject` object, then there is an overload of the `init(on:at:debounceInterval:)` initializer that will use the `ObservableObjectPublisher` on the root to be notified of changes, and trigger updates in SwiftUI. This functionality should happen automatically as long as the correct initializer is being used.
+
+`@Observble` objects are a little different. The root can be observed easily, but in order to notify SwiftUI of updates, the `VersioningController` requires the `ObservationRegistrar` of the instance. Therefore, there is another initializer that accepts an `ObservationRegistrar` instance.
+
+In both cases, the `VersioningController` will trigger an update whenever a versioning function is used (`undo()` or `redo()`), when a new version is appended, whenever there is a change to the scope, and whenever an error is produced. This allows your UI to stay up to date with not only the state being tracked, but also the state of the controller itself, allowing you to bind UI elements directly the controller with confidence.
+
+##### Scope details
+
+##### Tag details
+
+##### Error handling details
+
+##### Modification debouncing details
+
+#### `@Versioned` property wrapper
 
 #### `Versioning` macro
 
-## License
+## [License](https://github.com/AndyHeardApps/Revertible/blob/develop/License)
+
 This project is licensed under the terms of the MIT license.

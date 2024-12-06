@@ -15,49 +15,6 @@ The framework has been designed to support basic types such as `Int` and `Bool` 
 
 For more information on how the framework operates, check the [Type conformance](#type-conformance) section below.
 
-## `VersioningController`
-
-Other than the `@Versioned` property wrapper, the other way to easily handle version of a value is with the `VersioningController`. Each instance of a `VersioningController` can only manage a single value, so the best practice is to consolidate all of your state into a single type.
-
-There are a few different ways to use the `VersioningController`. They are mostly the same, but there are some points to be aware of.
-
-### Direct tracking
-
-Direct tracking is the simplest implementation, and is used by creating an instance with the `init(_ value: _)` initializer. Use this method when you want to track an entire object at the root level. For instance if you have some state you don't own but still want to track from some other type, such as when state is provided by some third party library or `@Environment`.
-
-Once an instance has been made, versions can be pushed using the `append(_ newValue: _)` function, which will check for any changes and store them in the version stack. Versions are stored in a last in - first out basis. The status of the `VersioningController` can be inspected with the `hasUndo` and `hasRedo` properties, and there are a couple of `undo` and `redo` variations available. One implementation for each function returns the undone / redone value, and the other accepts an `inout` parameter that is updated in place.
-
-This allows you to add and get versions externally. For those enjoying TCA, this is the best way to manage your reducer's `State`.
-
-### Key path tracking
-
-Key path tracking is functionally the same as the direct tracking method, but it accepts a `WritableKeyPath` in the `public init(on root: _, at keyPath: _)` initializer. This allows you to point to just a single property of a value to track, and also provides convenience methods that allow you to push and revert versions using the `Root` value of the key path.
-
-### Reference key path tracking
-
-Reference key path tracking is the same as key path tracking, but when the `Root` type of the key path is a reference type. This allows the `VersioningController` to hold on to a weak reference of the root, and perform `undo()` and `redo()` functions directly on that weak reference. This mode provides a more basic `undo()` and `redo()` functions that don't accept any parameters or return any values, but instead directly modifies the root.
-
-### Tags
-
-
-### Error handling
-
-Many of the functions on `VersioningController` can throw errors, which can be cumbersome to handle, especially in a SwiftUI view. Most of the time, we would just wrap the call in a `do - catch` block and assign the error to some observed property. This is boilerplate heavy, and to help reduce the need for such code, the `VersioningController` has a couple of convenience initializers available when the `Root` of the type is a reference type. 
-
-These initializers accept a `WritableKeyPath` to an optional `Error?` property on the root instance. Whenever an error is thrown internally, it is caught and assigned to this property. If the `Root` is an `@Observable` or `ObservableObject` type, then it is notified of the update. When using one of these initializers, the other functions on this type such as `undo()` etc. no longer throw, removing the need to manually handle errors.
-
-## Type conformance
-
-
-### `Revertible`
-
-
-### `Versionable`
-
-
-### `Reversion`
-
-### `Reverter`
 
 ### Macros
 
