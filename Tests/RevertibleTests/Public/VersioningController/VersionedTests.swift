@@ -6,7 +6,7 @@ import Revertible
 struct VersionedTests {
 
     private struct Mock {
-        @Versioned
+        @ThrowingVersioned
         var value = MockStruct()
     }
 

@@ -1,7 +1,7 @@
 import XCTest
 import SwiftSyntaxMacrosTestSupport
 
-final class EnumMacroTests: XCTestCase {
+final class VersoinableMacroEnumTests: XCTestCase {
 
     func test_enumExpansion() throws {
 
@@ -26,7 +26,7 @@ final class EnumMacroTests: XCTestCase {
         }
         
         extension MyEnum: Versionable {
-
+        
             func addReversions(into reverter: inout some Reverter<Self>) {
                 guard reverter.hasChanged(at: \\.caseName) == false else {
                     reverter.appendOverwriteReversion(at: \\.self)
@@ -36,13 +36,13 @@ final class EnumMacroTests: XCTestCase {
                 reverter.appendReversion(at: \\.associatedValues_$0)
                 reverter.appendReversion(at: \\.associatedValues_named)
             }
-
+        
             private enum CaseName {
                 case basic
                 case associatedValue
                 case associatedValues
             }
-
+        
             private var caseName: CaseName {
                 switch self {
                 case .basic:
@@ -53,7 +53,7 @@ final class EnumMacroTests: XCTestCase {
                     .associatedValues
                 }
             }
-
+        
             private var associatedValue_$0: Int? {
                 get {
                     guard case let .associatedValue(associatedValue_$0) = self else {
@@ -68,7 +68,7 @@ final class EnumMacroTests: XCTestCase {
                     self = .associatedValue(newValue)
                 }
             }
-
+        
             private var associatedValues_$0: Int? {
                 get {
                     guard case let .associatedValues(associatedValues_$0, _) = self else {
@@ -83,7 +83,7 @@ final class EnumMacroTests: XCTestCase {
                     self = .associatedValues(newValue, named: associatedValues_named)
                 }
             }
-
+        
             private var associatedValues_named: Int? {
                 get {
                     guard case let .associatedValues(_, associatedValues_named) = self else {

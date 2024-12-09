@@ -581,15 +581,18 @@ extension VersioningControllerTests {
 
         var model: ObservableModel? = ObservableModel()
         weak var controller = model?.controller
+        weak var weakModel = model
         model?.mockStruct.int = 5
 
         #expect(controller != nil)
+        #expect(weakModel != nil)
         model = nil
         #expect(controller == nil)
+        #expect(weakModel == nil)
     }
 
     @Observable
-    fileprivate final class ObservableModel: @unchecked Sendable {
+    fileprivate final class ObservableModel {
 
         @ObservationIgnored
         private(set) lazy var controller: VersioningController<ObservableModel, MockStruct, ReversionError>? = .init(
@@ -606,14 +609,17 @@ extension VersioningControllerTests {
 
         var model: ObservableObjectModel? = ObservableObjectModel()
         weak var controller = model?.controller
+        weak var weakModel = model
         model?.mockStruct.int = 5
 
         #expect(controller != nil)
+        #expect(weakModel != nil)
         model = nil
         #expect(controller == nil)
+        #expect(weakModel == nil)
     }
 
-    fileprivate final class ObservableObjectModel: ObservableObject, @unchecked Sendable {
+    fileprivate final class ObservableObjectModel: ObservableObject {
 
         private(set) lazy var controller: VersioningController<ObservableObjectModel, MockStruct, ReversionError>? = .init(
             on: self,

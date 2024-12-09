@@ -7,6 +7,7 @@ struct RevertiblePlugin: CompilerPlugin {
     // MARK: - Properties
     let providingMacros: [Macro.Type] = [
         VersionableMacro.self,
-        VersionableIgnoredMacro.self
+        VersionableIgnoredMacro.self,
+        VersioningMacro.self
     ]
 }

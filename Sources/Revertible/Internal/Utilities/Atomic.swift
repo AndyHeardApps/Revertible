@@ -33,7 +33,7 @@ struct Atomic<T>: Sendable {
         }
     }
 
-    struct Modifier {
+    struct Modifier: @unchecked Sendable {
         fileprivate let lock: NSRecursiveLock
         fileprivate let wrappedValue: Box
 

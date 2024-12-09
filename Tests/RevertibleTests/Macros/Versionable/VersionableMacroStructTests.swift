@@ -1,7 +1,7 @@
 import XCTest
 import SwiftSyntaxMacrosTestSupport
 
-final class StructMacroTests: XCTestCase {
+final class VersionableMacroStructTests: XCTestCase {
 
     func test_structExpansion() throws {
 
