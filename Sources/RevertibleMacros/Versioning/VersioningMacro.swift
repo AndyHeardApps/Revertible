@@ -147,6 +147,15 @@ extension VersioningMacro: MemberMacro {
                                             trailingComma: arguments.debounceInterval == nil ? nil : .commaToken()
                                         )
                                     }
+                                    if macroMode == .observedObject {
+                                        LabeledExprSyntax(
+                                            leadingTrivia: .newline,
+                                            label: "scheduler",
+                                            colon: .colonToken(),
+                                            expression: DeclReferenceExprSyntax(baseName: "DispatchQueue.main"),
+                                            trailingComma: arguments.debounceInterval == nil ? nil : .commaToken()
+                                        )
+                                    }
                                     if let debounceInterval = arguments.debounceInterval {
                                         debounceExpression(
                                             duration: debounceInterval,
