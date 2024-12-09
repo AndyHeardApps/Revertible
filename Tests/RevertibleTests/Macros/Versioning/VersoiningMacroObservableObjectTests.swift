@@ -26,13 +26,15 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             public private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
-                storingErrorsAt: \\.versioningError
+                storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main
             )
 
             private(set) lazy var _$state2 = VersioningController(
                 on: self,
                 at: \\.state2,
-                storingErrorsAt: \\.versioningError
+                storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main
             )
         }
         """,
@@ -63,7 +65,8 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
-                storingErrorsAt: \\.versioningError
+                storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main
             )
         }
         """,
@@ -91,12 +94,14 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
 
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
-                at: \\.state1
+                at: \\.state1,
+                scheduler: DispatchQueue.main
             )
         
             private(set) lazy var _$state2 = VersioningController(
                 on: self,
-                at: \\.state2
+                at: \\.state2,
+                scheduler: DispatchQueue.main
             )
         }
         """,
@@ -127,13 +132,15 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
-                storingErrorsAt: \\.versioningError
+                storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main
             )
 
             private(set) lazy var _$state2 = VersioningController(
                 on: self,
                 at: \\.state2,
-                storingErrorsAt: \\.versioningError
+                storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main
             )
         }
         """,
@@ -164,13 +171,15 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
-                storingErrorsAt: \\.error
+                storingErrorsAt: \\.error,
+                scheduler: DispatchQueue.main
             )
         
             private(set) lazy var _$state2 = VersioningController(
                 on: self,
                 at: \\.state2,
-                storingErrorsAt: \\.error
+                storingErrorsAt: \\.error,
+                scheduler: DispatchQueue.main
             )
         }
         """,
@@ -203,13 +212,15 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
-                storingErrorsAt: \\.error
+                storingErrorsAt: \\.error,
+                scheduler: DispatchQueue.main
             )
         
             private(set) lazy var _$state2 = VersioningController(
                 on: self,
                 at: \\.state2,
-                storingErrorsAt: \\.error
+                storingErrorsAt: \\.error,
+                scheduler: DispatchQueue.main
             )
         }
         """,
@@ -244,13 +255,15 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
-                storingErrorsAt: \\.error
+                storingErrorsAt: \\.error,
+                scheduler: DispatchQueue.main
             )
         
             private(set) lazy var _$state2 = VersioningController(
                 on: self,
                 at: \\.state2,
-                storingErrorsAt: \\.error
+                storingErrorsAt: \\.error,
+                scheduler: DispatchQueue.main
             )
         }
         """,
@@ -438,6 +451,7 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
                 on: self,
                 at: \\.state1,
                 storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main,
                 debounceInterval: .milliseconds(100)
             )
 
@@ -445,6 +459,7 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
                 on: self,
                 at: \\.state2,
                 storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main,
                 debounceInterval: .milliseconds(100)
             )
         }
@@ -478,6 +493,7 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
+                scheduler: DispatchQueue.main,
                 debounceInterval: .milliseconds(100)
             )
         }
@@ -792,7 +808,8 @@ final class VersioningMacroObservableObjectTests: XCTestCase {
             private(set) lazy var _$state1 = VersioningController(
                 on: self,
                 at: \\.state1,
-                storingErrorsAt: \\.versioningError
+                storingErrorsAt: \\.versioningError,
+                scheduler: DispatchQueue.main
             )
         }
         """,

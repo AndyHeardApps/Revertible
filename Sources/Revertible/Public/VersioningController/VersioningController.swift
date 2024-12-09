@@ -952,7 +952,7 @@ extension VersioningController where Failure == ReversionError {
 #if canImport(Combine)
 @preconcurrency import Combine
 
-extension VersioningController where Failure == ReversionError {
+extension VersioningController where Failure == ReversionError, Root: ObservableObject {
 
     /// Creates a controller that registers changes at a specific key path on an `ObservableObject` type, and observes the provided property, tracking all changes.
     ///
@@ -968,7 +968,6 @@ extension VersioningController where Failure == ReversionError {
         scheduler: some Scheduler = DispatchQueue.main,
         debounceInterval: Duration? = nil
     ) where
-    Root: ObservableObject,
     Root.ObjectWillChangePublisher == ObservableObjectPublisher
     {
         let milliseconds = debounceInterval.map {
@@ -1018,8 +1017,7 @@ extension VersioningController where Failure == ReversionError {
         scheduler: some Scheduler,
         interval: Duration
     )
-    where Root: ObservableObject,
-          Root.ObjectWillChangePublisher == ObservableObjectPublisher
+    where Root.ObjectWillChangePublisher == ObservableObjectPublisher
     {
         let milliseconds = Int(Double(interval.components.seconds) * 1000 + Double(interval.components.attoseconds) * 1e-15)
 
@@ -1242,7 +1240,7 @@ extension VersioningController where Failure == Never {
 #if canImport(Combine)
 @preconcurrency import Combine
 
-extension VersioningController where Failure == Never {
+extension VersioningController where Failure == Never, Root: ObservableObject {
 
     /// Creates a controller that registers changes at a specific key path on an `ObservableObject` type, and observes the provided property, tracking all changes. The interface of `VersioningController` no longer throws errors when using this initializer, and instead errors are assigned to the `errorKeyPath` on `root`.
     ///
@@ -1260,7 +1258,6 @@ extension VersioningController where Failure == Never {
         scheduler: some Scheduler = DispatchQueue.main,
         debounceInterval: Duration? = nil
     ) where
-    Root: ObservableObject,
     Root.ObjectWillChangePublisher == ObservableObjectPublisher
     {
         let milliseconds = debounceInterval.map {
