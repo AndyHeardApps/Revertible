@@ -7,6 +7,11 @@ struct DataReversion<Root> {
     private let keyPath: WritableKeyPath<Root, Data>
 
     // MARK: - Initialisers
+    init(overwrite newValue: Data) where Root == Data {
+        self.action = .overwrite(newValue)
+        self.keyPath = \.self
+    }
+    
     init(insert elements: Set<Insertion>) where Root == Data {
 
         self.action = .insert(elements)
@@ -35,6 +40,9 @@ extension DataReversion: ValueReversion {
     func revert(_ object: inout Root) {
         
         switch action {
+        case let .overwrite(newValue):
+            object[keyPath: keyPath] = newValue
+            
         case let .insert(insertions):
             insert(
                 insertions: insertions,
@@ -95,12 +103,15 @@ extension DataReversion {
     
     private enum Action {
         
+        case overwrite(Data)
         case insert(Set<Insertion>)
         case remove(Set<ClosedRange<Data.Index>>)
         
         init<OtherRoot>(_ other: DataReversion<OtherRoot>.Action) {
         
             switch other {
+            case let .overwrite(newValue):
+                self = .overwrite(newValue)
             case let .insert(insertions):
                 let mappedInsertions = insertions.map { Insertion($0) }
                 self = .insert(Set(mappedInsertions))

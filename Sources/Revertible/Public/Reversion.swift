@@ -27,7 +27,7 @@ public struct Reversion<Root: Hashable> {
     /// Reverts the `object` to a previous state.
     /// - Parameter object: The object to be reverted to a previous state.
     /// - Throws: A ``ReversionError`` that may be caused by incorrect application of the ``Reversion``.
-    public func revert(_ object: inout Root) throws {
+    public func revert(_ object: inout Root) throws(ReversionError) {
         
         guard object.hashValue == checkedHashValue else {
             throw ReversionError.attemptingToRevertWrongVersion

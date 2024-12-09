@@ -50,43 +50,45 @@ extension VersionableMacro {
 }
 
 // MARK: - Property
-private struct Property {
+extension VersionableMacro {
+    private struct Property {
 
-    // Properties
-    let identifier: IdentifierPatternSyntax
+        // Properties
+        let identifier: IdentifierPatternSyntax
 
-    // Initializer
-    init?(
-        declaration: VariableDeclSyntax,
-        binding: PatternBindingSyntax
-    ) {
+        // Initializer
+        init?(
+            declaration: VariableDeclSyntax,
+            binding: PatternBindingSyntax
+        ) {
 
-        let attributeNames = declaration.attributes
-            .compactMap { $0.as(AttributeSyntax.self)?.attributeName }
-            .compactMap { $0.as(IdentifierTypeSyntax.self)?.name.text }
+            let attributeNames = declaration.attributes
+                .compactMap { $0.as(AttributeSyntax.self)?.attributeName }
+                .compactMap { $0.as(IdentifierTypeSyntax.self)?.name.text }
 
-        guard
-            !attributeNames.contains("VersionableIgnored"),
-            declaration.bindingSpecifier.tokenKind == .keyword(.var),
-            let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
-        else {
-            return nil
+            guard
+                !attributeNames.contains("VersionableIgnored"),
+                declaration.bindingSpecifier.tokenKind == .keyword(.var),
+                let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
+            else {
+                return nil
+            }
+
+            if
+                let accessors = binding.accessorBlock?.accessors
+                    .as(AccessorDeclListSyntax.self)?
+                    .compactMap(\.accessorSpecifier.tokenKind),
+                accessors.contains(.keyword(.set)) || accessors.contains(.keyword(.get))
+            {
+                return nil
+            } else if
+                let accessors = binding.accessorBlock?.accessors,
+                accessors.is(CodeBlockItemListSyntax.self)
+            {
+                return nil
+            }
+
+            self.identifier = identifier
         }
-
-        if
-            let accessors = binding.accessorBlock?.accessors
-                .as(AccessorDeclListSyntax.self)?
-                .compactMap(\.accessorSpecifier.tokenKind),
-            accessors.contains(.keyword(.set)) || accessors.contains(.keyword(.get))
-        {
-            return nil
-        } else if
-            let accessors = binding.accessorBlock?.accessors,
-            accessors.is(CodeBlockItemListSyntax.self)
-        {
-            return nil
-        }
-
-        self.identifier = identifier
     }
 }

@@ -18,7 +18,8 @@ struct MacroTesting {
         #if canImport(RevertibleMacros)
         self.testMacros = [
             "Versionable" : VersionableMacro.self,
-            "VersionableIgnored" : VersionableIgnoredMacro.self
+            "VersionableIgnored" : VersionableIgnoredMacro.self,
+            "Versioning" : VersioningMacro.self
         ]
         self.isEnabled = true
         #else

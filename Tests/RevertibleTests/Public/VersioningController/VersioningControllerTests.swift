@@ -575,4 +575,57 @@ extension VersioningControllerTests {
         mockStruct = try versioningController.undo(to: Tag.modified)
         #expect(try #require(versioningController.tags(inScopeLevel: versioningController.scopeLevel)) == ([Tag.initial, nil, nil, nil, Tag.modified], [Tag.final]))
     }
+
+    @Test("Observable deallocates")
+    func observableDeallocates() {
+
+        var model: ObservableModel? = ObservableModel()
+        weak var controller = model?.controller
+        weak var weakModel = model
+        model?.mockStruct.int = 5
+
+        #expect(controller != nil)
+        #expect(weakModel != nil)
+        model = nil
+        #expect(controller == nil)
+        #expect(weakModel == nil)
+    }
+
+    @Observable
+    fileprivate final class ObservableModel {
+
+        @ObservationIgnored
+        private(set) lazy var controller: VersioningController<ObservableModel, MockStruct, ReversionError>? = .init(
+            on: self,
+            at: \.mockStruct,
+            using: _$observationRegistrar
+        )
+
+        var mockStruct = MockStruct()
+    }
+
+    @Test("Observable object deallocates")
+    func observableObjectDeallocates() {
+
+        var model: ObservableObjectModel? = ObservableObjectModel()
+        weak var controller = model?.controller
+        weak var weakModel = model
+        model?.mockStruct.int = 5
+
+        #expect(controller != nil)
+        #expect(weakModel != nil)
+        model = nil
+        #expect(controller == nil)
+        #expect(weakModel == nil)
+    }
+
+    fileprivate final class ObservableObjectModel: ObservableObject {
+
+        private(set) lazy var controller: VersioningController<ObservableObjectModel, MockStruct, ReversionError>? = .init(
+            on: self,
+            at: \.mockStruct
+        )
+
+        @Published var mockStruct = MockStruct()
+    }
 }
