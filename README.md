@@ -9,7 +9,7 @@ This library aims to add a low friction way to track changes in state, and allow
 
 * [Basic usage](#basic-usage)
 * [Installation](#installation)
-* [Why not `UndoManager`?](#why-not-undomanager?)
+* [Why not `UndoManager`?](#why-not-undomanager)
 * [Additional features](#additional-features)
     * [Scopes](#scopes)
     * [Tags](#tags)
@@ -19,20 +19,20 @@ This library aims to add a low friction way to track changes in state, and allow
 	* [Making a type revertible](#making-a-type-revertible)
         * [`Revertible ` protocol](#revertible-protocol)
         * [`Versionable` protocol](#versionable-protocol)
-        * [`@Versionable` macro](#@versionable-macro)
+        * [`@Versionable` macro](#versionable-macro)
 	* [Using a revertible type](#using-a-revertible-type)
         * [`Reversion`](#reversion)
         * [`VersioningController`](#versioningcontroller)
             * [Direct tracking](#direct-tracking)
             * [Key path tracking](#key-path-tracking)
             * [Reference key path tracking](#reference-key-path-tracking)
-                * [`@Observable` and `ObservableObject` types](#@observable-and-observableobject-types)
+                * [`@Observable` and `ObservableObject` types](#observable-and-observableobject-types)
             * [Scope details](#scope-details)
             * [Tag details](#tag-details)
             * [Error handling details](#error-handling-details)
             * [Debouncing details](#debouncing-details)
-        * [`@Versioned ` property wrapper](#@versioned-property-wrapper)
-        * [`@Versioning` macro](#@versioning-macro)
+        * [`@Versioned ` property wrapper](#versioned-property-wrapper)
+        * [`@Versioning` macro](#versioning-macro)
 * [License](#license)
 
 ## Basic Usage
@@ -550,7 +550,7 @@ When using either `undo(to:)` or `redo(to:)` you will always end up on the versi
 
 Error handling has been made dynamic thanks to typed error throwing. `VersioningController` has a generic `Failure` type that conforms to the `Error` protocol and is thrown by much of it's interface. When a `VersioningController` has been initialized with a key path to place any encountered errors, then it has a `Failure` type of `Never`, otherwise it is `ReversionError`. The initializer that accepts an error key path retains a weak reference to the Root object, and creates a closure with the signature `(ReversionError) throws(Failure) -> Void`, allowing errors to be handled internally.
 
-This type of error handling can only be used when the root object on the `VersioningController` is a reference type, such as a class based view model. The [`@Versioned`](#@versioned-property-wrapper) can handle errors for you in value types.
+This type of error handling can only be used when the root object on the `VersioningController` is a reference type, such as a class based view model. The [`@Versioned`](#versioned-property-wrapper) can handle errors for you in value types.
 
 ##### Debouncing details
 
