@@ -12,7 +12,7 @@ import Foundation
 ///
 /// 1. Direct
 ///
-/// This involves a single value being provided to the ``init(_:debounceInterval:)`` initializer and tracked in place. Changes can be tracked by calling the ``append(_:)`` function, which will register those changes, and store them. The ``undo()-6v9ak`` and ``redo()-o0va`` functions can then be used to navigate through those changes.
+/// This involves a single value being provided to the ``init(_:)`` initializer and tracked in place. Changes can be tracked by calling the ``append(_:)`` function, which will register those changes, and store them. The ``undo()-6v9ak`` and ``redo()-o0va`` functions can then be used to navigate through those changes.
 ///
 /// ```
 /// var value = MyStruct()
@@ -72,11 +72,12 @@ where Value: Versionable & Sendable,
     @Atomic private var stacks: [VersioningStack<Value>]
     @Atomic private var referenceValue: Value
     private let keyPath: WritableKeyPath<Root, Value> & Sendable
-    private let getRoot: (() -> Value?)?
-    private let setRoot: ((Value) -> Void)?
+    private let getRoot: (() -> Root?)?
+    private let getValueFromRoot: (() -> Value?)?
+    private let setValueOnRoot: ((Value) -> Void)?
     private let didUpdate: (() -> Void)?
     private let handleError: (ReversionError) throws(Failure) -> Void
-    @Atomic private var debounce: Debounce<DebouncedValue>?
+    private var debouncedAppend: (DebouncedValue) -> Void
 
     #if canImport(Combine)
     private var cancellables: Set<AnyCancellable> = []
@@ -86,9 +87,9 @@ where Value: Versionable & Sendable,
     fileprivate init(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        debounceInterval: ContinuousClock.Duration?,
-        getroot: (() -> Value?)?,
-        setRoot: ((Value) -> Void)?,
+        getRoot: (() -> Root?)?,
+        getValueFromRoot: (() -> Value?)?,
+        setValueOnRoot: ((Value) -> Void)?,
         didUpdate: (() -> Void)?,
         handleError: @escaping (ReversionError) throws(Failure) -> Void
     ) {
@@ -100,14 +101,54 @@ where Value: Versionable & Sendable,
         self.stacks = [.init(tag: nil)]
         self.referenceValue = root[keyPath: keyPath]
         self.keyPath = keyPath
-        self.getRoot = getroot
-        self.setRoot = setRoot
+        self.getRoot = getRoot
+        self.getValueFromRoot = getValueFromRoot
+        self.setValueOnRoot = setValueOnRoot
         self.didUpdate = didUpdate
         self.handleError = handleError
-        self.debounce = debounceInterval.map {
-            .init(duration: $0) { [weak self] in
-                self?._append($0.value, tag: $0.tag)
-            }
+        self.debouncedAppend = { _ in }
+        self.debouncedAppend = { [weak self] newValue in
+            self?._append(newValue.value, tag: newValue.tag)
+        }
+    }
+
+    fileprivate init<C>(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        debounceClock: C,
+        debounceInterval: Duration,
+        getRoot: (() -> Root?)?,
+        getValueFromRoot: (() -> Value?)?,
+        setValueOnRoot: ((Value) -> Void)?,
+        didUpdate: (() -> Void)?,
+        handleError: @escaping (ReversionError) throws(Failure) -> Void
+    )
+    where C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
+
+        if Value.self is AnyClass.Type {
+            assertionFailure("VersioningController can only be used on value types.")
+        }
+
+        self.stacks = [.init(tag: nil)]
+        self.referenceValue = root[keyPath: keyPath]
+        self.keyPath = keyPath
+        self.getRoot = getRoot
+        self.getValueFromRoot = getValueFromRoot
+        self.setValueOnRoot = setValueOnRoot
+        self.didUpdate = didUpdate
+        self.handleError = handleError
+        self.debouncedAppend = { _ in }
+        let debouncer = Debounce<DebouncedValue, C>(
+            clock: debounceClock,
+            duration: debounceInterval
+        ) { [weak self] in
+            self?._append($0.value, tag: $0.tag)
+        }
+        self.debouncedAppend = { [debouncer] newValue in
+            debouncer.emit(value: newValue)
         }
     }
 
@@ -130,6 +171,29 @@ where Value: Versionable & Sendable,
         #if canImport(Combine)
         cancellables.forEach { $0.cancel() }
         #endif
+    }
+    
+    /// Sets the debouncing clock and interval on an existing `VersioningController`. This can be useful to change the debounce interval or the clock used to measure time.
+    /// - Parameters:
+    ///   - clock: The clock to use to measure time for debouncing.
+    ///   - interval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public func withDebouncing<C>(
+        clock: C,
+        interval: Duration
+    )
+    where C: Clock,
+          C.Duration == Duration,
+          C.Instant.Duration == Duration
+    {
+        let debouncer = Debounce<DebouncedValue, C>(
+            clock: clock,
+            duration: interval
+        ) { [weak self] in
+            self?._append($0.value, tag: $0.tag)
+        }
+        self.debouncedAppend = { [debouncer] newValue in
+            debouncer.emit(value: newValue)
+        }
     }
 }
 
@@ -197,14 +261,7 @@ extension VersioningController {
     /// - Parameters:
     ///   - newValue: The updated value to register changes on.
     public func append(_ newValue: Value) {
-
-        $debounce {
-            if $0 != nil {
-                $0?.emit(value: .init(newValue))
-            } else {
-                _append(newValue, tag: nil)
-            }
-        }
+        debouncedAppend(.init(newValue))
     }
 
     /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
@@ -215,14 +272,7 @@ extension VersioningController {
         _ newValue: Value,
         tag: some Hashable & Sendable
     ) {
-
-        $debounce {
-            if $0 != nil {
-                $0?.emit(value: .init(newValue, tag: tag))
-            } else {
-                _append(newValue, tag: .init(wrapped: tag))
-            }
-        }
+        debouncedAppend(.init(newValue, tag: tag))
     }
 
     /// Attempts to append the changes from the provided value to the current scope. If no changes have been made then nothing is appended to the scope.
@@ -276,7 +326,7 @@ extension VersioningController where Root: AnyObject {
     /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
     public func setWithTransaction<E: Error>(_ closure: (inout Value) throws(E) -> Void) throws(E) {
         try closure(&referenceValue)
-        setRoot?(referenceValue)
+        setValueOnRoot?(referenceValue)
         append(referenceValue)
         didUpdate?()
     }
@@ -285,7 +335,7 @@ extension VersioningController where Root: AnyObject {
     /// - Parameter closure: The closure in which to make the modifications to the value, stored as a single modification.
     public func setWithTransaction<E: Error>(_ closure: (inout Value) async throws(E) -> Void) async throws(E) {
         try await closure(&referenceValue)
-        setRoot?(referenceValue)
+        setValueOnRoot?(referenceValue)
         append(referenceValue)
         didUpdate?()
     }
@@ -633,7 +683,7 @@ extension VersioningController where Root: AnyObject {
 
     /// Attempts to append the current value from the root object to the current scope. If no changes have been made then nothing is appended to the scope.
     public func appendCurrentVersion() {
-        guard let newValue = getRoot?() else {
+        guard let newValue = getValueFromRoot?() else {
             return
         }
 
@@ -643,7 +693,7 @@ extension VersioningController where Root: AnyObject {
     /// Attempts to append the current value from the root object to the current scope. If no changes have been made then nothing is appended to the scope.
     /// - Parameter tag: Some tag to reference this version. This can be used later to apply reversions up to this tag.
     public func appendCurrentVersion(tag: some Hashable & Sendable) {
-        guard let newValue = getRoot?() else {
+        guard let newValue = getValueFromRoot?() else {
             return
         }
 
@@ -654,7 +704,7 @@ extension VersioningController where Root: AnyObject {
     public func undo() throws(Failure) {
         do {
             try currentStack.undo(&referenceValue)
-            setRoot?(referenceValue)
+            setValueOnRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -668,7 +718,7 @@ extension VersioningController where Root: AnyObject {
     public func undo(to tag: some Hashable & Sendable) throws(Failure) {
         do {
             try currentStack.undo(&referenceValue, to: .init(wrapped: tag))
-            setRoot?(referenceValue)
+            setValueOnRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -679,7 +729,7 @@ extension VersioningController where Root: AnyObject {
     public func undoCurrentScope() throws(Failure) {
         do {
             try currentStack.undoAll(&referenceValue)
-            setRoot?(referenceValue)
+            setValueOnRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -691,7 +741,7 @@ extension VersioningController where Root: AnyObject {
         do {
             try currentStack.undoAll(&referenceValue)
             discardCurrentScope()
-            setRoot?(referenceValue)
+            setValueOnRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -702,7 +752,7 @@ extension VersioningController where Root: AnyObject {
     public func redo() throws(Failure) {
         do {
             try currentStack.redo(&referenceValue)
-            setRoot?(referenceValue)
+            setValueOnRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -716,7 +766,7 @@ extension VersioningController where Root: AnyObject {
     public func redo(to tag: some Hashable & Sendable) throws(Failure) {
         do {
             try currentStack.redo(&referenceValue, to: .init(wrapped: tag))
-            setRoot?(referenceValue)
+            setValueOnRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -727,7 +777,7 @@ extension VersioningController where Root: AnyObject {
     public func redoCurrentScope() throws(Failure) {
         do {
             try currentStack.redoAll(&referenceValue)
-            setRoot?(referenceValue)
+            setValueOnRoot?(referenceValue)
             didUpdate?()
         } catch {
             try handleError(error)
@@ -741,18 +791,64 @@ extension VersioningController where Failure == ReversionError {
     /// Creates a controller for direct registration of changes and application of reversions.
     /// - Parameters:
     ///   - value: The initial value to be tracked.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
-    public convenience init(
-        _ value: Value,
-        debounceInterval: ContinuousClock.Duration? = nil
-    ) where Root == Value {
+    public convenience init(_ value: Value) where Root == Value {
 
         self.init(
             on: value,
             at: \.self,
+            getRoot: nil,
+            getValueFromRoot: nil,
+            setValueOnRoot: nil,
+            didUpdate: nil,
+            handleError: { error throws(ReversionError) in throw error }
+        )
+    }
+
+    /// Creates a controller for direct registration of changes and application of reversions.
+    /// - Parameters:
+    ///   - value: The initial value to be tracked.
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public convenience init<C>(
+        _ value: Value,
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    )
+    where Root == Value,
+    C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
+
+        self.init(
+            on: value,
+            at: \.self,
+            debounceClock: debounceClock,
             debounceInterval: debounceInterval,
-            getroot: nil,
-            setRoot: nil,
+            getRoot: nil,
+            getValueFromRoot: nil,
+            setValueOnRoot: nil,
+            didUpdate: nil,
+            handleError: { error throws(ReversionError) in throw error }
+        )
+    }
+
+
+    /// Creates  a controller that registers changes at a specific key path on a value type.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some parent model.
+    ///   - keyPath: The key path to the value to be tracked.
+    public convenience init(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable
+    ) {
+
+        self.init(
+            on: root,
+            at: keyPath,
+            getRoot: nil,
+            getValueFromRoot: nil,
+            setValueOnRoot: nil,
             didUpdate: nil,
             handleError: { error throws(ReversionError) in throw error }
         )
@@ -762,19 +858,27 @@ extension VersioningController where Failure == ReversionError {
     /// - Parameters:
     ///   - root: The owning instance of the value to be tracked, such as some parent model.
     ///   - keyPath: The key path to the value to be tracked.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
-    public convenience init(
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public convenience init<C>(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        debounceInterval: ContinuousClock.Duration? = nil
-    ) {
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    )
+    where C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
 
         self.init(
             on: root,
             at: keyPath,
+            debounceClock: debounceClock,
             debounceInterval: debounceInterval,
-            getroot: nil,
-            setRoot: nil,
+            getRoot: nil,
+            getValueFromRoot: nil,
+            setValueOnRoot: nil,
             didUpdate: nil,
             handleError: { error throws(ReversionError) in throw error }
         )
@@ -784,21 +888,58 @@ extension VersioningController where Failure == ReversionError {
     /// - Parameters:
     ///   - root: The owning instance of the value to be tracked, such as some view model.
     ///   - keyPath: The key path to the value to be tracked.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
     public convenience init(
         on root: Root,
-        at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        debounceInterval: ContinuousClock.Duration? = nil
+        at keyPath: WritableKeyPath<Root, Value> & Sendable
     ) where Root: AnyObject {
 
         self.init(
             on: root,
             at: keyPath,
-            debounceInterval: debounceInterval,
-            getroot: { [weak root] in
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root] in
                 root?[keyPath: keyPath]
             },
-            setRoot: { [weak root] newValue in
+            setValueOnRoot: { [weak root] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: nil,
+            handleError: { error throws(ReversionError) in throw error }
+        )
+    }
+
+    /// Creates  a controller that registers changes at a specific key path on a reference type.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public convenience init<C>(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    )
+    where Root: AnyObject,
+    C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceClock: debounceClock,
+            debounceInterval: debounceInterval,
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root] in
+                root?[keyPath: keyPath]
+            },
+            setValueOnRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: nil,
@@ -819,11 +960,13 @@ extension VersioningController where Failure == ReversionError {
     /// - Parameters:
     ///   - root: The owning instance of the value to be tracked, such as some view model.
     ///   - keyPath: The key path to the value to be tracked.
+    ///   - scheduler: The scheduler used to publish events.
     ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
     public convenience init(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        debounceInterval: ContinuousClock.Duration? = nil
+        scheduler: some Scheduler = DispatchQueue.main,
+        debounceInterval: Duration? = nil
     ) where
     Root: ObservableObject,
     Root.ObjectWillChangePublisher == ObservableObjectPublisher
@@ -834,11 +977,13 @@ extension VersioningController where Failure == ReversionError {
         self.init(
             on: root,
             at: keyPath,
-            debounceInterval: debounceInterval,
-            getroot: { [weak root] in
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root] in
                 root?[keyPath: keyPath]
             },
-            setRoot: { [weak root] newValue in
+            setValueOnRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: { [weak publisher = root.objectWillChange] in
@@ -850,7 +995,41 @@ extension VersioningController where Failure == ReversionError {
         root.objectWillChange
             .debounce(
                 for: .milliseconds(milliseconds ?? 1),
-                scheduler: DispatchQueue.main
+                scheduler: scheduler
+            )
+            .compactMap { [weak root, keyPath] () -> Value? in
+                root?[keyPath: keyPath]
+            }
+            .removeDuplicates()
+            .sink { [weak self] newValue in
+                guard let self, newValue != self.referenceValue else {
+                    return
+                }
+                self._append(newValue, tag: nil)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Sets the debouncing scheduler and interval on an existing `VersioningController`. This can be useful to change the debounce interval or the scheduler used to measure time.
+    /// - Parameters:
+    ///   - scheduler: The scheduler to use to measure time for debouncing.
+    ///   - interval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public func withDebouncing(
+        scheduler: some Scheduler,
+        interval: Duration
+    )
+    where Root: ObservableObject,
+          Root.ObjectWillChangePublisher == ObservableObjectPublisher
+    {
+        let milliseconds = Int(Double(interval.components.seconds) * 1000 + Double(interval.components.attoseconds) * 1e-15)
+
+        cancellables.forEach { $0.cancel() }
+        cancellables = []
+        weak var root = getRoot?()
+        root?.objectWillChange
+            .debounce(
+                for: .milliseconds(milliseconds),
+                scheduler: scheduler
             )
             .compactMap { [weak root, keyPath] () -> Value? in
                 root?[keyPath: keyPath]
@@ -880,12 +1059,10 @@ extension VersioningController where Failure == ReversionError {
     ///   - root: The owning instance of the value to be tracked, such as some view model.
     ///   - keyPath: The key path to the value to be tracked.
     ///   - observationRegistrar: The observation registrar of the `Observable` object, used to notify of any changes to this controller.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
     public convenience init(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        using observationRegistrar: ObservationRegistrar,
-        debounceInterval: ContinuousClock.Duration? = nil
+        using observationRegistrar: ObservationRegistrar
     ) where
     Root: AnyObject,
     Root: Observable
@@ -893,11 +1070,63 @@ extension VersioningController where Failure == ReversionError {
         self.init(
             on: root,
             at: keyPath,
-            debounceInterval: debounceInterval,
-            getroot: { [weak root, keyPath] in
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root, keyPath] in
                 root?[keyPath: keyPath]
             },
-            setRoot: { [weak root, keyPath] newValue in
+            setValueOnRoot: { [weak root, keyPath] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: { [weak root, observationRegistrar, keyPath] in
+                guard let root else {
+                    return
+                }
+                observationRegistrar.willSet(root, keyPath: keyPath)
+                observationRegistrar.didSet(root, keyPath: keyPath)
+            },
+            handleError: { error throws(ReversionError) in throw error }
+        )
+
+        let box = WeakSendableBox(root)
+        observe(root: box, at: keyPath)
+    }
+
+    /// Creates a controller that registers changes at a specific key path on an `Observable` type, and observes the provided property, tracking all changes.
+    ///
+    /// This initializer observes changes made to the specified key path, and registers any modifications. Whenever an undo, redo or scope action is made, the root object is notified so that any UI that depends on the controller can update.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - observationRegistrar: The observation registrar of the `Observable` object, used to notify of any changes to this controller.
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public convenience init<C>(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        using observationRegistrar: ObservationRegistrar,
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    ) where
+    Root: AnyObject,
+    Root: Observable,
+    C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceClock: debounceClock,
+            debounceInterval: debounceInterval,
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root, keyPath] in
+                root?[keyPath: keyPath]
+            },
+            setValueOnRoot: { [weak root, keyPath] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: { [weak root, observationRegistrar, keyPath] in
@@ -941,22 +1170,22 @@ extension VersioningController where Failure == Never {
     ///   - root: The owning instance of the value to be tracked, such as some view model.
     ///   - keyPath: The key path to the value to be tracked.
     ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
     public convenience init(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
-        storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
-        debounceInterval: ContinuousClock.Duration? = nil
+        storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable
     ) where Root: AnyObject {
 
         self.init(
             on: root,
             at: keyPath,
-            debounceInterval: debounceInterval,
-            getroot: { [weak root] in
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root] in
                 root?[keyPath: keyPath]
             },
-            setRoot: { [weak root] newValue in
+            setValueOnRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: nil,
@@ -965,6 +1194,48 @@ extension VersioningController where Failure == Never {
             }
         )
     }
+
+    /// Creates  a controller that registers changes at a specific key path on a reference type. The interface of `VersioningController` no longer throws errors when using this initializer, and instead errors are assigned to the `errorKeyPath` on `root`.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public convenience init<C>(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    )
+    where Root: AnyObject,
+    C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceClock: debounceClock,
+            debounceInterval: debounceInterval,
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root] in
+                root?[keyPath: keyPath]
+            },
+            setValueOnRoot: { [weak root] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: nil,
+            handleError: { [weak root] error in
+                root?[keyPath: errorKeyPath] = error
+            }
+        )
+    }
+
 }
 
 // MARK: Combine
@@ -980,12 +1251,14 @@ extension VersioningController where Failure == Never {
     ///   - root: The owning instance of the value to be tracked, such as some view model.
     ///   - keyPath: The key path to the value to be tracked.
     ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
+    ///   - scheduler: The scheduler used to publish events.
     ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
     public convenience init(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
         storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
-        debounceInterval: ContinuousClock.Duration? = nil
+        scheduler: some Scheduler = DispatchQueue.main,
+        debounceInterval: Duration? = nil
     ) where
     Root: ObservableObject,
     Root.ObjectWillChangePublisher == ObservableObjectPublisher
@@ -1001,11 +1274,13 @@ extension VersioningController where Failure == Never {
         self.init(
             on: root,
             at: keyPath,
-            debounceInterval: debounceInterval,
-            getroot: { [weak root] in
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root] in
                 root?[keyPath: keyPath]
             },
-            setRoot: { [weak root] newValue in
+            setValueOnRoot: { [weak root] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: didUpdate,
@@ -1018,7 +1293,7 @@ extension VersioningController where Failure == Never {
         root.objectWillChange
             .debounce(
                 for: .milliseconds(milliseconds ?? 1),
-                scheduler: DispatchQueue.main
+                scheduler: scheduler
             )
             .compactMap { [weak root, keyPath] () -> Value? in
                 root?[keyPath: keyPath]
@@ -1049,13 +1324,11 @@ extension VersioningController where Failure == Never {
     ///   - keyPath: The key path to the value to be tracked.
     ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
     ///   - observationRegistrar: The observation registrar of the `Observable` object, used to notify of any changes to this controller.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
     public convenience init(
         on root: Root,
         at keyPath: WritableKeyPath<Root, Value> & Sendable,
         storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
-        using observationRegistrar: ObservationRegistrar,
-        debounceInterval: ContinuousClock.Duration? = nil
+        using observationRegistrar: ObservationRegistrar
     ) where
     Root: AnyObject,
     Root: Observable
@@ -1071,11 +1344,70 @@ extension VersioningController where Failure == Never {
         self.init(
             on: root,
             at: keyPath,
-            debounceInterval: debounceInterval,
-            getroot: { [weak root, keyPath] in
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root, keyPath] in
                 root?[keyPath: keyPath]
             },
-            setRoot: { [weak root, keyPath] newValue in
+            setValueOnRoot: { [weak root, keyPath] newValue in
+                root?[keyPath: keyPath] = newValue
+            },
+            didUpdate: didUpdate,
+            handleError: { [weak root] error in
+                root?[keyPath: errorKeyPath] = error
+                didUpdate()
+            }
+        )
+
+        let box = WeakSendableBox(root)
+        observe(root: box, at: keyPath)
+    }
+
+    /// Creates a controller that registers changes at a specific key path on an `Observable` type, and observes the provided property, tracking all changes. The interface of `VersioningController` no longer throws errors when using this initializer, and instead errors are assigned to the `errorKeyPath` on `root`.
+    ///
+    /// This initializer observes changes made to the specified key path, and registers any modifications. Whenever an undo, redo or scope action is made, the root object is notified so that any UI that depends on the controller can update.
+    /// - Parameters:
+    ///   - root: The owning instance of the value to be tracked, such as some view model.
+    ///   - keyPath: The key path to the value to be tracked.
+    ///   - errorKeyPath: The key path to the property on `root` to store any errors that are thrown.
+    ///   - observationRegistrar: The observation registrar of the `Observable` object, used to notify of any changes to this controller.
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public convenience init<C>(
+        on root: Root,
+        at keyPath: WritableKeyPath<Root, Value> & Sendable,
+        storingErrorsAt errorKeyPath: WritableKeyPath<Root, Error?> & Sendable,
+        using observationRegistrar: ObservationRegistrar,
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    ) where
+    Root: AnyObject,
+    Root: Observable,
+    C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
+        let didUpdate: () -> Void = { [weak root, observationRegistrar, keyPath] in
+            guard let root else {
+                return
+            }
+            observationRegistrar.willSet(root, keyPath: keyPath)
+            observationRegistrar.didSet(root, keyPath: keyPath)
+        }
+
+        self.init(
+            on: root,
+            at: keyPath,
+            debounceClock: debounceClock,
+            debounceInterval: debounceInterval,
+            getRoot: { [weak root] in
+                root
+            },
+            getValueFromRoot: { [weak root, keyPath] in
+                root?[keyPath: keyPath]
+            },
+            setValueOnRoot: { [weak root, keyPath] newValue in
                 root?[keyPath: keyPath] = newValue
             },
             didUpdate: didUpdate,

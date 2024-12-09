@@ -113,3 +113,13 @@ extension UUID: @retroactive ExpressibleByIntegerLiteral {
         self.init(uuidString: "00000000-0000-0000-0000-\(String(format: "%012x", value))")!
     }
 }
+
+
+extension Model {
+
+    convenience init() {
+        self.init(activity: .mock)
+        self._$activity.withDebouncing(clock: ContinuousClock(), interval: .zero)
+        self.$test.withDebouncing(clock: ContinuousClock(), interval: .zero)
+    }
+}

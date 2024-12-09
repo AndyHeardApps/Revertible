@@ -1,14 +1,24 @@
 import Foundation
 
-struct StateMachine<T: Sendable>: Sendable {
+struct StateMachine<T, C>: Sendable
+where T: Sendable,
+      C: Clock,
+      C.Duration == Duration,
+      C.Instant.Duration == Duration
+{
 
     // MARK: - Properties
     private var state: State
-    private let duration: ContinuousClock.Duration
+    private let clock: C
+    private let duration: C.Duration
 
     // MARK: - Initializer
-    init(duration: ContinuousClock.Duration) {
+    init(
+        clock: C,
+        duration: C.Duration
+    ) {
         self.state = .idle
+        self.clock = clock
         self.duration = duration
     }
 }
@@ -16,8 +26,8 @@ struct StateMachine<T: Sendable>: Sendable {
 // MARK: - State updates
 extension StateMachine {
 
-    mutating func newValue(_ value: T) -> (Bool, ContinuousClock.Instant) {
-        let dueTime = ContinuousClock.now + duration
+    mutating func newValue(_ value: T) -> (Bool, C.Instant) {
+        let dueTime = clock.now.advanced(by: duration)
         switch self.state {
         case .idle:
             self.state = .debouncing(value: value, dueTime: dueTime, isValueDuringSleep: false)
@@ -50,14 +60,14 @@ extension StateMachine {
 extension StateMachine {
     enum State: Sendable {
         case idle
-        case debouncing(value: T, dueTime: ContinuousClock.Instant, isValueDuringSleep: Bool)
+        case debouncing(value: T, dueTime: C.Instant, isValueDuringSleep: Bool)
    }
 }
 
 // MARK: - Wake action
 extension StateMachine {
     enum WakeAction {
-        case continueDebouncing(dueTime: ContinuousClock.Instant)
+        case continueDebouncing(dueTime: C.Instant)
         case finishDebouncing(value: T)
     }
 }

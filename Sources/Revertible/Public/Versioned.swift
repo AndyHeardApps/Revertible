@@ -42,13 +42,32 @@ public struct _Versioned<Value: Versionable & Sendable, Failure: Error>: Sendabl
     /// Creates a new ``Versioned`` property wrapper that exposes errors through throwing functions.
     /// - Parameters:
     ///   - wrappedValue: The initial tracked value.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
-    public init(
+    public init(wrappedValue: Value)
+    where Failure == ReversionError
+    {
+        self.controller = .init(wrappedValue)
+        self.handleError = { error throws(ReversionError) in throw error }
+        self.storage = wrappedValue
+    }
+
+    /// Creates a new ``Versioned`` property wrapper that exposes errors through throwing functions.
+    /// - Parameters:
+    ///   - wrappedValue: The initial tracked value.
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public init<C>(
         wrappedValue: Value,
-        debounceInterval: ContinuousClock.Duration? = nil
-    ) where Failure == ReversionError {
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    )
+    where Failure == ReversionError,
+    C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
         self.controller = .init(
             wrappedValue,
+            debounceClock: debounceClock,
             debounceInterval: debounceInterval
         )
         self.handleError = { error throws(ReversionError) in throw error }
@@ -58,13 +77,34 @@ public struct _Versioned<Value: Versionable & Sendable, Failure: Error>: Sendabl
     /// Creates a new ``Versioned`` property wrapper that exposes errors through the `projectedValue.error` property.
     /// - Parameters:
     ///   - wrappedValue: The initial tracked value.
-    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored. If `nil` then all changes are stored.
-    public init(
+    public init(wrappedValue: Value)
+    where Failure == Never
+    {
+        self.controller = .init(wrappedValue)
+        self.handleError = { [__error] error in
+            __error.wrappedValue = error
+        }
+        self.storage = wrappedValue
+    }
+
+    /// Creates a new ``Versioned`` property wrapper that exposes errors through the `projectedValue.error` property.
+    /// - Parameters:
+    ///   - wrappedValue: The initial tracked value.
+    ///   - debounceClock: The clock to use to measure time for debouncing.
+    ///   - debounceInterval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+    public init<C>(
         wrappedValue: Value,
-        debounceInterval: ContinuousClock.Duration? = nil
-    ) where Failure == Never {
+        debounceClock: C = ContinuousClock(),
+        debounceInterval: Duration
+    )
+    where Failure == Never,
+    C: Clock,
+    C.Duration == Duration,
+    C.Instant.Duration == Duration
+    {
         self.controller = .init(
             wrappedValue,
+            debounceClock: debounceClock,
             debounceInterval: debounceInterval
         )
         self.handleError = { [__error] error in
@@ -222,6 +262,24 @@ extension _Versioned {
         /// Clears all stored undo and redo actions. This may be needed when using ``setWithoutTracking(_:)``.
         public func reset() {
             controller.reset()
+        }
+
+        /// Sets the debouncing clock and interval. This can be useful to change the debounce interval or the clock used to measure time.
+        /// - Parameters:
+        ///   - clock: The clock to use to measure time for debouncing.
+        ///   - interval: The debounce interval, indicating how much time must elapse between changes before they are stored.
+        public func withDebouncing<C>(
+            clock: C,
+            interval: Duration
+        )
+        where C: Clock,
+              C.Duration == Duration,
+              C.Instant.Duration == Duration
+        {
+            controller.withDebouncing(
+                clock: clock,
+                interval: interval
+            )
         }
     }
 }

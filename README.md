@@ -9,6 +9,7 @@ This library aims to add a low friction way to track changes in state, and allow
 
 * [Basic usage](#basic-usage)
 * [Installation](#installation)
+* [Why not `UndoManager`?](#why-not-undomanager?)
 * [Additional features](#additional-features)
     * [Scopes](#scopes)
     * [Tags](#tags)
@@ -29,7 +30,7 @@ This library aims to add a low friction way to track changes in state, and allow
             * [Scope details](#scope-details)
             * [Tag details](#tag-details)
             * [Error handling details](#error-handling-details)
-            * [Modification debouncing details](#modification-debouncing-details)
+            * [Debouncing details](#debouncing-details)
         * [`@Versioned ` property wrapper](#@versioned-property-wrapper)
         * [`@Versioning` macro](#@versioning-macro)
 * [License](#license)
@@ -147,6 +148,18 @@ That's all that needs to be done to get started with state tracking, however the
 Swift Package Manager is the best way to include this library in your project. To do so, add a dependency pointing to [https://github.com/andyheardapps/Revertible.git](https://github.com/andyheardapps/Revertible.git) and be sure to add it as a dependency to your target of choice.
 
 Alternatively you may download the source and include it directly in your project.
+
+## Why not `UndoManager`?
+
+The `UndoManager` in Foundation is cumbersome to use, with a lot of boilerplate involved in adding undo and redo actions. With it being closure based, it can be easy to let a retain cycle slip in, while also possibly retaining full copies of large state data, just in case the undo action is applied.
+
+Consider a situation where a large nested model has a minor change made. A naive approach would be for the `UndoManager` to hold on to the entirety of the old value, in case it is needed in an undo action. A better approach would be to just track what has changed and where, but this adds more complexity to an already bloated method of tracking changes.
+
+This framework aims to ease those pains, with piecewise storage of only what has changed in a value, and a simple interface with which to push versions of a value onto the version stack. When an updated value is pushed onto the version stack, each property is inspected for changes, recursively, so that only the individual values that have changed are used. These values are then stored alongside their `KeyPath` in a lightweight struct. If no changes have occurred, then nothing happens. These `Reversion` values can then be applied to the updated object to revert it to the previous state.
+
+This method means that individual reversions do not know about the object that created them, resulting in a lower memory footprint and no risk of a memory leak. The `Reversion` type is what drives this framework.
+
+The framework has been designed to support basic types such as `Int` and `Bool` out of the box, as well as other common types such as `UUID` and basic collections like `Data`, `String`, `Array` etc. This allows more complex types to be used by combining these basic implementations.
 
 ## Additional features
 
@@ -519,15 +532,41 @@ In both cases, the `VersioningController` will trigger an update whenever a vers
 
 ##### Scope details
 
+The scopes are useful for setting up barriers between versions and grouping versions, allowing you to squash groups of versions into a single change, or discard the changes in the current scope altogether. Internally, versions are stored in stacks, one is the undo stack and the other is the redo stack. Each scope contains one of these stack pairs, and all versions are appended to the stack in the current scope.
+
+Scopes are best used when changing focus in a form, such as when pushing new screens that focus on a part of your state, and popped or discarded when leaving that screen. There is no set limit on the number of scopes you can make.
+
+To explicitly carry out multiple changes in a single version change, is is best to use the `setWithTransaction(_:)` functions instead of scopes.
+
+Scopes must always be explicitly pushed and popped, and an undo or redo call will *NEVER* alter the current scope.
+
 ##### Tag details
+
+A tag can be applied to a version either it is explicitly appended to the `VersioningController` using the `append(_:tag:)` function or similar. When versions are automatically appended for you, you can instead tag the latest version using `tagCurrentVersion(_:)`. When a version is tagged, you can use it as a waypoint when navigating the version stack by calling the `undo(to:)` and `redo(to:)` functions. You cannot navigate to a tag from another scope, as you must always explicitly handle your scopes.
+
+When using either `undo(to:)` or `redo(to:)` you will always end up on the version that was tagged. There is an important distinction between versions of the state and the modifications between them. You tag a *version*, and not the changes that made that version. When performing an undo to a tag, you will undo all changes up to but not including the tagged changes. When performing a redo to a tag, you will redo all changes including the tagged changes.
 
 ##### Error handling details
 
-##### Modification debouncing details
+Error handling has been made dynamic thanks to typed error throwing. `VersioningController` has a generic `Failure` type that conforms to the `Error` protocol and is thrown by much of it's interface. When a `VersioningController` has been initialized with a key path to place any encountered errors, then it has a `Failure` type of `Never`, otherwise it is `ReversionError`. The initializer that accepts an error key path retains a weak reference to the Root object, and creates a closure with the signature `(ReversionError) throws(Failure) -> Void`, allowing errors to be handled internally.
+
+This type of error handling can only be used when the root object on the `VersioningController` is a reference type, such as a class based view model. The [`@Versioned`](#@versioned-property-wrapper) can handle errors for you in value types.
+
+##### Debouncing details
+
+Debouncing changes is something you are likely to use when versioning mutable user facing state. Other than the unfortunate limitations of the macro parameters only being able to accept a number of milliseconds, it behaves as you would expect from Combine or Async Algorithms. In fact, when used with an `ObservableObject`, the combine debounce publisher is used directly. In other cases, a custom implementation is used, which is designed to mirror other, first party implementations.
+
+When using an initializer that accepts a `debounceInterval`, you can also specify the clock / scheduler to use to measure that interval. By default the `ContinuousClock` or `DispatchQueue.main` are used, depending on which initializer is called. This allows you to test your versioned objects with test clocks, so your tests don't need to sleep while waiting for values to be debounced. If relying on the macros, you will need to overwrite the default `VersioningController` or `@Versioned` property wrappers in your tests in order to inject your custom clock. In order to change the debouncing clock in tests, use the `withDebouncing(clock:, interval:)` function on `VersioningController` or the `@Versioned` projected value. On `ObservableObject` types, use `withDebouncing(scheduler:interval:)` instead.
 
 #### `@Versioned` property wrapper
 
-#### `Versioning` macro
+The `@Versioned` property wrapper is relatively simple. It owns an instance of `VersioningController` and uses it to directly track the `wrappedValue`. The versioning interface is available through the projected value using dollar syntax, but it does not directly provide the `VersioningController`. Instead it provides a cut down interface that makes sense for the value based tracking being carried out. This interface still gives access to scopes, tags, transactions etc.
+
+The error handling on `@Versioned` is similar to `VersioningController`, but instead of accepting a key path to store the error, it will store the error internally on the `$value.error` property on the projected value. If you'd rather handle errors yourself, then the `@ThrowingVersioned` property wrapper will cause the interface to throw errors instead of catching them.
+
+#### `@Versioning` macro
+
+All of the above can be a bit much to remember. Which initializer to use, error handling, whether or not `@Versioned` can be used or not. The `@Versioning` macro aims to join all of this together into a single call. It will check the type it is attached to for `@Observable` or `ObservedObject` and will apply the appropriate tracking method for each. If neither are there, then the default `@Versioned` approach is used.
 
 ## [License](https://github.com/AndyHeardApps/Revertible/blob/develop/License)
 
