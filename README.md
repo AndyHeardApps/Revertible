@@ -119,7 +119,7 @@ Changes can be tracked and applied through `enum` cases, collections, computed p
 
 ```swift
 model.activity.childActivities[0].childActivities[1].priority.reason += " - updated"
-``
+```
 
 Assuming we've made a `reason` computed property on the `Priority`, this will construct a key path to the individual change on the child activity, enabling efficient tracking and reversion of the change.
 
@@ -277,7 +277,7 @@ model.activity.title += "l"
 model.activity.title += "e"
 
 model.$activity.undo() // model.activity.title -> "New titl"
-``
+```
 
 In this case every new character is stored as a new version. Now let's add a debounce interval:
 
@@ -526,7 +526,7 @@ Having to manually append versions to the controller can be an annoyance, especi
 
 For an `@ObservableObject` object, then there is an overload of the `init(on:at:debounceInterval:)` initializer that will use the `ObservableObjectPublisher` on the root to be notified of changes, and trigger updates in SwiftUI. This functionality should happen automatically as long as the correct initializer is being used.
 
-`@Observble` objects are a little different. The root can be observed easily, but in order to notify SwiftUI of updates, the `VersioningController` requires the `ObservationRegistrar` of the instance. Therefore, there is another initializer that accepts an `ObservationRegistrar` instance.
+`@Observable` objects are a little different. The root can be observed easily, but in order to notify SwiftUI of updates, the `VersioningController` requires the `ObservationRegistrar` of the instance. Therefore, there is another initializer that accepts an `ObservationRegistrar` instance.
 
 In both cases, the `VersioningController` will trigger an update whenever a versioning function is used (`undo()` or `redo()`), when a new version is appended, whenever there is a change to the scope, and whenever an error is produced. This allows your UI to stay up to date with not only the state being tracked, but also the state of the controller itself, allowing you to bind UI elements directly the controller with confidence.
 
@@ -566,7 +566,7 @@ The error handling on `@Versioned` is similar to `VersioningController`, but ins
 
 #### `@Versioning` macro
 
-All of the above can be a bit much to remember. Which initializer to use, error handling, whether or not `@Versioned` can be used or not. The `@Versioning` macro aims to join all of this together into a single call. It will check the type it is attached to for `@Observable` or `ObservedObject` and will apply the appropriate tracking method for each. If neither are there, then the default `@Versioned` approach is used.
+All of the above can be a bit much to remember. Which initializer to use, error handling, whether or not `@Versioned` can be used or not. The `@Versioning` macro aims to join all of this together into a single call. It will check the type it is attached to for `@Observable` or `ObservableObject` and will apply the appropriate tracking method for each. If neither are there, then the default `@Versioned` approach is used.
 
 ## [License](https://github.com/AndyHeardApps/Revertible/blob/develop/License)
 
